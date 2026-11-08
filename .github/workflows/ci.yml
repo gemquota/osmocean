@@ -22,6 +22,10 @@ jobs:
   ultra-water-build:
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout Osmocean
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - name: Checkout pinned Ultra-Water source
         uses: actions/checkout@v4
         with:
@@ -35,9 +39,13 @@ jobs:
           node-version: 22
           cache: npm
           cache-dependency-path: _upstream/ultra-water/package-lock.json
+      - name: Apply Osmocean Rapier integration
+        run: node scripts/integrate-ultra-water-rapier.mjs _upstream/ultra-water
       - name: Install dependencies
         working-directory: _upstream/ultra-water
-        run: npm ci
+        run: |
+          npm install --package-lock-only --ignore-scripts --no-audit --no-fund
+          npm ci
       - name: Build upstream demo for GitHub Pages
         working-directory: _upstream/ultra-water
         run: npm run build -- --base=/osmocean/ultra-water/

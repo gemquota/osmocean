@@ -14,7 +14,7 @@ Osmocean is an integration and marine-domain project, not a replacement fluid so
 
 ## Demo deployment
 
-The Osmocean deployment provides a dedicated `/lab.html` integration lab. It links and embeds upstream-hosted fluid and Rapier demos, and builds the pinned Ultra-Water Vite source into `/ultra-water/` as part of the GitHub Pages deployment because upstream does not publish a hosted demo. This is a demo/compatibility harness, not a claim that the engines are integrated into one runtime.
+The Osmocean deployment provides a dedicated `/lab.html` integration lab. It builds the pinned Ultra-Water Vite source into `/ultra-water/` and applies an Osmocean Rapier integration overlay during the Pages build. The ocean renderer and asynchronous GPU surface queries remain upstream; Rapier owns floating-object rigid-body state and contacts. Fluid and Rapier reference demos remain linked separately.
 
 ## Integration boundaries
 
@@ -27,9 +27,9 @@ The Osmocean deployment provides a dedicated `/lab.html` integration lab. It lin
 ## Current status
 
 - **Fluid demos:** upstream 2D PIC/FLIP, Hybrid FLIP, APIC and Canvas2D plus WebGPU variants are available in the lab. WebGPU support is device-dependent.
-- **Ultra-Water:** the actual upstream Vite project is built and served at `/ultra-water/` by GitHub Pages from pinned commit `30ea65ecb0a66b137aa200d099965634bdd84d51`; The build and static assets are deployed; automated browser navigation timed out before the WebGL scene could be inspected, so runtime rendering remains unverified.
-- **Rapier:** official 2D and 3D JavaScript demos are linked in the lab. Rapier is not yet the rigid-body runtime in Osmocean.
-- **Ultra-Water + Rapier:** an adapter implementation and fake-body regression suite are proposed in this branch. It is one-way water-to-body force coupling; it is not yet wired into the deployed Ultra-Water scene or verified against a real Rapier runtime.
+- **Ultra-Water:** the actual upstream Vite project is built and served at `/ultra-water/` from pinned commit `30ea65ecb0a66b137aa200d099965634bdd84d51`. The project owner has verified that the scene renders on a real phone.
+- **Rapier:** official 2D and 3D JavaScript demos are linked in the lab. Rapier 3D 0.21.0 is also initialized inside the Ultra-Water scene for floating-object rigid bodies.
+- **Ultra-Water + Rapier:** integrated in the Pages build. Rapier owns the existing boat, buoy, crate and barrel bodies; the adapter consumes batched asynchronous WaterQuery readbacks and applies point buoyancy/drag forces. This is one-way coupling; reaction impulses do not modify the FFT ocean.
 - **Two-way fluid/body coupling:** not yet implemented by the demo presentation.
 
-See [COMBINATION-INVESTIGATION.md](./COMBINATION-INVESTIGATION.md) for the exhaustive three pairings + one triplet assessment and proposed adapter architecture.
+See [COMBINATION-INVESTIGATION.md](./COMBINATION-INVESTIGATION.md) for the exhaustive three pairings + one triplet assessment and [ULTRA-WATER-RAPIER-SCENE.md](./ULTRA-WATER-RAPIER-SCENE.md) for the live scene's force model and limitations.

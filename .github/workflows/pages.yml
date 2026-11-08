@@ -38,9 +38,13 @@ jobs:
           node-version: 22
           cache: npm
           cache-dependency-path: _upstream/ultra-water/package-lock.json
+      - name: Apply Osmocean Rapier integration
+        run: |
+          node scripts/integrate-ultra-water-rapier.mjs _upstream/ultra-water
       - name: Install and build Ultra-Water
         working-directory: _upstream/ultra-water
         run: |
+          npm install --package-lock-only --ignore-scripts --no-audit --no-fund
           npm ci
           npm run build -- --base=/osmocean/ultra-water/
           cp LICENSE dist/LICENSE

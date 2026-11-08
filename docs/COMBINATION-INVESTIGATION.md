@@ -48,20 +48,23 @@ There are three two-library pairings and one three-library combination.
 
 ### 3. Ultra-Water + Rapier
 
-**Existing upstream capability discovered**
+**Existing upstream capability and Osmocean integration**
 - `WaterQuery` evaluates the rendered water surface at supplied world XZ positions and reads back height plus horizontal displacement asynchronously.
 - Results can lag by 1–3 frames.
-- Ultra-Water's `Floaters` currently integrates its own bodies with a 1/240 s substep, point-sample Archimedes buoyancy, and drag against water velocity estimated from changes in query displacement.
-- This means Ultra-Water already contains a useful water-sampling and buoyancy prototype, but it does **not** currently use Rapier.
+- The Osmocean Pages build replaces the custom `Floaters` integrator with Rapier 3D 0.21.0 while preserving the upstream meshes, WaterQuery and rendering pipeline.
+- Rapier owns rigid-body state, contacts, gravity and fixed-step integration; Osmocean batches query samples and applies distributed buoyancy and drag at world-space points.
+- The upstream custom integrator is not instantiated for the integrated scene.
 
-**Recommended adapter**
+**Implemented adapter and remaining work**
 - Keep `OceanSim`, `OceanSurface` and `WaterQuery` as the water/rendering owner.
-- Replace the custom `Floaters.Body` rigid-body state/integrator with Rapier rigid bodies and colliders.
-- Preserve body-local sample points. Transform them through Rapier body poses, query the water surface, calculate per-sample buoyancy/drag, and apply forces at their world positions.
-- Let Rapier own collision response and body integration. Do not also integrate the same body in `Floaters.integrate`.
-- Account for asynchronous query age when estimating water velocity; avoid treating stale samples as current instantaneous velocity.
+- Rapier rigid bodies and colliders now replace the custom floater integrator in the Osmocean-hosted build.
+- Body-local volume and surface samples are transformed through Rapier poses and batched into the existing GPU query pass.
+- Buoyancy and quadratic drag are applied at their sample points; Rapier derives torque and resolves body-body/terrain contacts.
+- A 257 x 257 static heightfield is sampled from the upstream island-height function.
+- Query latency is bounded and stale results are rejected. Water velocity remains an estimate from displacement readbacks.
+- Remaining work: improve drag quadrature, validate mass/inertia and wave response, add physical telemetry and measure browser performance on target devices.
 
-**Assessment:** best near-term two-library integration candidate. Existing code provides a concrete adapter seam and an observable test scene (boat, buoy, crates, barrels).
+**Assessment:** first live two-library integration is now implemented in the hosted scene. It is one-way water-to-body coupling, not two-way momentum exchange: Rapier reaction impulses do not modify the FFT spectrum or generate resolved wakes.
 
 ### 4. Fluid + Ultra-Water + Rapier
 
@@ -88,7 +91,7 @@ There are three two-library pairings and one three-library combination.
 |---|---|---|---|---:|
 | Fluid + Ultra-Water | Gallery provides simultaneous independent panels; actual startup remains browser/GPU-dependent | Fluid API extraction and domain boundary needed | High | 3 |
 | Fluid + Rapier | Gallery provides simultaneous independent panels | Moving-boundary adapter not exposed as a stable upstream API | Very high | 2 |
-| Ultra-Water + Rapier | Gallery provides simultaneous independent panels | Clear seam in WaterQuery / Floaters | Medium | 1 |
+| Ultra-Water + Rapier | Live Rapier-backed floaters in the hosted Ultra-Water scene | Batched WaterQuery adapter and Rapier-owned bodies | Medium | 1 |
 | All three | Gallery provides simultaneous independent panels | Requires all adapters plus local/far-field handoff | Very high | 4 |
 
 ## Verification still required
@@ -97,7 +100,7 @@ There are three two-library pairings and one three-library combination.
 - Exercise Rapier 2D and 3D demos on target browsers; hosted demo URLs are verified, but successful runtime execution is not inferred from their existence.
 - Measure GPU memory, frame time and thermal behaviour with each pair and the triplet on the same device.
 - Record WebGL2 and WebGPU capability separately. Ultra-Water is WebGL2; the selected fluid 3D route is WebGPU.
-- Only after co-residency is stable should the project implement the first data-coupled prototype: Ultra-Water + Rapier buoyant floaters.
+- Next, validate the live Ultra-Water + Rapier scene on desktop and mobile, then improve wake coupling and physical regression coverage.
 
 ## Sources
 
