@@ -10,10 +10,11 @@ Osmocean is the independent successor to [Mocean](https://github.com/gemquota/mo
 
 **Status: foundation stage.**
 
-The repository is being established. No production simulation engine, validated hydrodynamics model, or third-party runtime dependency is claimed yet.
+The repository now contains a source audit and initial executable kernel contracts. It does not yet contain a production simulation engine, validated hydrodynamics model, or third-party runtime dependency.
 
 - [Architecture](docs/ARCHITECTURE.md)
 - [Roadmap and gates](docs/ROADMAP.md)
+- [Gate 0 kernel contracts](docs/GATE-0-KERNEL-CONTRACTS.md)
 - [Mocean source audit](docs/MOCEAN-AUDIT.md)
 - [Mocean migration and feature parity](docs/MOCEAN-PARITY.md)
 - [Engineering principles](docs/ENGINEERING-PRINCIPLES.md)
@@ -46,6 +47,6 @@ The successor adds a shared water environment, spatially varying currents, envir
 
 ## Development
 
-The initial foundation is documentation-first. The runtime stack will be selected after focused prototypes, not by installing a collection of impressive-sounding libraries and hoping they agree.
+The runtime stack will be selected after focused prototypes, not by installing a collection of impressive-sounding libraries and hoping they agree.
 
 See [ROADMAP.md](docs/ROADMAP.md) for gates and acceptance criteria.
