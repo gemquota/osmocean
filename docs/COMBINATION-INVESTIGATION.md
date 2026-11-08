@@ -1,6 +1,6 @@
 # Library demo and combination investigation
 
-**Status:** three executable coupling prototypes are represented in the repository: Ultra-Water + Rapier 3D, 2D SPH + Rapier 2D, and a combined Ultra-Water → SPH → optional Rapier scene. The latter two are build-verified in CI; real-device numerical validation remains outstanding.
+**Status:** three coupling paths are implemented in the repository: Ultra-Water + Rapier 3D, 2D SPH + Rapier 2D, and a combined Ultra-Water → SPH → optional Rapier scene. The first two have passed CI; the new far-field boundary and three-engine additions are awaiting the next build run. Real-device numerical validation remains outstanding.
 
 ## Upstream demo availability
 
@@ -89,10 +89,10 @@ There are three two-library pairings and one three-library combination.
 
 | Combination | Demo co-residency | Data API seam | Physical coupling effort | Recommended order |
 |---|---|---|---|---:|
-| Fluid + Ultra-Water | Gallery provides simultaneous independent panels; actual startup remains browser/GPU-dependent | Fluid API extraction and domain boundary needed | High | 3 |
+| Fluid + Ultra-Water | 2D SPH surface forcing from batched Ultra-Water GPU queries | One-way far-field wave profile to local SPH domain | High; no mass/momentum conservation | 3 |
 | Fluid + Rapier | Integrated 2D SPH + Rapier prototype plus standalone references | Shared AABB obstacle and bounded pressure/drag load adapter | High; two-way exchange remains unimplemented | 2 |
 | Ultra-Water + Rapier | Live Rapier-backed floaters in the hosted Ultra-Water scene | Batched WaterQuery adapter and Rapier-owned bodies | Medium | 1 |
-| All three | Gallery provides simultaneous independent panels | Requires all adapters plus local/far-field handoff | Very high | 4 |
+| All three | Ultra-Water → SPH → optional Rapier 2D prototype | Two sequential one-way adapters; no conservative three-way exchange | Very high; prototype only | 4 |
 
 ## Verification still required
 
@@ -100,7 +100,7 @@ There are three two-library pairings and one three-library combination.
 - Exercise Rapier 2D and 3D demos on target browsers; hosted demo URLs are verified, but successful runtime execution is not inferred from their existence.
 - Measure GPU memory, frame time and thermal behaviour with each pair and the triplet on the same device.
 - Record WebGL2 and WebGPU capability separately. Ultra-Water is WebGL2; the selected fluid 3D route is WebGPU.
-- Next, validate the live Ultra-Water + Rapier scene on desktop and mobile, then improve wake coupling and physical regression coverage.
+- Validate the new external WaterQuery probe path and combined Fluid/Ocean/Rapier scene on desktop and mobile; CI build success does not prove same-origin iframe data flow or GPU runtime behaviour.
 
 ## Sources
 
