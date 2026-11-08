@@ -41,3 +41,44 @@ export function quadraticDrag({
 
   return Object.freeze({ relativeVelocity, speed, force });
 }
+
+
+/**
+ * Sample a water field at a body's world position and calculate water-relative
+ * quadratic drag. Invalid field samples are propagated without inventing a
+ * fallback velocity or applying a force.
+ *
+ * The field owns spatial/time sampling; this function owns only the lumped
+ * drag calculation. It deliberately does not mutate or integrate a body.
+ */
+export function quadraticDragFromWaterField({
+  bodyVelocity,
+  position,
+  time = 0,
+  waterField,
+  dragCoefficient,
+  referenceArea
+}) {
+  if (!waterField || typeof waterField.sample !== "function") {
+    throw new TypeError("waterField must provide a sample(position, time) function");
+  }
+  const sample = waterField.sample(position, time);
+  if (!sample || typeof sample.valid !== "boolean") {
+    throw new TypeError("Water field returned an invalid sample contract");
+  }
+  if (!sample.valid) {
+    return Object.freeze({ valid: false, sample, drag: null });
+  }
+  if (!isFinite3(sample.velocity)) {
+    throw new TypeError("Valid water samples must contain a finite velocity");
+  }
+
+  const drag = quadraticDrag({
+    bodyVelocity,
+    waterVelocity: sample.velocity,
+    density: sample.density,
+    dragCoefficient,
+    referenceArea
+  });
+  return Object.freeze({ valid: true, sample, drag });
+}

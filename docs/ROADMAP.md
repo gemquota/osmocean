@@ -120,3 +120,12 @@ Each implementation item must be decomposed into small, independently reviewable
 - rollback / replacement considerations.
 
 Do not mark a parent task complete while any required child task remains incomplete.
+
+
+## Water-field mechanics integration
+
+- [x] Compose sampled local water velocity and density with quadratic relative-flow drag.
+- [x] Propagate invalid spatial samples without inventing a fallback force.
+- [ ] Integrate hydrodynamic loads into rigid-body force and torque accumulation.
+- [ ] Add distributed body-surface sampling and angular point-velocity contributions.
+- [ ] Characterise timestep sensitivity and energy dissipation under representative flows.
