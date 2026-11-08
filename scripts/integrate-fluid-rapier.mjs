@@ -24,6 +24,11 @@ write(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
 const integrationDir = path.join(upstream, 'src/osmocean');
 copy(path.join(repoRoot, 'src/adapters/rapier-fluid-sph2d.js'), path.join(integrationDir, 'rapier-fluid-sph2d.js'));
 copy(path.join(repoRoot, 'integrations/fluid-rapier/rapier-fluid-sph2d.d.ts'), path.join(integrationDir, 'rapier-fluid-sph2d.d.ts'));
+copy(path.join(repoRoot, 'src/adapters/fluid-ocean-boundary.js'), path.join(integrationDir, 'fluid-ocean-boundary.js'));
+copy(path.join(repoRoot, 'integrations/fluid-rapier/fluid-ocean-boundary.d.ts'), path.join(integrationDir, 'fluid-ocean-boundary.d.ts'));
+copy(path.join(repoRoot, 'integrations/fluid-rapier/fluid-ocean-rapier.ts'), path.join(integrationDir, 'fluid-ocean-rapier.ts'));
+copy(path.join(repoRoot, 'integrations/fluid-rapier/fluid-ocean-rapier.css'), path.join(integrationDir, 'fluid-ocean-rapier.css'));
+copy(path.join(repoRoot, 'integrations/fluid-rapier/fluid-ocean-rapier.html'), path.join(upstream, 'fluid-ocean-rapier.html'));
 copy(path.join(repoRoot, 'integrations/fluid-rapier/main.ts'), path.join(integrationDir, 'rapier-fluid-2d.ts'));
 copy(path.join(repoRoot, 'integrations/fluid-rapier/rapier-fluid-2d.css'), path.join(integrationDir, 'rapier-fluid-2d.css'));
 copy(path.join(repoRoot, 'integrations/fluid-rapier/rapier-fluid-2d.html'), path.join(upstream, 'rapier-fluid-2d.html'));
@@ -33,7 +38,8 @@ let vite = read(vitePath);
 vite = replaceExactly(
   vite,
   "'main-index': resolve(__dirname, 'index.html'),",
-  "'main-index': resolve(__dirname, 'index.html'),\n        'osmocean-rapier-fluid': resolve(__dirname, 'rapier-fluid-2d.html'),",
+  "'main-index': resolve(__dirname, 'index.html'),\n        'osmocean-rapier-fluid': resolve(__dirname, 'rapier-fluid-2d.html'),
+        'osmocean-fluid-ocean-rapier': resolve(__dirname, 'fluid-ocean-rapier.html'),",
   'Vite multi-page input'
 );
 write(vitePath, vite);
