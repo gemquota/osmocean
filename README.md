@@ -14,6 +14,7 @@ The repository is being established. No production simulation engine, validated 
 
 - [Architecture](docs/ARCHITECTURE.md)
 - [Roadmap and gates](docs/ROADMAP.md)
+- [Mocean source audit](docs/MOCEAN-AUDIT.md)
 - [Mocean migration and feature parity](docs/MOCEAN-PARITY.md)
 - [Engineering principles](docs/ENGINEERING-PRINCIPLES.md)
 - [Decision records](docs/decisions/)
