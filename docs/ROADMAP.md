@@ -120,3 +120,11 @@ Each implementation item must be decomposed into small, independently reviewable
 - rollback / replacement considerations.
 
 Do not mark a parent task complete while any required child task remains incomplete.
+
+## Distributed hydrodynamic loads
+
+- [x] Evaluate discrete world-space surface drag samples using local flow and density.
+- [x] Include angular point velocity and accumulate total force and moment about the centre of mass.
+- [ ] Couple the resulting wrench to rigid-body force and torque integration.
+- [ ] Generate surface quadrature points from body geometry and orientation.
+- [ ] Characterise spatial sampling convergence, timestep sensitivity, and energy dissipation under representative flows.
