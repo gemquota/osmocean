@@ -22,7 +22,7 @@ The roadmap is gate-driven. A gate closes only when its exit criteria are eviden
 ## Gate 1 — Technical selection prototypes
 
 - [ ] Compare rendering candidates against the Mocean presentation and target devices.
-- [ ] Prototype spatially varying water-field sampling.
+- [x] Prototype spatially varying water-field sampling (affine, shear and planar-vortex analytic fields; bounded grid interpolation remains open).
 - [ ] Demonstrate a creature moving relative to moving water.
 - [ ] Compare surface-wave approaches independently from underwater flow.
 - [ ] Prototype contact / collision adapter boundaries.
