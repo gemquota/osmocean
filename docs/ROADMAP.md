@@ -2,23 +2,27 @@
 
 The roadmap is gate-driven. A gate closes only when its exit criteria are evidenced. A merged PR is not, by itself, proof that a feature works.
 
-## Gate 0 — Successor foundation
+## Gate 0 — Successor foundation and predecessor audit
 
 - [x] Establish independent repository identity.
 - [x] Record architecture boundaries and engineering principles.
 - [x] Record Mocean as predecessor and reference implementation.
-- [ ] Inventory all Mocean source modules, tests, phases, presentation behaviour, and open acceptance items.
-- [ ] Build a feature-level port / reimplement / defer / retire matrix.
-- [ ] Record coordinate, unit, time-step, state-ownership, and determinism contracts.
-- [ ] Create dependency evaluation records and licence checklist.
-- [ ] Define baseline browser/device targets and performance budgets.
+- [x] Inventory Mocean root files, source modules, tests, phase specifications and CI/deployment workflows.
+- [x] Inspect merged Mocean PR #2 and open experiment PR #1.
+- [x] Record Mocean implementation status separately from visual acceptance and user approval.
+- [x] Create feature-level port / reimplement / defer / retire migration ledger.
+- [ ] Capture representative visual baselines and compare the deployed presentation.
+- [ ] Execute Osmocean's own CI workflow and record actual results.
+- [ ] Record dependency evaluations, licences, browser compatibility and mobile performance.
+- [ ] Approve Osmocean coordinate, unit, timestep, state-ownership and determinism contracts.
+- [ ] Define initial browser/device targets and performance budgets.
 
-**Exit:** reviewed inventory, traceable parity matrix, stable contracts, and approved prototype questions.
+**Exit:** reviewed source inventory, traceable parity ledger, visual reference, verified Osmocean CI, stable contracts, and approved prototype questions.
 
 ## Gate 1 — Technical selection prototypes
 
-- [ ] Compare rendering candidates against the existing Mocean presentation and target devices.
-- [ ] Prototype water-field sampling with spatially varying current.
+- [ ] Compare rendering candidates against the Mocean presentation and target devices.
+- [ ] Prototype spatially varying water-field sampling.
 - [ ] Demonstrate a creature moving relative to moving water.
 - [ ] Compare surface-wave approaches independently from underwater flow.
 - [ ] Prototype contact / collision adapter boundaries.
