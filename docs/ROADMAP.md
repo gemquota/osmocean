@@ -121,11 +121,12 @@ Each implementation item must be decomposed into small, independently reviewable
 
 Do not mark a parent task complete while any required child task remains incomplete.
 
-
 ## Water-field mechanics integration
 
 - [x] Compose sampled local water velocity and density with quadratic relative-flow drag.
 - [x] Propagate invalid spatial samples without inventing a fallback force.
-- [ ] Integrate hydrodynamic loads into rigid-body force and torque accumulation.
-- [ ] Add distributed body-surface sampling and angular point-velocity contributions.
-- [ ] Characterise timestep sensitivity and energy dissipation under representative flows.
+- [x] Evaluate discrete world-space surface drag samples using local flow and density.
+- [x] Include angular point velocity and accumulate total force and moment about the centre of mass.
+- [ ] Couple the resulting wrench to rigid-body force and torque integration.
+- [ ] Generate surface quadrature points from body geometry and orientation.
+- [ ] Characterise spatial sampling convergence, timestep sensitivity, and energy dissipation under representative flows.
