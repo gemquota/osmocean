@@ -2,6 +2,10 @@
 
 **Status:** three coupling paths are implemented in the repository: Ultra-Water + Rapier 3D, 2D SPH + Rapier 2D, and a combined Ultra-Water → SPH → optional Rapier scene. All three paths pass the adapter tests and upstream build jobs in CI; real-device data-flow and numerical validation remain outstanding. Real-device numerical validation remains outstanding.
 
+## Verification ledger
+
+See [COMBINATION-VERIFICATION.md](./COMBINATION-VERIFICATION.md) for the explicit classification vocabulary, exhaustive pair/triplet matrix, runtime test protocol, evidence boundaries, and next execution order. The ledger distinguishes source/API compatibility from demonstrated browser runtime and physical coupling.
+
 ## Upstream demo availability
 
 | Foundation | Standalone demo path | Deployment status / constraints |
