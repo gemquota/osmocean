@@ -52,7 +52,11 @@ export function estimateSphBoundaryLoad({
     if (distance >= h) continue;
 
     let normalX = 0, normalY = 0, surfaceDistance;
-    if (edgeX >= edgeY) {
+    if (edgeX > 0 && edgeY > 0) {
+      normalX = (Math.sign(dx) || 1) * edgeX / distance;
+      normalY = (Math.sign(dy) || 1) * edgeY / distance;
+      surfaceDistance = distance;
+    } else if (edgeX >= edgeY) {
       normalX = Math.sign(dx) || 1;
       surfaceDistance = Math.max(0, edgeX);
     } else {
