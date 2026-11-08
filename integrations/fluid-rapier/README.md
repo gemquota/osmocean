@@ -11,7 +11,7 @@ This integration builds a dedicated Osmocean page into the pinned jeantimex/flui
 
 ## Important limitations
 
-This is an executable coupling prototype, not a conservation-complete fluid/solid solver.
+This is an executable pose/load coupling prototype, not a conservation-complete fluid/solid solver.
 
 - The upstream SPH obstacle is axis-aligned and supports one rectangular obstacle. The Rapier body is therefore rotation-locked; it cannot rotate independently of the SPH boundary.
 - The upstream collision response reflects/clamps particles against the AABB. It does not return collision impulses. Osmocean adds a separate pressure/relative-velocity load estimate to Rapier.
