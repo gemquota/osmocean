@@ -1,0 +1,14 @@
+{
+  "name": "osmocean",
+  "version": "0.1.0",
+  "private": false,
+  "type": "module",
+  "description": "A physically grounded interactive marine simulation platform",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "test": "node --test",
+    "test:watch": "node --test --watch"
+  }
+}
