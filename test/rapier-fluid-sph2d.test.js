@@ -60,3 +60,13 @@ test('local particle envelope generates upward Archimedes buoyancy', () => {
   assert.ok(result.buoyancyForce.y > 0);
   assert.equal(result.submergedFraction, 1);
 });
+
+test('corner pressure uses a diagonal surface normal', () => {
+  const result = estimateSphBoundaryLoad({
+    state: state([{ x: 1.1, y: 1.1, density: 20 }]),
+    config, bodyPosition: { x: 0, y: 0 }, pressureScale: 0.01, dragScale: 0,
+  });
+  assert.ok(result.pressureForce.x < 0);
+  assert.ok(result.pressureForce.y < 0);
+  assert.ok(Math.abs(result.pressureForce.x - result.pressureForce.y) < 1e-9);
+});
