@@ -161,17 +161,29 @@ export class RapierFloaters {
     for (let i = 0; i < body.world.length; i++) {
       const p = body.world[i], water = body.water, h = water[i * 4];
       const submerged = clamp((h - p.y) / body.cellHeight + 0.5, 0, 1);
-      if (submerged <= 0) continue;
-      wet = true;
       const v = pointVelocity(linear, angular, p, t);
-      const k = drag * body.cellMass * submerged;
-      const force = vec(
-        -(v.x - water[i * 4 + 1]) * k,
-        RHO_WATER * GRAVITY * body.cellVolume * submerged * buoyancy
-          - (v.y - water[i * 4 + 2]) * k * 1.5,
-        -(v.z - water[i * 4 + 3]) * k,
-      );
-      body.rigidBody.addForceAtPoint(force, { x: p.x, y: p.y, z: p.z }, true);
+      if (submerged > 0) {
+        wet = true;
+        const k = drag * body.cellMass * submerged;
+        const force = vec(
+          -(v.x - water[i * 4 + 1]) * k,
+          RHO_WATER * GRAVITY * body.cellVolume * submerged * buoyancy
+            - (v.y - water[i * 4 + 2]) * k * 1.5,
+          -(v.z - water[i * 4 + 3]) * k,
+        );
+        body.rigidBody.addForceAtPoint(force, { x: p.x, y: p.y, z: p.z }, true);
+      }
+      // Keep the upstream terrain contact response as a force model, not a second
+      // rigid-body integrator. Rapier still owns all resulting pose/contact updates.
+      const ground = this.heightAt(p.x, p.z);
+      const penetration = ground - p.y;
+      if (penetration > 0) {
+        body.rigidBody.addForceAtPoint({
+          x: -v.x * body.cellMass * 6,
+          y: penetration * body.cellMass * 900 - v.y * body.cellMass * 40,
+          z: -v.z * body.cellMass * 6,
+        }, { x: p.x, y: p.y, z: p.z }, true);
+      }
     }
     if (wet && !body.wet && linear.y < -1.5) {
       const size = body.size;
