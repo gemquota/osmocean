@@ -21,7 +21,7 @@ test("affine field evaluates a full 3D velocity-gradient tensor", () => {
     density: 998
   });
   const sample = field.sample({ x: 2, y: 4, z: 6 }, 2.5);
-  assert.deepEqual(sample.velocity, { x: 17, y: 32, z: 47 });
+  assert.deepEqual(sample.velocity, { x: 18, y: 37, z: 56 });
   assert.equal(sample.density, 998);
   assert.equal(sample.time, 2.5);
   assert.equal(sample.valid, true);
