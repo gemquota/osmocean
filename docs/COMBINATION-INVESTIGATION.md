@@ -109,4 +109,11 @@ There are three two-library pairings and one three-library combination.
 - https://github.com/dimforge/rapier
 - https://rapier.rs/demos2d/
 - https://rapier.rs/demos3d/
-\n## Fluid + Rapier prototype\n\nSee [the 2D integration notes](../integrations/fluid-rapier/README.md), [the force adapter](../src/adapters/rapier-fluid-sph2d.js), and [the deployed coupled demo](../fluid/rapier-fluid-2d.html). The Pages workflow builds a pinned upstream SPH app with the Osmocean page injected at build time.\n\n## Fluid + Ultra-Water and three-engine prototype\n\nThe build injects the external-probe multiplexer into the Ultra-Water Rapier runtime. The parent page registers 25 XZ probes in the iframe; the child app appends them to its existing GPU query batch and publishes the matching readback slice. The local SPH adapter maps the sampled wave height and displacement velocity onto the local free-surface particle band. The optional Rapier 2D body then interacts with that same SPH domain. See [the multi-engine runtime](../fluid/fluid-ocean-rapier-2d.html) and [the ocean boundary adapter](../src/adapters/fluid-ocean-boundary.js).\n
+
+## Fluid + Rapier prototype
+
+See [the 2D integration notes](../integrations/fluid-rapier/README.md), [the force adapter](../src/adapters/rapier-fluid-sph2d.js), and [the deployed coupled demo](../fluid/rapier-fluid-2d.html). The Pages workflow builds a pinned upstream SPH app with the Osmocean page injected at build time.
+
+## Fluid + Ultra-Water and three-engine prototype
+
+The build injects the external-probe multiplexer into the Ultra-Water Rapier runtime. The parent page registers 25 XZ probes in the iframe; the child app appends them to its existing GPU query batch and publishes the matching readback slice. The local SPH adapter maps the sampled wave height and displacement velocity onto the local free-surface particle band. The optional Rapier 2D body then interacts with that same SPH domain. See [the multi-engine runtime](../fluid/fluid-ocean-rapier-2d.html) and [the ocean boundary adapter](../src/adapters/fluid-ocean-boundary.js).
