@@ -32,6 +32,13 @@ jobs:
           ref: 30ea65ecb0a66b137aa200d099965634bdd84d51
           path: _upstream/ultra-water
           persist-credentials: false
+      - name: Checkout pinned fluid solver source
+        uses: actions/checkout@v4
+        with:
+          repository: jeantimex/fluid
+          ref: 9daf3ae2add7dedc3eadcc10da5e4a44ef1b771f
+          path: _upstream/fluid
+          persist-credentials: false
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
@@ -49,12 +56,27 @@ jobs:
           npm run build -- --base=/osmocean/ultra-water/
           cp LICENSE dist/LICENSE
           cp THIRD_PARTY_NOTICES.md dist/THIRD_PARTY_NOTICES.md
+      - name: Set up Node.js cache for fluid solver
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: _upstream/fluid/package-lock.json
+      - name: Apply Osmocean SPH/Rapier integration
+        run: node scripts/integrate-fluid-rapier.mjs _upstream/fluid
+      - name: Build integrated fluid solver
+        working-directory: _upstream/fluid
+        run: |
+          npm install --package-lock-only --ignore-scripts --no-audit --no-fund
+          npm ci
+          npm run build -- --base=/osmocean/fluid/
+          cp LICENSE.txt dist/LICENSE.txt
       - name: Assemble static site
         run: |
-          mkdir -p _site/docs _site/ultra-water
+          mkdir -p _site/docs _site/ultra-water _site/fluid
           cp index.html lab.html styles.css lab.css app.js lab.js _site/
           cp -R docs/. _site/docs/
-          cp -R _upstream/ultra-water/dist/. _site/ultra-water/
+          cp -R _upstream/ultra-water/dist/. _site/ultra-water/\n          cp -R _upstream/fluid/dist/. _site/fluid/
       - name: Configure Pages
         uses: actions/configure-pages@v5
       - name: Upload static site
