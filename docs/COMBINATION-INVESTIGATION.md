@@ -1,13 +1,13 @@
 # Library demo and combination investigation
 
-**Status:** initial upstream audit and deployed demo gallery. This document distinguishes verified upstream capabilities from proposed integration work. A group of iframes is not a physics integration.
+**Status:** initial upstream audit plus the first executable coupled pairing. The GitHub Pages build now injects the Osmocean Rapier adapter into the pinned Ultra-Water source. A group of iframes is not a physics integration.
 
 ## Upstream demo availability
 
 | Foundation | Standalone demo path | Deployment status / constraints |
 |---|---|---|
 | [jeantimex/fluid](https://github.com/jeantimex/fluid) | [2D PIC/FLIP](https://jeantimex.github.io/fluid/src/flip/2d/pic_flip/), [2D Hybrid FLIP](https://jeantimex.github.io/fluid/src/flip/2d/hybrid_flip/), [2D APIC](https://jeantimex.github.io/fluid/src/flip/2d/apic/), [Canvas2D SPH](https://jeantimex.github.io/fluid/canvas2d.html), [2D WebGPU](https://jeantimex.github.io/fluid/webgpu2d.html), [3D WebGPU FLIP](https://jeantimex.github.io/fluid/src/flip/3d/webgpu_flip/) | Public upstream GitHub Pages. Canvas2D is a CPU compatibility fallback. WebGPU paths require a working adapter; an inspected 2D WebGPU page returned `Unable to acquire a WebGPU adapter` in the inspection environment. |
-| [Humpalumps/Ultra-Water](https://github.com/Humpalumps/Ultra-Water) | [Osmocean-hosted upstream build](https://gemquota.github.io/osmocean/ultra-water/) | Built by the Osmocean GitHub Pages workflow from pinned upstream commit `30ea65ecb0a66b137aa200d099965634bdd84d51`; MIT licence and third-party notices ship with the build. Requires WebGL2. The generated index and JS bundle are reachable, but automated browser navigation timed out after 30 seconds, so the rendered scene is not yet runtime-verified. |
+| [Humpalumps/Ultra-Water](https://github.com/Humpalumps/Ultra-Water) + Rapier 3D | [Osmocean-hosted integrated build](https://gemquota.github.io/osmocean/ultra-water/) | Pages workflow checks out pinned Ultra-Water commit `30ea65ecb0a66b137aa200d099965634bdd84d51`, injects `integrations/ocean-rapier/rapier-floaters.js`, patches the upstream floater owner, installs `@dimforge/rapier3d-compat`, and builds the result. Rapier owns rigid-body integration; Ultra-Water owns the ocean and GPU water queries. WebGL2 required. Runtime scene still needs real-device verification. |
 | [dimforge/rapier](https://github.com/dimforge/rapier) | [Official JS 2D demos](https://rapier.rs/demos2d/), [official JS 3D demos](https://rapier.rs/demos3d/) | Official hosted JavaScript/WASM demo pages. Rapier's full Rust testbed is a separate desktop/native application; the browser demos are the appropriate web path. |
 
 ## Exhaustive combinations of the three selected foundations
@@ -61,7 +61,7 @@ There are three two-library pairings and one three-library combination.
 - Let Rapier own collision response and body integration. Do not also integrate the same body in `Floaters.integrate`.
 - Account for asynchronous query age when estimating water velocity; avoid treating stale samples as current instantaneous velocity.
 
-**Assessment:** best near-term two-library integration candidate. Existing code provides a concrete adapter seam and an observable test scene (boat, buoy, crates, barrels).
+**Assessment:** first executable integration implemented in `integrations/ocean-rapier/`. The build-time patch replaces the upstream custom floater integrator with Rapier 3D. The adapter preserves the boat, buoy, crate and barrel meshes, water-query sampling, distributed buoyancy/drag, ripple impacts and terrain penalty forces. Collision proxies are cuboids, and runtime/physical validation remains outstanding.
 
 ### 4. Fluid + Ultra-Water + Rapier
 
@@ -88,7 +88,7 @@ There are three two-library pairings and one three-library combination.
 |---|---|---|---|---:|
 | Fluid + Ultra-Water | Gallery provides simultaneous independent panels; actual startup remains browser/GPU-dependent | Fluid API extraction and domain boundary needed | High | 3 |
 | Fluid + Rapier | Gallery provides simultaneous independent panels | Moving-boundary adapter not exposed as a stable upstream API | Very high | 2 |
-| Ultra-Water + Rapier | Gallery provides simultaneous independent panels | Clear seam in WaterQuery / Floaters | Medium | 1 |
+| Ultra-Water + Rapier | Integrated Rapier-owned floaters in the Ultra-Water build | WaterQuery feeds distributed forces into Rapier bodies | Medium | 1 |
 | All three | Gallery provides simultaneous independent panels | Requires all adapters plus local/far-field handoff | Very high | 4 |
 
 ## Verification still required
@@ -97,7 +97,7 @@ There are three two-library pairings and one three-library combination.
 - Exercise Rapier 2D and 3D demos on target browsers; hosted demo URLs are verified, but successful runtime execution is not inferred from their existence.
 - Measure GPU memory, frame time and thermal behaviour with each pair and the triplet on the same device.
 - Record WebGL2 and WebGPU capability separately. Ultra-Water is WebGL2; the selected fluid 3D route is WebGPU.
-- Only after co-residency is stable should the project implement the first data-coupled prototype: Ultra-Water + Rapier buoyant floaters.
+- The first data-coupled prototype is now implemented: Ultra-Water + Rapier buoyant floaters. Verify it on desktop and mobile WebGL2 devices before treating it as runtime-proven.\n- Continue with a 2D fluid + Rapier moving-boundary prototype, then a local fluid + far-field Ultra-Water boundary adapter, and finally the three-engine coordinator.
 
 ## Sources
 
@@ -106,3 +106,4 @@ There are three two-library pairings and one three-library combination.
 - https://github.com/dimforge/rapier
 - https://rapier.rs/demos2d/
 - https://rapier.rs/demos3d/
+\n## Implemented adapter\n\nSee [Ultra-Water + Rapier integration notes](../integrations/ocean-rapier/README.md) and the [Rapier floater adapter](../integrations/ocean-rapier/rapier-floaters.js). The Pages workflow applies the integration at build time to the pinned upstream source; it does not modify or claim ownership of the upstream repository.\n
