@@ -2,6 +2,10 @@
 
 **Status:** initial upstream audit and deployed demo gallery. This document distinguishes verified upstream capabilities from proposed integration work. A group of iframes is not a physics integration.
 
+## Verification ledger
+
+See [COMBINATION-VERIFICATION.md](./COMBINATION-VERIFICATION.md) for the explicit classification vocabulary, exhaustive pair/triplet matrix, runtime test protocol, evidence boundaries, and next execution order. The ledger distinguishes source/API compatibility from demonstrated browser runtime and physical coupling.
+
 ## Upstream demo availability
 
 | Foundation | Standalone demo path | Deployment status / constraints |
