@@ -28,3 +28,16 @@ The GitHub Pages and CI workflows:
 4. Run Osmocean's adapter tests and compile the integrated upstream app in CI.
 
 The deployed prototype is at `/fluid/rapier-fluid-2d.html`. Runtime and numerical calibration on desktop/mobile browsers remain required.
+
+## Fluid + Ultra-Water and three-engine scene
+
+The multi-engine page is built alongside the standalone SPH/Rapier page.
+
+- The parent page embeds the same-origin Osmocean Ultra-Water deployment.
+- The parent registers 25 XZ sample probes on the child window.
+- The Ultra-Water Rapier runtime appends those probes to its existing GPU WaterQuery batch, preserving the single readback pass.
+- The child publishes the matching result slice, including query time and probe positions.
+- The local SPH adapter maps the sampled wave-height profile and displacement-derived velocity onto the upper free-surface particle band.
+- The URL parameter `rapier=0` disables the local rigid body for the Fluid + Ultra-Water pairing. `rapier=1` enables the Rapier 2D body for the three-engine scene.
+
+This remains a one-way interface. The ocean does not receive reaction impulses from SPH, the local domain does not transfer conserved mass across the boundary, and the 2D slice is not a 3D near-shore FLIP solver. The three-engine scene is an executable shared-data prototype, not a claim of fully coupled ocean physics.
