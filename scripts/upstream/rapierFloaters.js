@@ -207,7 +207,7 @@ export class RapierFloaters {
     }
     const start = offset + this.externalProbeOffset;
     const end = start + this.externalProbeCount;
-    if (this.externalProbeCount > 0 && query.result && query.resultCount >= end && Number.isFinite(query.resultTime)) {
+    if (this.externalProbeCount > 0 && query.resultTag === this.layout && query.result && query.resultCount >= end && Number.isFinite(query.resultTime)) {
       window.osmoceanOceanProbeResults = {
         time: query.resultTime,
         count: this.externalProbeCount,
