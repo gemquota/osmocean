@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { makeFloater } from './floaterMeshes.js';
 import { createRapierWaterBodyAdapter } from '../osmocean/rapier-ultra-water.js';
+import { createHeightfieldGrid } from '../osmocean/heightfield-grid.js';
 
 const MAX_BODIES = 28;
 const FIXED_DT = 1 / 120;
@@ -69,17 +70,15 @@ export class RapierFloaters {
   }
 
   addTerrainCollider() {
-    const rows = 257, cols = 257, span = 2400, verticalScale = 160;
-    const heights = new Float32Array(rows * cols);
-    for (let col = 0; col < cols; col++) {
-      const x = (col / (cols - 1) - 0.5) * span;
-      for (let row = 0; row < rows; row++) {
-        const z = (row / (rows - 1) - 0.5) * span;
-        heights[col * rows + row] = this.heightAt(x, z) / verticalScale;
-      }
-    }
+    const grid = createHeightfieldGrid({
+      heightAt: this.heightAt,
+      sampleRows: 257,
+      sampleCols: 257,
+      span: 2400,
+      verticalScale: 160,
+    });
     const terrain = this.RAPIER.ColliderDesc.heightfield(
-      rows, cols, heights, { x: span, y: verticalScale, z: span }
+      grid.nrows, grid.ncols, grid.heights, grid.scale
     ).setFriction(0.8);
     this.world.createCollider(terrain);
   }
