@@ -49,3 +49,32 @@ jobs:
       - name: Build upstream demo for GitHub Pages
         working-directory: _upstream/ultra-water
         run: npm run build -- --base=/osmocean/ultra-water/
+
+  fluid-rapier-build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Osmocean
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Checkout pinned fluid solver
+        uses: actions/checkout@v4
+        with:
+          repository: jeantimex/fluid
+          ref: 9daf3ae2add7dedc3eadcc10da5e4a44ef1b771f
+          path: _upstream/fluid
+          persist-credentials: false
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: _upstream/fluid/package-lock.json
+      - name: Inject Osmocean SPH/Rapier demo
+        run: node scripts/integrate-fluid-rapier.mjs _upstream/fluid
+      - name: Install and build integrated fluid demo
+        working-directory: _upstream/fluid
+        run: |
+          npm install --package-lock-only --ignore-scripts --no-audit --no-fund
+          npm ci
+          npm run build -- --base=/osmocean/fluid/
