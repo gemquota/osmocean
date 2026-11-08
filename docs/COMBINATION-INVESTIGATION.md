@@ -44,7 +44,7 @@ There are three two-library pairings and one three-library combination.
 
 **Hard problems:** no documented public adapter currently connects the upstream fluid application's moving obstacles to Rapier. A 2D fluid demo must pair with Rapier 2D; use the 3D FLIP solver for a 3D rigid-body experiment.
 
-**Assessment:** a first 2D SPH/Rapier coupling prototype is implemented at [the deployed 2D demo](../fluid/rapier-fluid-2d.html). It uses the upstream Canvas2D SPH core's existing AABB obstacle, updates that obstacle from a rotation-locked Rapier 2D body, and applies a bounded pressure/relative-velocity estimate to the body. This is deliberately one-way and scaled: upstream SPH parameters are not SI-calibrated, and reaction impulses are not returned to fluid particles. It demonstrates shared runtime state and body loading, not momentum-conserving two-way fluid-solid coupling.
+**Assessment:** a first 2D SPH/Rapier coupling prototype is implemented at [the deployed 2D demo](../fluid/rapier-fluid-2d.html). It uses the upstream Canvas2D SPH core's existing AABB obstacle, updates that obstacle from a rotation-locked Rapier 2D body, and applies a bounded pressure/relative-velocity estimate to the body. This is a bidirectional pose/load prototype, but not a momentum-conserving solver: upstream SPH parameters are not SI-calibrated, and reaction impulses are not returned to fluid particles. It demonstrates shared runtime state and body loading, not momentum-conserving two-way fluid-solid coupling.
 
 ### 3. Ultra-Water + Rapier
 
