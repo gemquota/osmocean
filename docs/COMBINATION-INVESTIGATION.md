@@ -44,7 +44,7 @@ There are three two-library pairings and one three-library combination.
 
 **Hard problems:** no documented public adapter currently connects the upstream fluid application's moving obstacles to Rapier. A 2D fluid demo must pair with Rapier 2D; use the 3D FLIP solver for a 3D rigid-body experiment.
 
-**Assessment:** technically coherent and valuable, but it is the most demanding solver coupling. Do not substitute particle visual overlap for displaced-volume and momentum exchange.
+**Assessment:** a first 2D SPH/Rapier coupling prototype is now implemented at [the deployed 2D demo](../fluid/rapier-fluid-2d.html). It uses the upstream Canvas2D SPH core's existing AABB obstacle, updates that obstacle from a rotation-locked Rapier 2D body, and applies a bounded pressure/relative-velocity estimate to the body. This is deliberately one-way and scaled: upstream SPH parameters are not SI-calibrated, and reaction impulses are not returned to fluid particles. It demonstrates shared runtime state and body loading, not momentum-conserving two-way fluid-solid coupling.
 
 ### 3. Ultra-Water + Rapier
 
@@ -90,7 +90,7 @@ There are three two-library pairings and one three-library combination.
 | Combination | Demo co-residency | Data API seam | Physical coupling effort | Recommended order |
 |---|---|---|---|---:|
 | Fluid + Ultra-Water | Gallery provides simultaneous independent panels; actual startup remains browser/GPU-dependent | Fluid API extraction and domain boundary needed | High | 3 |
-| Fluid + Rapier | Gallery provides simultaneous independent panels | Moving-boundary adapter not exposed as a stable upstream API | Very high | 2 |
+| Fluid + Rapier | Integrated 2D SPH + Rapier prototype plus standalone references | Shared AABB obstacle and bounded pressure/drag load adapter | High; two-way exchange remains unimplemented | 2 |
 | Ultra-Water + Rapier | Live Rapier-backed floaters in the hosted Ultra-Water scene | Batched WaterQuery adapter and Rapier-owned bodies | Medium | 1 |
 | All three | Gallery provides simultaneous independent panels | Requires all adapters plus local/far-field handoff | Very high | 4 |
 
@@ -109,3 +109,4 @@ There are three two-library pairings and one three-library combination.
 - https://github.com/dimforge/rapier
 - https://rapier.rs/demos2d/
 - https://rapier.rs/demos3d/
+\n## Fluid + Rapier prototype\n\nSee [the 2D integration notes](../integrations/fluid-rapier/README.md), [the force adapter](../src/adapters/rapier-fluid-sph2d.js), and [the deployed coupled demo](../fluid/rapier-fluid-2d.html). The Pages workflow builds a pinned upstream SPH app with the Osmocean page injected at build time.\n
