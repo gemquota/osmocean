@@ -23,6 +23,7 @@ write(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
 
 const integrationDir = path.join(upstream, 'src/osmocean');
 copy(path.join(repoRoot, 'src/adapters/rapier-fluid-sph2d.js'), path.join(integrationDir, 'rapier-fluid-sph2d.js'));
+copy(path.join(repoRoot, 'integrations/fluid-rapier/rapier-fluid-sph2d.d.ts'), path.join(integrationDir, 'rapier-fluid-sph2d.d.ts'));
 copy(path.join(repoRoot, 'integrations/fluid-rapier/main.ts'), path.join(integrationDir, 'rapier-fluid-2d.ts'));
 copy(path.join(repoRoot, 'integrations/fluid-rapier/rapier-fluid-2d.css'), path.join(integrationDir, 'rapier-fluid-2d.css'));
 copy(path.join(repoRoot, 'integrations/fluid-rapier/rapier-fluid-2d.html'), path.join(upstream, 'rapier-fluid-2d.html'));
