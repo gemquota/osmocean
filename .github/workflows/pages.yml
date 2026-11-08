@@ -38,10 +38,18 @@ jobs:
           node-version: 22
           cache: npm
           cache-dependency-path: _upstream/ultra-water/package-lock.json
-      - name: Install and build Ultra-Water
+      - name: Inject Osmocean Rapier adapter runtime
+        run: |
+          mkdir -p _upstream/ultra-water/src/adapters _upstream/ultra-water/src/core
+          cp src/adapters/rapier-ultra-water.js _upstream/ultra-water/src/adapters/rapier-ultra-water.js
+          cp src/core/vector3.js _upstream/ultra-water/src/core/vector3.js
+          cp integrations/ocean-rapier/runtime/rapierFloaters.js _upstream/ultra-water/src/scene/rapierFloaters.js
+          node integrations/ocean-rapier/runtime/patch-upstream.mjs
+      - name: Install and build Ultra-Water with Rapier
         working-directory: _upstream/ultra-water
         run: |
           npm ci
+          npm install --no-save @dimforge/rapier3d-compat
           npm run build -- --base=/osmocean/ultra-water/
           cp LICENSE dist/LICENSE
           cp THIRD_PARTY_NOTICES.md dist/THIRD_PARTY_NOTICES.md
