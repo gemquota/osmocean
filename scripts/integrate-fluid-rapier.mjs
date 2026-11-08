@@ -29,6 +29,7 @@ copy(path.join(repoRoot, 'integrations/fluid-rapier/fluid-ocean-boundary.d.ts'),
 copy(path.join(repoRoot, 'integrations/fluid-rapier/fluid-ocean-rapier.ts'), path.join(integrationDir, 'fluid-ocean-rapier.ts'));
 copy(path.join(repoRoot, 'integrations/fluid-rapier/fluid-ocean-rapier.css'), path.join(integrationDir, 'fluid-ocean-rapier.css'));
 copy(path.join(repoRoot, 'integrations/fluid-rapier/fluid-ocean-rapier.html'), path.join(upstream, 'fluid-ocean-rapier.html'));
+copy(path.join(repoRoot, 'integrations/fluid-rapier/fluid-ocean-rapier.ts'), path.join(integrationDir, 'fluid-ocean-rapier.ts'));
 copy(path.join(repoRoot, 'integrations/fluid-rapier/main.ts'), path.join(integrationDir, 'rapier-fluid-2d.ts'));
 copy(path.join(repoRoot, 'integrations/fluid-rapier/rapier-fluid-2d.css'), path.join(integrationDir, 'rapier-fluid-2d.css'));
 copy(path.join(repoRoot, 'integrations/fluid-rapier/rapier-fluid-2d.html'), path.join(upstream, 'rapier-fluid-2d.html'));
@@ -39,6 +40,7 @@ vite = replaceExactly(
   vite,
   "'main-index': resolve(__dirname, 'index.html'),",
   "'main-index': resolve(__dirname, 'index.html'),\n        'osmocean-rapier-fluid': resolve(__dirname, 'rapier-fluid-2d.html'),
+        'osmocean-fluid-ocean-rapier': resolve(__dirname, 'fluid-ocean-rapier.html'),
         'osmocean-fluid-ocean-rapier': resolve(__dirname, 'fluid-ocean-rapier.html'),",
   'Vite multi-page input'
 );
