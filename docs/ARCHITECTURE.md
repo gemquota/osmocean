@@ -40,15 +40,15 @@ The renderer consumes immutable or otherwise read-only snapshots. It must not mu
 
 ## 2. Coordinate and unit contract
 
-Before production mechanics are implemented, the kernel must define and test:
+The initial kernel contract is implemented in `src/core/units.js`:
 
-- SI base units: metres, kilograms, seconds, newtons, pascals, kilograms per cubic metre.
-- One world-up axis and one handedness convention.
-- Angle units at API boundaries; radians internally unless a measured interface requires otherwise.
-- Quaternion multiplication order and vector transform conventions.
-- Whether water-field velocity is expressed in world coordinates.
-- Position, velocity, acceleration, force, torque and angular-velocity semantics.
-- Timestep ownership and the exact point at which environmental fields are sampled.
+- Right-handed world frame.
+- +X points right, +Y points up, +Z points toward the viewer.
+- Angles are radians at kernel boundaries.
+- Physical quantities use SI: metres, kilograms, seconds, newtons, pascals, kg/m³, m² and N·m.
+- World-space vectors are distinct from camera/view-space vectors. A renderer may transform between them but cannot redefine the simulation frame.
+
+The contract is executable and covered by unit tests. Quaternion multiplication order, local body frames, and angular-velocity conventions remain explicit follow-up decisions; the world-axis declaration does not pretend to settle those separate questions.
 
 No module may silently reinterpret units or coordinate frames.
 
@@ -68,6 +68,8 @@ The initial authoritative tick contract:
 10. Publish a completed state snapshot.
 
 The precise order may evolve, but it must remain explicit, tested, and deterministic for a fixed input sequence and seed. Coupled solvers may require substeps; those substeps must be declared rather than hidden.
+
+The initial `createFixedStepClock` implementation owns the fixed-step accumulator and tick counter. It supplies a constant `dt`, monotonically increasing integer tick, and tick-derived simulation time. It bounds catch-up work and reports discarded wall time instead of silently increasing `dt`. It does not own simulation state or promise rollback of a caller's partially-mutated state if a step callback throws.
 
 ## 4. Water-field contract
 
