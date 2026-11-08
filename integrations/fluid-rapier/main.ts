@@ -1,6 +1,6 @@
 import * as RAPIER from '@dimforge/rapier2d-compat';
 import { createSim } from '../sph/2d/canvas2d/sim.ts';
-import { estimateSphBoundaryLoad } from '../../adapters/rapier-fluid-sph2d.js';
+import { estimateSphBoundaryLoad } from '../adapters/rapier-fluid-sph2d.js';
 
 const FIXED_DT = 1 / 120;
 const MAX_STEPS = 6;
