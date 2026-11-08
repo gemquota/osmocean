@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#06131c">
+  <title>Osmocean | Ocean + SPH + Rapier</title>
+  <link rel="stylesheet" href="/src/osmocean/fluid-ocean-rapier.css">
+</head>
+<body>
+  <main class="triple-shell">
+    <header>
+      <a href="/osmocean/lab.html">← OSMOCEAN INTEGRATION LAB</a>
+      <span>FFT OCEAN → LOCAL SPH → RAPIER 2D</span>
+    </header>
+    <section class="intro">
+      <p class="eyebrow">LIVE COUPLED PROTOTYPE / 02</p>
+      <h1>Far field.<br><em>Near field.</em></h1>
+      <p>Ultra-Water supplies sampled wave height and displacement. The local SPH domain receives a surface-profile forcing signal. Rapier optionally owns a rigid obstacle inside that local domain. Each engine retains a clear state owner.</p>
+    </section>
+    <section class="systems">
+      <article class="system ocean-system">
+        <div class="system-title"><span>01 / FAR-FIELD</span><strong>ULTRA-WATER · FFT OCEAN</strong></div>
+        <iframe id="ocean-frame" src="../ultra-water/" title="Ultra-Water far-field ocean" allow="accelerometer; gyroscope; fullscreen"></iframe>
+      </article>
+      <article class="system fluid-system">
+        <div class="system-title"><span>02 / LOCAL DOMAIN</span><strong>CANVAS2D SPH <span id="engine-state">INITIALISING</span></strong></div>
+        <div class="fluid-viewport"><canvas id="sim-canvas" aria-label="Local SPH domain coupled to ocean wave samples"></canvas></div>
+        <div class="telemetry"><span id="ocean-state">WAITING FOR OCEAN QUERY</span><span id="force-state">BODY LOAD: 0</span></div>
+      </article>
+    </section>
+    <section class="controls">
+      <button id="pause" type="button">PAUSE</button>
+      <button id="reset" type="button">RESET BODY</button>
+      <span>Use ?rapier=0 for Fluid + Ultra-Water without the rigid body.</span>
+    </section>
+    <footer>ONE-WAY FAR-FIELD WAVE FORCING · LOCAL SPH · OPTIONAL RAPIER 2D · NOT A CONSERVATIVE THREE-WAY SOLVER</footer>
+  </main>
+  <script type="module" src="/src/osmocean/fluid-ocean-rapier.ts"></script>
+</body>
+</html>
