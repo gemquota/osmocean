@@ -35,10 +35,9 @@ export function quadraticDrag({
   const relativeVelocity = sub3(bodyVelocity, waterVelocity);
   const speed = length3(relativeVelocity);
   const factor = -0.5 * density * dragCoefficient * referenceArea * speed;
+  const force = speed === 0
+    ? { x: 0, y: 0, z: 0 }
+    : scale3(relativeVelocity, factor);
 
-  return Object.freeze({
-    relativeVelocity,
-    speed,
-    force: scale3(relativeVelocity, factor)
-  });
+  return Object.freeze({ relativeVelocity, speed, force });
 }
