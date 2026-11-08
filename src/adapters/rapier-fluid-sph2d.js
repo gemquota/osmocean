@@ -14,7 +14,9 @@ export function estimateSphBoundaryLoad({
 }) {
   if (!state || !config || !bodyPosition) throw new TypeError('state, config and bodyPosition are required');
   if (!Number.isInteger(state.count) || state.count < 0) throw new RangeError('state.count must be a non-negative integer');
-  if (!finite(config.smoothingRadius) || config.smoothingRadius <= 0) throw new RangeError('smoothingRadius must be positive');\n  if (!config.obstacleSize || !finite(config.obstacleSize.x) || !finite(config.obstacleSize.y) || config.obstacleSize.x <= 0 || config.obstacleSize.y <= 0) throw new RangeError('obstacleSize dimensions must be positive');\n  if (!finite(config.targetDensity) || !finite(config.pressureMultiplier)) throw new TypeError('SPH pressure parameters must be finite');
+  if (!finite(config.smoothingRadius) || config.smoothingRadius <= 0) throw new RangeError('smoothingRadius must be positive');
+  if (!config.obstacleSize || !finite(config.obstacleSize.x) || !finite(config.obstacleSize.y) || config.obstacleSize.x <= 0 || config.obstacleSize.y <= 0) throw new RangeError('obstacleSize dimensions must be positive');
+  if (!finite(config.targetDensity) || !finite(config.pressureMultiplier)) throw new TypeError('SPH pressure parameters must be finite');
   if (![bodyPosition.x, bodyPosition.y, bodyVelocity.x, bodyVelocity.y, pressureScale, dragScale, maxForce, fluidDensity, gravity, buoyancyScale].every(finite)) {
     throw new TypeError('boundary load inputs must be finite');
   }
