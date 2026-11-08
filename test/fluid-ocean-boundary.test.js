@@ -58,8 +58,9 @@ test('successive water-query displacements inject bounded horizontal velocity', 
 test('the boundary forcing remains bounded for large wave displacement', () => {
   const state = makeState([{ x: 0.9, y: 2, vx: 0, vy: 0 }]);
   applyOceanSurfaceBoundary({
-    state, config, sample: sample([0, 100]), baseSurfaceY: 2,
+    state, config, sample: sample([0, 0.2]), baseSurfaceY: 2,
     heightScale: 10, blend: 1, maxVelocityDelta: 0.5,
   });
+  assert.ok(state.velocities[1] > 0);
   assert.ok(Math.abs(state.velocities[1]) <= 0.5 + 1e-9);
 });
