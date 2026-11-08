@@ -18,3 +18,26 @@ jobs:
         with:
           node-version: 22
       - run: npm test
+
+  ultra-water-build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout pinned Ultra-Water source
+        uses: actions/checkout@v4
+        with:
+          repository: Humpalumps/Ultra-Water
+          ref: 30ea65ecb0a66b137aa200d099965634bdd84d51
+          path: _upstream/ultra-water
+          persist-credentials: false
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: _upstream/ultra-water/package-lock.json
+      - name: Install dependencies
+        working-directory: _upstream/ultra-water
+        run: npm ci
+      - name: Build upstream demo for GitHub Pages
+        working-directory: _upstream/ultra-water
+        run: npm run build -- --base=/osmocean/ultra-water/
