@@ -33,8 +33,12 @@ const mainPath = path.join(upstream, 'src/main.js');
 let main = read(mainPath);
 main = replaceExactly(main,
   "import { Floaters } from './scene/floaters.js';",
-  "import { RapierFloaters } from './scene/rapierFloaters.js';\nimport * as RAPIER from '@dimforge/rapier3d-compat';\nawait RAPIER.init();",
+  "import { RapierFloaters } from './scene/rapierFloaters.js';\nimport * as RAPIER from '@dimforge/rapier3d-compat';",
   'floater import');
+main = replaceExactly(main,
+  'const REFLECT_LAYER = 1;',
+  'await RAPIER.init();\n\nconst REFLECT_LAYER = 1;',
+  'Rapier WASM initialization');
 main = replaceExactly(main,
   'const floaters = new Floaters({ scene, heightAt: islandHeight, patchMaterial: terrain.patchProp });',
   'const floaters = new RapierFloaters({ RAPIER, scene, heightAt: islandHeight, patchMaterial: terrain.patchProp, query });',

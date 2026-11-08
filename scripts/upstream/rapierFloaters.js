@@ -7,7 +7,8 @@ const FIXED_DT = 1 / 120;
 const MAX_SUBSTEPS = 6;
 const WATER_DENSITY = 1025;
 const GRAVITY = 9.81;
-const MAX_QUERY_POINTS = 512;
+const MAX_QUERY_POINTS = 1024;
+const _point = new THREE.Vector3();
 const v3 = (v) => ({ x: v.x, y: v.y, z: v.z });
 const rotationOf = (body) => { const q = body.rotation(); return new THREE.Quaternion(q.x, q.y, q.z, q.w); };
 const positionOf = (body) => { const p = body.translation(); return new THREE.Vector3(p.x, p.y, p.z); };
@@ -178,15 +179,9 @@ export class RapierFloaters {
     let cursor = 0;
     for (const point of extra) { points[cursor++] = point.x; points[cursor++] = point.z; }
     for (const item of this.bodies) {
-      item.adapter.submitQuery(time);
-      const position = positionOf(item.body);
-      const rotation = rotationOf(item.body);
-      for (const sample of [...item.volumeSamples, ...item.surfaceSamples]) {
-        const point = new THREE.Vector3(sample.position.x, sample.position.y, sample.position.z)
-          .applyQuaternion(rotation).add(position);
-        points[cursor++] = point.x;
-        points[cursor++] = point.z;
-      }
+      const submitted = item.adapter.submitQuery(time);
+      points.set(submitted.xz, cursor);
+      cursor += submitted.xz.length;
     }
     this.points = points;
     this.count = required;
@@ -200,7 +195,8 @@ export class RapierFloaters {
     }
   }
 
-  step(dt) {
+  step(dt, simulationTime = this.queryTime) {
+    this.queryTime = simulationTime;
     dt = Math.min(Math.max(dt, 0), 0.05);
     this.time += dt;
     this.accumulator = Math.min(this.accumulator + dt, FIXED_DT * MAX_SUBSTEPS);
@@ -222,7 +218,8 @@ export class RapierFloaters {
       if (water) {
         for (let i = 0; i < item.volumeSamples.length; i++) {
           const sample = item.volumeSamples[i].position;
-          const p = new THREE.Vector3(sample.x, sample.y, sample.z).applyQuaternion(rotation).add(position);
+          _point.set(sample.x, sample.y, sample.z).applyQuaternion(rotation).add(position);
+          const p = _point;
           if (water.heights[i] > p.y) { wet = true; break; }
         }
       }

@@ -47,6 +47,7 @@ test("submits ordered body-local samples as world XZ points", () => {
   const { adapter, query } = makeAdapter();
   const result = adapter.submitQuery(1);
   assert.equal(result.count, 2);
+  assert.deepEqual([...result.xz], [0, 0, 1, 0]);
   assert.deepEqual([...query.submissions[0].xz], [0, 0, 1, 0]);
 });
 

@@ -131,7 +131,7 @@ export function createRapierWaterBodyAdapter({
     waterQuery.submit(snapshot.xz, samples.length, layoutTag, time);
     snapshots.set(time, snapshot);
     while (snapshots.size > 8) snapshots.delete(snapshots.keys().next().value);
-    return Object.freeze({ count: samples.length, layoutTag, time });
+    return Object.freeze({ count: samples.length, layoutTag, time, xz: snapshot.xz });
   }
 
   function ingestQuery() {
