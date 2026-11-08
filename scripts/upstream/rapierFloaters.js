@@ -191,7 +191,7 @@ export class RapierFloaters {
       points.set(submitted.xz, cursor);
       cursor += submitted.xz.length;
     }
-    this.externalProbeOffset = cursor / 2;
+    this.externalProbeOffset = cursor / 2 - extra.length;
     this.externalProbeCount = external.length;
     this.externalProbePoints = external.map(p => ({ x: p.x, z: p.z }));
     for (const point of external) { points[cursor++] = point.x; points[cursor++] = point.z; }
