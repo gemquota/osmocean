@@ -7,7 +7,7 @@ export function estimateSphBoundaryLoad({
   bodyVelocity = { x: 0, y: 0 },
   pressureScale = 0.0005,
   dragScale = 0.025,
-  maxForce = 80,
+  maxForce = 80,\n  fluidDensity = 1,\n  gravity = 12,\n  buoyancyScale = 1,
 }) {
   if (!state || !config || !bodyPosition) throw new TypeError('state, config and bodyPosition are required');
   if (!Number.isInteger(state.count) || state.count < 0) throw new RangeError('state.count must be a non-negative integer');
@@ -15,7 +15,7 @@ export function estimateSphBoundaryLoad({
   if (![bodyPosition.x, bodyPosition.y, bodyVelocity.x, bodyVelocity.y, pressureScale, dragScale, maxForce].every(finite)) {
     throw new TypeError('boundary load inputs must be finite');
   }
-  if (pressureScale < 0 || dragScale < 0 || maxForce <= 0) throw new RangeError('force scales must be non-negative and maxForce positive');
+  if (pressureScale < 0 || dragScale < 0 || maxForce <= 0 || fluidDensity <= 0 || gravity <= 0 || buoyancyScale < 0) throw new RangeError('force scales and fluid properties are invalid');
 
   const halfX = config.obstacleSize.x * 0.5;
   const halfY = config.obstacleSize.y * 0.5;
@@ -23,7 +23,7 @@ export function estimateSphBoundaryLoad({
   const positions = state.positions;
   const velocities = state.velocities;
   const densities = state.densities;
-  let pressureX = 0, pressureY = 0, dragX = 0, dragY = 0, contacts = 0;
+  let pressureX = 0, pressureY = 0, dragX = 0, dragY = 0, contacts = 0;\n  let localSurfaceY = -Infinity;
 
   for (let i = 0; i < state.count; i++) {
     const index = i * 2;
@@ -71,7 +71,7 @@ export function estimateSphBoundaryLoad({
 
   return Object.freeze({
     force: Object.freeze({ x: forceX, y: forceY }),
-    pressureForce: Object.freeze({ x: pressureX, y: pressureY }),
+    pressureForce: Object.freeze({ x: pressureX, y: pressureY }),\n    buoyancyForce: Object.freeze({ x: 0, y: buoyancyY }),
     dragForce: Object.freeze({ x: dragX, y: dragY }),
     contactParticles: contacts,
   });
