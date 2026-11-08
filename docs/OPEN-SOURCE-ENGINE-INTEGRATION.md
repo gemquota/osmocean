@@ -8,45 +8,27 @@ Osmocean is an integration and marine-domain project, not a replacement fluid so
 
 | Role | Upstream | Licence | Intended responsibility |
 |---|---|---|---|
-| Local free-surface fluid | [jeantimex/fluid](https://github.com/jeantimex/fluid) | MIT | 2D PIC/FLIP, hybrid FLIP, 3D SPH and WebGPU PIC/FLIP |
-| Ocean surface and underwater rendering | [Humpalumps/Ultra-Water](https://github.com/Humpalumps/Ultra-Water) | MIT | Tessendorf FFT ocean, shore breakers, foam, caustics, underwater rendering and sample buoyancy |
+| Local free-surface fluid | [jeantimex/fluid](https://github.com/jeantimex/fluid) | MIT | 2D PIC/FLIP, Hybrid FLIP, APIC, Canvas2D SPH and 3D WebGPU FLIP |
+| Ocean surface and underwater rendering | [Humpalumps/Ultra-Water](https://github.com/Humpalumps/Ultra-Water) | MIT | Tessendorf FFT ocean, shore breakers, foam, caustics, underwater rendering and existing water-query/floater prototype |
 | Rigid-body mechanics | [dimforge/rapier](https://github.com/dimforge/rapier) | Apache-2.0 | Rigid-body integration, contacts, collision queries and constraints |
 
-## Browser presentation
+## Demo deployment
 
-The browser lab embeds the upstream-hosted 2D PIC/FLIP and hybrid FLIP demos, plus the upstream 3D WebGPU dashboard. The iframe is a live upstream application, not a copied or reimplemented solver. The 3D view requires WebGPU; the 2D modes are the compatibility path.
-
-The Ultra-Water repository documents a Vite development/build workflow and does not publish a hosted demo URL. It is therefore listed as a selected upstream dependency but is not falsely represented as embedded or deployed here. Its source must be built and integrated as a proper Three.js renderer before the Osmocean browser lab can claim to use it at runtime.
-
-Rapier is selected for rigid-body mechanics. The existing Osmocean rigid-body prototype must be compared against Rapier before choosing whether to replace it, wrap it, or retain only marine-specific state and force assembly. Do not maintain two competing general-purpose rigid-body solvers.
+The Osmocean deployment provides a dedicated `/lab.html` integration lab. It links and embeds upstream-hosted fluid and Rapier demos, and opens the actual Ultra-Water Vite source in a StackBlitz browser workspace because Ultra-Water does not publish a hosted demo. This is a demo/compatibility harness, not a claim that the engines are integrated into one runtime.
 
 ## Integration boundaries
 
 1. **Upstream fluid solver:** owns particle/grid state, pressure projection, advection and solver-specific rendering.
-2. **Ultra-Water:** owns FFT ocean surface generation and its rendering effects. Its water query and floater hooks are candidates for adapters, not proof of two-way coupling.
-3. **Rapier:** owns collision detection, rigid-body contacts and constraint solving.
+2. **Ultra-Water:** owns FFT ocean surface generation and rendering effects. Its water query and floater hooks are candidates for adapters, not proof of two-way coupling.
+3. **Rapier:** owns rigid-body state, collision detection, contacts and constraint solving.
 4. **Osmocean adapters:** own SI unit conversion, world/local coordinate mapping, time-step policy, field sampling, force/torque exchange, lifecycle and error propagation.
 5. **Marine domain:** owns body geometry/quadrature, drag/buoyancy models, swimming locomotion, animal morphology and ecosystem interactions.
 
-## Required integration gates
-
-- Pin upstream revisions and record corresponding licence text and notices.
-- Build upstream projects independently before adapting them.
-- Define explicit adapters for water velocity/height queries and body state.
-- Verify timestep, unit, axis and handedness conventions at each boundary.
-- Establish whether coupling is one-way or two-way; never imply feedback where only a sampled query exists.
-- Add regression tests for finite states, boundary handling, force/torque sign conventions, momentum exchange and deterministic stepping where supported.
-- Benchmark mobile and desktop paths separately. WebGPU is optional, not a universal browser assumption.
-
 ## Current status
 
-- **Live browser solver:** upstream jeantimex/fluid 2D PIC/FLIP and hybrid FLIP demos embedded; 3D WebGPU demo selectable.
-- **Ultra-Water:** selected and documented; no upstream-hosted demo exists, so runtime integration remains pending.
-- **Rapier:** selected and documented; runtime adoption and comparison with the existing Osmocean rigid-body prototype remain pending.
-- **Two-way fluid/body coupling:** not yet implemented by this browser presentation.
+- **Fluid demos:** upstream 2D PIC/FLIP, Hybrid FLIP, APIC and Canvas2D plus WebGPU variants are available in the lab. WebGPU support is device-dependent.
+- **Ultra-Water:** actual source is available through StackBlitz; a completed runtime preview and a dedicated Osmocean-controlled deployment remain to be verified. Vercel's Git integration refused direct linking because the connected identity lacks write/admin access to the upstream repository.
+- **Rapier:** official 2D and 3D JavaScript demos are linked in the lab. Rapier is not yet the rigid-body runtime in Osmocean.
+- **Two-way fluid/body coupling:** not yet implemented by the demo presentation.
 
-## Upstream references
-
-- https://github.com/jeantimex/fluid
-- https://github.com/Humpalumps/Ultra-Water
-- https://github.com/dimforge/rapier
+See [COMBINATION-INVESTIGATION.md](./COMBINATION-INVESTIGATION.md) for the exhaustive three pairings + one triplet assessment and proposed adapter architecture.
