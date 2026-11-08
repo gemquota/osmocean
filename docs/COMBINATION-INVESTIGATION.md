@@ -7,7 +7,7 @@
 | Foundation | Standalone demo path | Deployment status / constraints |
 |---|---|---|
 | [jeantimex/fluid](https://github.com/jeantimex/fluid) | [2D PIC/FLIP](https://jeantimex.github.io/fluid/src/flip/2d/pic_flip/), [2D Hybrid FLIP](https://jeantimex.github.io/fluid/src/flip/2d/hybrid_flip/), [2D APIC](https://jeantimex.github.io/fluid/src/flip/2d/apic/), [Canvas2D SPH](https://jeantimex.github.io/fluid/canvas2d.html), [2D WebGPU](https://jeantimex.github.io/fluid/webgpu2d.html), [3D WebGPU FLIP](https://jeantimex.github.io/fluid/src/flip/3d/webgpu_flip/) | Public upstream GitHub Pages. Canvas2D is a CPU compatibility fallback. WebGPU paths require a working adapter; an inspected 2D WebGPU page returned `Unable to acquire a WebGPU adapter` in the inspection environment. |
-| [Humpalumps/Ultra-Water](https://github.com/Humpalumps/Ultra-Water) | [Osmocean-hosted upstream build](https://gemquota.github.io/osmocean/ultra-water/) | Built by the Osmocean GitHub Pages workflow from pinned upstream commit `30ea65ecb0a66b137aa200d099965634bdd84d51`; MIT licence and third-party notices ship with the build. Requires WebGL2. |
+| [Humpalumps/Ultra-Water](https://github.com/Humpalumps/Ultra-Water) | [Osmocean-hosted upstream build](https://gemquota.github.io/osmocean/ultra-water/) | Built by the Osmocean GitHub Pages workflow from pinned upstream commit `30ea65ecb0a66b137aa200d099965634bdd84d51`; MIT licence and third-party notices ship with the build. Requires WebGL2. The generated index and JS bundle are reachable, but automated browser navigation timed out after 30 seconds, so the rendered scene is not yet runtime-verified. |
 | [dimforge/rapier](https://github.com/dimforge/rapier) | [Official JS 2D demos](https://rapier.rs/demos2d/), [official JS 3D demos](https://rapier.rs/demos3d/) | Official hosted JavaScript/WASM demo pages. Rapier's full Rust testbed is a separate desktop/native application; the browser demos are the appropriate web path. |
 
 ## Exhaustive combinations of the three selected foundations
@@ -93,7 +93,7 @@ There are three two-library pairings and one three-library combination.
 
 ## Verification still required
 
-- Exercise the Osmocean-hosted Ultra-Water build on desktop and mobile browsers; deployment and build metadata are verified, but WebGL rendering still needs a real browser/GPU pass.
+- Exercise the Osmocean-hosted Ultra-Water build on desktop and mobile browsers. The deployment artifact contains the upstream index, 751 KB JS bundle and licence notices, and those static assets are reachable. Browser automation timed out waiting for the page load event even with the mobile profile; the actual WebGL canvas remains unverified.
 - Exercise Rapier 2D and 3D demos on target browsers; hosted demo URLs are verified, but successful runtime execution is not inferred from their existence.
 - Measure GPU memory, frame time and thermal behaviour with each pair and the triplet on the same device.
 - Record WebGL2 and WebGPU capability separately. Ultra-Water is WebGL2; the selected fluid 3D route is WebGPU.
@@ -106,4 +106,3 @@ There are three two-library pairings and one three-library combination.
 - https://github.com/dimforge/rapier
 - https://rapier.rs/demos2d/
 - https://rapier.rs/demos3d/
-- https://stackblitz.com/github/Humpalumps/Ultra-Water?embed=1&view=preview
