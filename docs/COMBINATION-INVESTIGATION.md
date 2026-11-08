@@ -1,6 +1,6 @@
 # Library demo and combination investigation
 
-**Status:** three coupling paths are implemented in the repository: Ultra-Water + Rapier 3D, 2D SPH + Rapier 2D, and a combined Ultra-Water → SPH → optional Rapier scene. The first two have passed CI; the new far-field boundary and three-engine additions are awaiting the next build run. Real-device numerical validation remains outstanding.
+**Status:** three coupling paths are implemented in the repository: Ultra-Water + Rapier 3D, 2D SPH + Rapier 2D, and a combined Ultra-Water → SPH → optional Rapier scene. All three paths pass the adapter tests and upstream build jobs in CI; real-device data-flow and numerical validation remain outstanding. Real-device numerical validation remains outstanding.
 
 ## Upstream demo availability
 
