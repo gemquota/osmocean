@@ -1,6 +1,6 @@
 # Library demo and combination investigation
 
-**Status:** initial upstream audit and deployed demo gallery. This document distinguishes verified upstream capabilities from proposed integration work. A group of iframes is not a physics integration.
+**Status:** upstream audit, deployed demo gallery, and a wired Ultra-Water/Rapier runtime integration. The canonical hydrodynamics adapter was added in PR #18; this change connects it to the pinned Ultra-Water application. A group of iframes is not a physics integration.
 
 ## Upstream demo availability
 
@@ -61,7 +61,7 @@ There are three two-library pairings and one three-library combination.
 - Let Rapier own collision response and body integration. Do not also integrate the same body in `Floaters.integrate`.
 - Account for asynchronous query age when estimating water velocity; avoid treating stale samples as current instantaneous velocity.
 
-**Assessment:** best near-term two-library integration candidate. Existing code provides a concrete adapter seam and an observable test scene (boat, buoy, crates, barrels).
+**Assessment:** the canonical Osmocean adapter is implemented and its runtime wiring is included in this change. The runtime wrapper multiplexes each body's probe set into Ultra-Water's single asynchronous GPU query, then applies the canonical adapter's buoyancy and drag forces before Rapier steps. The deployed scene retains the boat, buoy, crate and barrel meshes. Collision proxies and surface quadrature remain approximations; desktop/mobile WebGL2 runtime validation is still required.
 
 ### 4. Fluid + Ultra-Water + Rapier
 
@@ -88,7 +88,7 @@ There are three two-library pairings and one three-library combination.
 |---|---|---|---|---:|
 | Fluid + Ultra-Water | Gallery provides simultaneous independent panels; actual startup remains browser/GPU-dependent | Fluid API extraction and domain boundary needed | High | 3 |
 | Fluid + Rapier | Gallery provides simultaneous independent panels | Moving-boundary adapter not exposed as a stable upstream API | Very high | 2 |
-| Ultra-Water + Rapier | Gallery provides simultaneous independent panels | Clear seam in WaterQuery / Floaters | Medium | 1 |
+| Ultra-Water + Rapier | Rapier-owned floaters in the Ultra-Water build | Canonical adapter + shared-query multiplexer | Medium | 1 |
 | All three | Gallery provides simultaneous independent panels | Requires all adapters plus local/far-field handoff | Very high | 4 |
 
 ## Verification still required
@@ -97,7 +97,7 @@ There are three two-library pairings and one three-library combination.
 - Exercise Rapier 2D and 3D demos on target browsers; hosted demo URLs are verified, but successful runtime execution is not inferred from their existence.
 - Measure GPU memory, frame time and thermal behaviour with each pair and the triplet on the same device.
 - Record WebGL2 and WebGPU capability separately. Ultra-Water is WebGL2; the selected fluid 3D route is WebGPU.
-- Only after co-residency is stable should the project implement the first data-coupled prototype: Ultra-Water + Rapier buoyant floaters.
+- Verify the wired Ultra-Water/Rapier runtime on desktop and mobile WebGL2 devices, including buoyancy stability, collision response, readback age and frame pacing.\n- Continue with Fluid + Rapier moving-boundary exchange, then Fluid + Ultra-Water local/far-field boundary coupling, and finally the three-engine coordinator.
 
 ## Sources
 
@@ -106,3 +106,4 @@ There are three two-library pairings and one three-library combination.
 - https://github.com/dimforge/rapier
 - https://rapier.rs/demos2d/
 - https://rapier.rs/demos3d/
+\n## Implemented runtime wiring\n\nSee [runtime integration notes](../integrations/ocean-rapier/runtime/README.md) and [the existing core adapter](../src/adapters/rapier-ultra-water.js). The build injects these Osmocean modules into the pinned Ultra-Water source and replaces its custom floater integrator; Rapier becomes the sole rigid-body integrator for the floater set.\n
