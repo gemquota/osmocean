@@ -76,7 +76,8 @@ jobs:
           mkdir -p _site/docs _site/ultra-water _site/fluid
           cp index.html lab.html styles.css lab.css app.js lab.js _site/
           cp -R docs/. _site/docs/
-          cp -R _upstream/ultra-water/dist/. _site/ultra-water/\n          cp -R _upstream/fluid/dist/. _site/fluid/
+          cp -R _upstream/ultra-water/dist/. _site/ultra-water/
+          cp -R _upstream/fluid/dist/. _site/fluid/
       - name: Configure Pages
         uses: actions/configure-pages@v5
       - name: Upload static site
