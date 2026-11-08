@@ -1,12 +1,12 @@
 # Library demo and combination investigation
 
-**Status:** initial upstream audit and deployed demo gallery. This document distinguishes verified upstream capabilities from proposed integration work. A group of iframes is not a physics integration.
+**Status:** three coupling paths are implemented in the repository: Ultra-Water + Rapier 3D, 2D SPH + Rapier 2D, and a combined Ultra-Water → SPH → optional Rapier scene. All three paths pass the adapter tests and upstream build jobs in CI; real-device data-flow and numerical validation remain outstanding. Real-device numerical validation remains outstanding.
 
 ## Upstream demo availability
 
 | Foundation | Standalone demo path | Deployment status / constraints |
 |---|---|---|
-| [jeantimex/fluid](https://github.com/jeantimex/fluid) | [2D PIC/FLIP](https://jeantimex.github.io/fluid/src/flip/2d/pic_flip/), [2D Hybrid FLIP](https://jeantimex.github.io/fluid/src/flip/2d/hybrid_flip/), [2D APIC](https://jeantimex.github.io/fluid/src/flip/2d/apic/), [Canvas2D SPH](https://jeantimex.github.io/fluid/canvas2d.html), [2D WebGPU](https://jeantimex.github.io/fluid/webgpu2d.html), [3D WebGPU FLIP](https://jeantimex.github.io/fluid/src/flip/3d/webgpu_flip/) | Public upstream GitHub Pages. Canvas2D is a CPU compatibility fallback. WebGPU paths require a working adapter; an inspected 2D WebGPU page returned `Unable to acquire a WebGPU adapter` in the inspection environment. |
+| [jeantimex/fluid](https://github.com/jeantimex/fluid) | [2D PIC/FLIP](https://jeantimex.github.io/fluid/src/flip/2d/pic_flip/), [2D Hybrid FLIP](https://jeantimex.github.io/fluid/src/flip/2d/hybrid_flip/), [2D APIC](https://jeantimex.github.io/fluid/src/flip/2d/apic/), [Canvas2D SPH](https://jeantimex.github.io/fluid/canvas2d.html), [Osmocean SPH + Rapier](../fluid/rapier-fluid-2d.html), [Osmocean Ocean + SPH + Rapier](../fluid/fluid-ocean-rapier.html), [2D WebGPU](https://jeantimex.github.io/fluid/webgpu2d.html), [3D WebGPU FLIP](https://jeantimex.github.io/fluid/src/flip/3d/webgpu_flip/) | Pinned upstream source is built with Osmocean integration pages. Canvas2D is a CPU compatibility path; WebGPU paths require a working adapter. |
 | [Humpalumps/Ultra-Water](https://github.com/Humpalumps/Ultra-Water) | [Osmocean-hosted upstream build](https://gemquota.github.io/osmocean/ultra-water/) | Built by the Osmocean GitHub Pages workflow from pinned upstream commit `30ea65ecb0a66b137aa200d099965634bdd84d51`; MIT licence and third-party notices ship with the build. Requires WebGL2. The generated index and JS bundle are reachable, but automated browser navigation timed out after 30 seconds, so the rendered scene is not yet runtime-verified. |
 | [dimforge/rapier](https://github.com/dimforge/rapier) | [Official JS 2D demos](https://rapier.rs/demos2d/), [official JS 3D demos](https://rapier.rs/demos3d/) | Official hosted JavaScript/WASM demo pages. Rapier's full Rust testbed is a separate desktop/native application; the browser demos are the appropriate web path. |
 
@@ -26,7 +26,7 @@ There are three two-library pairings and one three-library combination.
 - The fluid repository currently exposes complete Vite applications, not a documented package-level solver API or stable external state contract.
 - The two solvers must not both claim ownership of the same volume. Prefer a nested/partitioned local domain with explicit boundary conditions and a conservative handoff, not two overlapping water surfaces.
 
-**Assessment:** viable as far-field ocean plus local near-field fluid, but requires extracting or wrapping the FLIP solver and defining boundary exchange. A 2D solver is useful for a side-view prototype, not a physically complete 3D ocean coupling.
+**Assessment:** a build-verified 2D far-field/local-domain prototype now exists at [Fluid + Ultra-Water](../fluid/fluid-ocean-rapier-2d.html?rapier=0). The Ultra-Water Rapier runtime batches external water probes into its existing GPU WaterQuery pass. The local SPH domain receives a height/displacement-derived surface forcing profile. This demonstrates real data exchange, but it is one-way, 2D, and does not conserve mass or momentum across the domain boundary. A production 3D coupling still needs a 3D FLIP moving-boundary interface and conservative transfer.
 
 ### 2. Fluid + Rapier
 
@@ -44,7 +44,7 @@ There are three two-library pairings and one three-library combination.
 
 **Hard problems:** no documented public adapter currently connects the upstream fluid application's moving obstacles to Rapier. A 2D fluid demo must pair with Rapier 2D; use the 3D FLIP solver for a 3D rigid-body experiment.
 
-**Assessment:** technically coherent and valuable, but it is the most demanding solver coupling. Do not substitute particle visual overlap for displaced-volume and momentum exchange.
+**Assessment:** a first 2D SPH/Rapier coupling prototype is implemented at [the deployed 2D demo](../fluid/rapier-fluid-2d.html). It uses the upstream Canvas2D SPH core's existing AABB obstacle, updates that obstacle from a rotation-locked Rapier 2D body, and applies a bounded pressure/relative-velocity estimate to the body. This is a bidirectional pose/load prototype, but not a momentum-conserving solver: upstream SPH parameters are not SI-calibrated, and reaction impulses are not returned to fluid particles. It demonstrates shared runtime state and body loading, not momentum-conserving two-way fluid-solid coupling.
 
 ### 3. Ultra-Water + Rapier
 
@@ -89,10 +89,10 @@ There are three two-library pairings and one three-library combination.
 
 | Combination | Demo co-residency | Data API seam | Physical coupling effort | Recommended order |
 |---|---|---|---|---:|
-| Fluid + Ultra-Water | Gallery provides simultaneous independent panels; actual startup remains browser/GPU-dependent | Fluid API extraction and domain boundary needed | High | 3 |
-| Fluid + Rapier | Gallery provides simultaneous independent panels | Moving-boundary adapter not exposed as a stable upstream API | Very high | 2 |
+| Fluid + Ultra-Water | 2D SPH surface forcing from batched Ultra-Water GPU queries | One-way far-field wave profile to local SPH domain | High; no mass/momentum conservation | 3 |
+| Fluid + Rapier | Integrated 2D SPH + Rapier prototype plus standalone references | Shared AABB obstacle and bounded pressure/drag load adapter | High; two-way exchange remains unimplemented | 2 |
 | Ultra-Water + Rapier | Live Rapier-backed floaters in the hosted Ultra-Water scene | Batched WaterQuery adapter and Rapier-owned bodies | Medium | 1 |
-| All three | Gallery provides simultaneous independent panels | Requires all adapters plus local/far-field handoff | Very high | 4 |
+| All three | Ultra-Water → SPH → optional Rapier 2D prototype | Two sequential one-way adapters; no conservative three-way exchange | Very high; prototype only | 4 |
 
 ## Verification still required
 
@@ -100,7 +100,7 @@ There are three two-library pairings and one three-library combination.
 - Exercise Rapier 2D and 3D demos on target browsers; hosted demo URLs are verified, but successful runtime execution is not inferred from their existence.
 - Measure GPU memory, frame time and thermal behaviour with each pair and the triplet on the same device.
 - Record WebGL2 and WebGPU capability separately. Ultra-Water is WebGL2; the selected fluid 3D route is WebGPU.
-- Next, validate the live Ultra-Water + Rapier scene on desktop and mobile, then improve wake coupling and physical regression coverage.
+- Validate the new external WaterQuery probe path and combined Fluid/Ocean/Rapier scene on desktop and mobile; CI build success does not prove same-origin iframe data flow or GPU runtime behaviour.
 
 ## Sources
 
@@ -109,3 +109,11 @@ There are three two-library pairings and one three-library combination.
 - https://github.com/dimforge/rapier
 - https://rapier.rs/demos2d/
 - https://rapier.rs/demos3d/
+
+## Fluid + Rapier prototype
+
+See [the 2D integration notes](../integrations/fluid-rapier/README.md), [the force adapter](../src/adapters/rapier-fluid-sph2d.js), and [the deployed coupled demo](../fluid/rapier-fluid-2d.html). The Pages workflow builds a pinned upstream SPH app with the Osmocean page injected at build time.
+
+## Fluid + Ultra-Water and three-engine prototype
+
+The build injects the external-probe multiplexer into the Ultra-Water Rapier runtime. The parent page registers 25 XZ probes in the iframe; the child app appends them to its existing GPU query batch and publishes the matching readback slice. The local SPH adapter maps the sampled wave height and displacement velocity onto the local free-surface particle band. The optional Rapier 2D body then interacts with that same SPH domain. See [the multi-engine runtime](../fluid/fluid-ocean-rapier-2d.html) and [the ocean boundary adapter](../src/adapters/fluid-ocean-boundary.js).

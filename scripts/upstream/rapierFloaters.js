@@ -63,6 +63,9 @@ export class RapierFloaters {
     this.params = Object.freeze({ engine: 'Rapier 3D', fixedTimestep: FIXED_DT });
     this.time = 0;
     this.queryTime = 0;
+    this.externalProbeOffset = 0;
+    this.externalProbeCount = 0;
+    this.externalProbePoints = [];
     this.accumulator = 0;
     this.impacts = [];
     this.adapters = [];
@@ -174,8 +177,12 @@ export class RapierFloaters {
 
   collectPoints(extra, time) {
     this.queryTime = time;
-    const required = extra.length + this.bodies.reduce((sum, item) => sum + item.adapter.sampleCount, 0);
-    if (required > MAX_QUERY_POINTS) throw new RangeError('Rapier floater query capacity exceeded');
+    const external = Array.isArray(window.osmoceanOceanProbes)
+      ? window.osmoceanOceanProbes.filter(p => Number.isFinite(p?.x) && Number.isFinite(p?.z))
+      : [];
+    const bodyCount = this.bodies.reduce((sum, item) => sum + item.adapter.sampleCount, 0);
+    const required = extra.length + bodyCount + external.length;
+    if (required > MAX_QUERY_POINTS) throw new RangeError('Rapier floater and external query capacity exceeded');
     const points = new Float32Array(required * 2);
     let cursor = 0;
     for (const point of extra) { points[cursor++] = point.x; points[cursor++] = point.z; }
@@ -184,6 +191,10 @@ export class RapierFloaters {
       points.set(submitted.xz, cursor);
       cursor += submitted.xz.length;
     }
+    this.externalProbeOffset = cursor / 2 - extra.length;
+    this.externalProbeCount = external.length;
+    this.externalProbePoints = external.map(p => ({ x: p.x, z: p.z }));
+    for (const point of external) { points[cursor++] = point.x; points[cursor++] = point.z; }
     this.points = points;
     this.count = required;
     return points;
@@ -193,6 +204,16 @@ export class RapierFloaters {
     for (const item of this.bodies) {
       item.queryProxy.offset = offset + item.queryOffset;
       item.adapter.ingestQuery();
+    }
+    const start = offset + this.externalProbeOffset;
+    const end = start + this.externalProbeCount;
+    if (this.externalProbeCount > 0 && query.resultTag === this.layout && query.result && query.resultCount >= end && Number.isFinite(query.resultTime)) {
+      window.osmoceanOceanProbeResults = {
+        time: query.resultTime,
+        count: this.externalProbeCount,
+        points: this.externalProbePoints,
+        data: query.result.slice(start * 4, end * 4),
+      };
     }
   }
 

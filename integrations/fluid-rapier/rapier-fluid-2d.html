@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#06131c">
+  <title>Osmocean | SPH + Rapier 2D</title>
+  <link rel="stylesheet" href="/src/osmocean/rapier-fluid-2d.css">
+</head>
+<body>
+  <main class="integration-shell">
+    <header>
+      <a href="/osmocean/lab.html">← OSMOCEAN INTEGRATION LAB</a>
+      <span>UPSTREAM SPH · RAPIER 2D</span>
+    </header>
+    <section class="intro">
+      <p class="eyebrow">LIVE COUPLED PROTOTYPE / 01</p>
+      <h1>Fluid meets <em>rigid body.</em></h1>
+      <p>The upstream Canvas2D SPH solver owns fluid particles and pressure/viscosity. Rapier 2D owns a dynamic, rotation-locked obstacle. The obstacle position is fed back into the SPH collision boundary; a bounded pressure/drag estimate loads the Rapier body.</p>
+    </section>
+    <section class="viewport">
+      <div id="app"><canvas id="sim-canvas" aria-label="SPH fluid and Rapier rigid body simulation"></canvas></div>
+      <div class="hud">
+        <span id="engine-state">INITIALISING</span>
+        <span id="force-state">BOUNDARY LOAD: 0.0 N</span>
+      </div>
+    </section>
+    <section class="controls">
+      <button id="pause" type="button">PAUSE</button>
+      <button id="reset" type="button">RESET BODY</button>
+      <span>Pointer interaction: drag fluid · right-drag repels</span>
+    </section>
+    <footer>ONE-WAY PRESSURE/DRAG LOADING · AABB FLUID BOUNDARY · FIXED 120 HZ RAPIER</footer>
+  </main>
+  <script type="module" src="/src/osmocean/rapier-fluid-2d.ts"></script>
+</body>
+</html>
