@@ -19,7 +19,7 @@ const manifestPath = path.join(upstream, 'package.json');
 const manifest = JSON.parse(read(manifestPath));
 manifest.dependencies ||= {};
 manifest.dependencies['@dimforge/rapier2d-compat'] = '0.21.0';
-write(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
+write(manifestPath, JSON.stringify(manifest, null, 2) + '\n');
 
 const integrationDir = path.join(upstream, 'src/osmocean');
 copy(path.join(repoRoot, 'src/adapters/rapier-fluid-sph2d.js'), path.join(integrationDir, 'rapier-fluid-sph2d.js'));
@@ -35,12 +35,12 @@ copy(path.join(repoRoot, 'integrations/fluid-rapier/rapier-fluid-2d.html'), path
 
 const vitePath = path.join(upstream, 'vite.config.ts');
 let vite = read(vitePath);
-vite = replaceExactly(
-  vite,
-  "'main-index': resolve(__dirname, 'index.html'),",
-  "'main-index': resolve(__dirname, 'index.html'),\n        'osmocean-rapier-fluid': resolve(__dirname, 'rapier-fluid-2d.html'),
-        'osmocean-fluid-ocean-rapier': resolve(__dirname, 'fluid-ocean-rapier.html'),
-  'Vite multi-page input'
-);
+const before = "'main-index': resolve(__dirname, 'index.html'),";
+const after = [
+  before,
+  "        'osmocean-rapier-fluid': resolve(__dirname, 'rapier-fluid-2d.html'),",
+  "        'osmocean-fluid-ocean-rapier': resolve(__dirname, 'fluid-ocean-rapier.html'),",
+].join('\n');
+vite = replaceExactly(vite, before, after, 'Vite multi-page input');
 write(vitePath, vite);
 console.log('Injected Osmocean SPH/Rapier and ocean-boundary demos into the pinned upstream fluid build.');
