@@ -1,6 +1,6 @@
 const fluidDemos={pic:{url:'https://jeantimex.github.io/fluid/src/flip/2d/pic_flip/',label:'2D PIC/FLIP · staggered MAC grid'},hybrid:{url:'https://jeantimex.github.io/fluid/src/flip/2d/hybrid_flip/',label:'2D Hybrid FLIP · RK2 + whitewater'},apic:{url:'https://jeantimex.github.io/fluid/src/flip/2d/apic/',label:'2D APIC · particle-grid solver'},canvas:{url:'https://jeantimex.github.io/fluid/canvas2d.html',label:'2D SPH Canvas · CPU compatibility path'},webgpu:{url:'https://jeantimex.github.io/fluid/webgpu2d.html',label:'2D WebGPU SPH · requires WebGPU adapter'},flip3d:{url:'https://jeantimex.github.io/fluid/src/flip/3d/webgpu_flip/',label:'3D WebGPU FLIP · requires WebGPU adapter'}};
 const rapierDemos={'3d':'https://rapier.rs/demos3d/','2d':'https://rapier.rs/demos2d/'};
-const oceanDemo='https://stackblitz.com/github/Humpalumps/Ultra-Water?embed=1&view=preview';
+const oceanDemo='./ultra-water/';
 const fluidFrame=document.querySelector('#fluid-frame');
 document.querySelectorAll('[data-fluid]').forEach(button=>button.addEventListener('click',()=>{const d=fluidDemos[button.dataset.fluid];if(!d)return;document.querySelectorAll('[data-fluid]').forEach(b=>b.classList.toggle('active',b===button));fluidFrame.src=d.url;document.querySelector('#fluid-status').textContent=d.label;document.querySelector('#fluid-open').href=d.url;}));
 const rapierFrame=document.querySelector('#rapier-frame');
