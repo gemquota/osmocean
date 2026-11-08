@@ -16,7 +16,7 @@ const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
  * those views into the single bounded GPU WaterQuery pass owned by Ultra-Water.
  */
 export class RapierFloaters {
-  constructor({ RAPIER, scene, patchMaterial }) {
+  constructor({ RAPIER, scene, patchMaterial, heightAt }) {
     if (!RAPIER?.World) throw new Error('Rapier must be initialized before RapierFloaters');
     this.RAPIER = RAPIER;
     this.scene = new THREE.Scene();
@@ -34,6 +34,7 @@ export class RapierFloaters {
     this.batches = new Map();
     this.nextLayoutTag = 1;
     this.patchMaterial = patchMaterial;
+    this.heightAt = heightAt;
     this.hud = document.createElement('div');
     Object.assign(this.hud.style, {
       position: 'fixed', left: '12px', bottom: '12px', zIndex: '20',
@@ -181,6 +182,32 @@ export class RapierFloaters {
     for (const time of this.batches.keys()) if (time <= query.resultTime) this.batches.delete(time);
   }
 
+  applyTerrainContact(body) {
+    if (typeof this.heightAt !== 'function') return;
+    const position = body.rigidBody.translation();
+    const rotation = body.rigidBody.rotation();
+    const linear = body.rigidBody.linvel();
+    const angular = body.rigidBody.angvel();
+    const origin = new THREE.Vector3(position.x, position.y, position.z);
+    const q = new THREE.Quaternion(rotation.x, rotation.y, rotation.z, rotation.w);
+    for (const local of body.samples) {
+      const point = local.clone().applyQuaternion(q).add(origin);
+      const penetration = this.heightAt(point.x, point.z) - point.y;
+      if (penetration <= 0) continue;
+      const arm = point.clone().sub(origin);
+      const rotational = new THREE.Vector3(angular.x, angular.y, angular.z).cross(arm);
+      const vx = linear.x + rotational.x;
+      const vy = linear.y + rotational.y;
+      const vz = linear.z + rotational.z;
+      const cellMass = body.mass / body.samples.length;
+      body.rigidBody.addForceAtPoint({
+        x: -vx * cellMass * 6,
+        y: penetration * cellMass * 900 - vy * cellMass * 40,
+        z: -vz * cellMass * 6,
+      }, { x: point.x, y: point.y, z: point.z }, true);
+    }
+  }
+
   step(dt) {
     dt = clamp(dt, 0, MAX_FRAME_DT);
     this.time += dt;
@@ -189,6 +216,7 @@ export class RapierFloaters {
     while (this.accumulator >= FIXED_DT && steps < MAX_STEPS) {
       for (const body of this.bodies) {
         const result = body.adapter.applyForces(this.time);
+        this.applyTerrainContact(body);
         const vy = body.rigidBody.linvel().y;
         if (result.applied && !body.wet && vy < -1.5) {
           const size = body.size;
