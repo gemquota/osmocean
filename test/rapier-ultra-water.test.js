@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { createRapierWaterBodyAdapter } from "../src/adapters/rapier-ultra-water.js";
+import { createHeightfieldGrid } from "../src/core/heightfield-grid.js";
 
 const near = (actual, expected, epsilon = 1e-6) =>
   assert.ok(Math.abs(actual - expected) <= epsilon, `${actual} != ${expected}`);
@@ -116,4 +117,55 @@ test("rejects malformed sample descriptors and invalid physical parameters", () 
   assert.throws(() => createRapierWaterBodyAdapter({
     body, waterQuery: query, volumeSamples: volume, density: -1
   }), RangeError);
+});
+
+test("heightfield subdivision counts are one less than sample dimensions", () => {
+  const grid = createHeightfieldGrid({
+    heightAt: (x, z) => x + z,
+    sampleRows: 3,
+    sampleCols: 4,
+    span: 20,
+    verticalScale: 10,
+  });
+  assert.equal(grid.nrows, 2);
+  assert.equal(grid.ncols, 3);
+  assert.equal(grid.heights.length, (grid.nrows + 1) * (grid.ncols + 1));
+  assert.deepEqual(grid.scale, { x: 20, y: 10, z: 20 });
+  assert.equal(grid.heights[0], -2);
+  assert.equal(grid.heights[1], -1);
+  assert.equal(grid.heights[2], 0);
+  assert.ok(Math.abs(grid.heights[3] + 4 / 3) < 1e-6);
+  assert.equal(grid.heights[9], 0);
+  assert.equal(grid.heights[10], 1);
+  assert.equal(grid.heights[11], 2);
+});
+
+test("heightfield matrix uses column-major sample order", () => {
+  const samples = [];
+  const grid = createHeightfieldGrid({
+    heightAt: (x, z) => { samples.push([x, z]); return x * 2 + z; },
+    sampleRows: 2,
+    sampleCols: 3,
+    span: 4,
+    verticalScale: 2,
+  });
+  assert.deepEqual(samples, [
+    [-2, -2], [-2, 2],
+    [0, -2], [0, 2],
+    [2, -2], [2, 2],
+  ]);
+  assert.deepEqual([...grid.heights], [-3, -1, -1, 1, 1, 3]);
+});
+
+test("heightfield builder rejects invalid dimensions and non-finite samples", () => {
+  assert.throws(() => createHeightfieldGrid({ heightAt: () => 0, sampleRows: 1 }), RangeError);
+  assert.throws(() => createHeightfieldGrid({ heightAt: () => Number.NaN }), /non-finite/);
+  assert.throws(() => createHeightfieldGrid({ heightAt: 0 }), TypeError);
+});
+
+test("Rapier heightfield grid uses subdivisions, not sample counts", () => {
+  const grid = createHeightfieldGrid({ heightAt: () => 0, sampleRows: 257, sampleCols: 257 });
+  assert.equal(grid.nrows, 256);
+  assert.equal(grid.ncols, 256);
+  assert.equal(grid.heights.length, 257 * 257);
 });

@@ -24,10 +24,13 @@ respectively. Collider mass is set from each upstream descriptor's density
 and volume; inertia is computed from the collision proxy shape.
 
 The island and seabed collision surface is sampled from the upstream
-islandHeight function into a 257 x 257 Rapier heightfield spanning 2.4 km.
-This is a collision approximation, not a replacement for the rendered terrain.
-The surface grid spacing is about 9.4 m, so small rocks and fine shoreline
-features are not represented in the rigid-body collision surface.
+islandHeight function into a 257 x 257 sample matrix (256 x 256 Rapier
+subdivisions) spanning 2.4 km. Rapier's API takes subdivision counts, not
+sample counts; the helper enforces the required +1 matrix dimensions and
+column-major storage. This is a collision approximation, not a replacement
+for the rendered terrain. The surface grid spacing is about 9.4 m, so small
+rocks and fine shoreline features are not represented in the rigid-body
+collision surface.
 
 ## Hydrodynamic loading
 

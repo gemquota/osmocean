@@ -24,6 +24,7 @@ write(packagePath, JSON.stringify(manifest, null, 2) + '\n');
 const osmoceanDir = path.join(upstream, 'src/osmocean');
 copy(path.join(repoRoot, 'src/adapters/rapier-ultra-water.js'), path.join(osmoceanDir, 'rapier-ultra-water.js'));
 copy(path.join(repoRoot, 'src/core/vector3.js'), path.join(osmoceanDir, 'vector3.js'));
+copy(path.join(repoRoot, 'src/core/heightfield-grid.js'), path.join(osmoceanDir, 'heightfield-grid.js'));
 let adapter = read(path.join(osmoceanDir, 'rapier-ultra-water.js'));
 adapter = replaceExactly(adapter, '"../core/vector3.js"', '"./vector3.js"', 'adapter vector import');
 write(path.join(osmoceanDir, 'rapier-ultra-water.js'), adapter);
