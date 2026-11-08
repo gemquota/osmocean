@@ -35,7 +35,7 @@ const bodyDesc = RAPIER.RigidBodyDesc.dynamic()
 const body = world.createRigidBody(bodyDesc);
 world.createCollider(
   RAPIER.ColliderDesc.cuboid(sim.config.obstacleSize.x * 0.5, sim.config.obstacleSize.y * 0.5)
-    .setDensity(1.4).setFriction(0.8).setRestitution(0.02),
+    .setDensity(0.65).setFriction(0.8).setRestitution(0.02),
   body,
 );
 
