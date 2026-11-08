@@ -53,6 +53,8 @@ export class RapierFloaters {
     scene.add(this.scene);
     this.world = new RAPIER.World({ x: 0, y: -GRAVITY, z: 0 });
     this.world.timestep = FIXED_DT;
+    this.world.numSolverIterations = 8;
+    this.world.numInternalPgsIterations = 2;
     this.bodies = [];
     this.layout = 1;
     this.count = 0;

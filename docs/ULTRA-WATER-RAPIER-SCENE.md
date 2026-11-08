@@ -44,6 +44,19 @@ features are not represented in the rigid-body collision surface.
 - Water readback is one to three frames delayed. Unknown layouts and stale
   results are rejected by the adapter.
 
+## Startup diagnostics
+
+The build patch installs visible error reporting for uncaught exceptions and
+unhandled promise rejections before Rapier initialization. It exposes a
+window-level boot status (`rapier-initializing`, `rapier-ready`,
+`rapier-world-ready`, `scene-initialized`, or `error`) and displays startup
+stacks in an on-page panel. The document and GUI titles identify the Rapier
+integration rather than the upstream-only demo.
+
+The shared GPU query capacity is 1024 points, matching the adapter's bound.
+The Rapier step receives the current render simulation time when checking
+readback age, rather than the previous frame's timestamp.
+
 ## Current limits
 
 This is a real one-way water-to-body integration, not two-way fluid coupling.
