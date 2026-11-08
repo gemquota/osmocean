@@ -21,14 +21,42 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: Checkout Osmocean
         uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Checkout pinned Ultra-Water source
+        uses: actions/checkout@v4
+        with:
+          repository: Humpalumps/Ultra-Water
+          ref: 30ea65ecb0a66b137aa200d099965634bdd84d51
+          path: _upstream/ultra-water
+          persist-credentials: false
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: _upstream/ultra-water/package-lock.json
+      - name: Install and build Ultra-Water
+        working-directory: _upstream/ultra-water
+        run: |
+          npm ci
+          npm run build -- --base=/osmocean/ultra-water/
+          cp LICENSE dist/LICENSE
+          cp THIRD_PARTY_NOTICES.md dist/THIRD_PARTY_NOTICES.md
+      - name: Assemble static site
+        run: |
+          mkdir -p _site/docs _site/ultra-water
+          cp index.html lab.html styles.css lab.css app.js lab.js _site/
+          cp -R docs/. _site/docs/
+          cp -R _upstream/ultra-water/dist/. _site/ultra-water/
       - name: Configure Pages
         uses: actions/configure-pages@v5
       - name: Upload static site
         uses: actions/upload-pages-artifact@v3
         with:
-          path: .
+          path: _site
       - name: Deploy
         id: deployment
         uses: actions/deploy-pages@v4

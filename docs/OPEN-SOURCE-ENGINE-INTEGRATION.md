@@ -14,7 +14,7 @@ Osmocean is an integration and marine-domain project, not a replacement fluid so
 
 ## Demo deployment
 
-The Osmocean deployment provides a dedicated `/lab.html` integration lab. It links and embeds upstream-hosted fluid and Rapier demos, and opens the actual Ultra-Water Vite source in a StackBlitz browser workspace because Ultra-Water does not publish a hosted demo. This is a demo/compatibility harness, not a claim that the engines are integrated into one runtime.
+The Osmocean deployment provides a dedicated `/lab.html` integration lab. It links and embeds upstream-hosted fluid and Rapier demos, and builds the pinned Ultra-Water Vite source into `/ultra-water/` as part of the GitHub Pages deployment because upstream does not publish a hosted demo. This is a demo/compatibility harness, not a claim that the engines are integrated into one runtime.
 
 ## Integration boundaries
 
@@ -27,7 +27,7 @@ The Osmocean deployment provides a dedicated `/lab.html` integration lab. It lin
 ## Current status
 
 - **Fluid demos:** upstream 2D PIC/FLIP, Hybrid FLIP, APIC and Canvas2D plus WebGPU variants are available in the lab. WebGPU support is device-dependent.
-- **Ultra-Water:** actual source is available through StackBlitz; a completed runtime preview and a dedicated Osmocean-controlled deployment remain to be verified. Vercel's Git integration refused direct linking because the connected identity lacks write/admin access to the upstream repository.
+- **Ultra-Water:** the actual upstream Vite project is built and served at `/ultra-water/` by GitHub Pages from pinned commit `30ea65ecb0a66b137aa200d099965634bdd84d51`; WebGL2 runtime verification remains device-dependent.
 - **Rapier:** official 2D and 3D JavaScript demos are linked in the lab. Rapier is not yet the rigid-body runtime in Osmocean.
 - **Two-way fluid/body coupling:** not yet implemented by the demo presentation.
 
