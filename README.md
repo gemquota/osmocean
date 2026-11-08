@@ -8,7 +8,7 @@ Osmocean is the independent successor to [Mocean](https://github.com/gemquota/mo
 
 ## Project status
 
-<badge>Foundation stage</badge>
+**Status: foundation stage.**
 
 The repository is being established. No production simulation engine, validated hydrodynamics model, or third-party runtime dependency is claimed yet.
 
