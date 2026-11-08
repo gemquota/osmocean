@@ -98,7 +98,7 @@ function frame(now: number) {
   sim.config.obstacleCentre = { x: p.x, y: p.y };
   sim.draw();
   stateLabel.textContent = `RAPIER 2D · ${sim.state.count.toLocaleString()} SPH PARTICLES · ${paused ? 'PAUSED' : 'RUNNING'}`;
-  forceLabel.textContent = `BOUNDARY LOAD: ${Math.hypot(lastForce.x, lastForce.y).toFixed(2)} N (SCALED)`;
+  forceLabel.textContent = `LOAD: ${Math.hypot(lastForce.x, lastForce.y).toFixed(2)} (SCALED 2D UNITS)`;
   requestAnimationFrame(frame);
 }
 stateLabel.textContent = 'RAPIER 2D · INITIALISED';
