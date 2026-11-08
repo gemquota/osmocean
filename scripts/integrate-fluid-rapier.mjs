@@ -40,8 +40,7 @@ vite = replaceExactly(
   "'main-index': resolve(__dirname, 'index.html'),",
   "'main-index': resolve(__dirname, 'index.html'),\n        'osmocean-rapier-fluid': resolve(__dirname, 'rapier-fluid-2d.html'),
         'osmocean-fluid-ocean-rapier': resolve(__dirname, 'fluid-ocean-rapier.html'),
-,
   'Vite multi-page input'
 );
 write(vitePath, vite);
-console.log('Injected Osmocean SPH/Rapier 2D demo into the pinned upstream fluid build.');
+console.log('Injected Osmocean SPH/Rapier and ocean-boundary demos into the pinned upstream fluid build.');
