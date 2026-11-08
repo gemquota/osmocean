@@ -12,9 +12,11 @@ The roadmap is gate-driven. A gate closes only when its exit criteria are eviden
 - [x] Record Mocean implementation status separately from visual acceptance and user approval.
 - [x] Create feature-level port / reimplement / defer / retire migration ledger.
 - [ ] Capture representative visual baselines and compare the deployed presentation.
-- [ ] Execute Osmocean's own CI workflow and record actual results.
+- [x] Execute Osmocean's own CI workflow and record actual results (initial workflow run passed).
 - [ ] Record dependency evaluations, licences, browser compatibility and mobile performance.
-- [ ] Approve Osmocean coordinate, unit, timestep, state-ownership and determinism contracts.
+- [x] Implement provisional world-axis and SI-unit contract.
+- [x] Implement fixed-step clock with bounded catch-up and explicit dropped-time accounting.
+- [ ] User review and approve coordinate, unit, timestep, state-ownership and determinism contracts.
 - [ ] Define initial browser/device targets and performance budgets.
 
 **Exit:** reviewed source inventory, traceable parity ledger, visual reference, verified Osmocean CI, stable contracts, and approved prototype questions.
@@ -33,11 +35,11 @@ The roadmap is gate-driven. A gate closes only when its exit criteria are eviden
 
 ## Gate 2 — Simulation kernel
 
-- [ ] Fixed-step clock and bounded catch-up.
+- [x] Fixed-step clock and bounded catch-up (initial implementation; CI verification pending for this PR).
 - [ ] Deterministic update scheduler.
 - [ ] Seeded random streams.
 - [ ] Entity identity and lifecycle.
-- [ ] Unit / coordinate / quaternion conventions.
+- [ ] Quaternion and local/world transform conventions.
 - [ ] Force and torque accumulation contracts.
 - [ ] Snapshot and render-interpolation boundary.
 - [ ] Numerical test harness and reproducibility fixtures.
@@ -46,8 +48,8 @@ The roadmap is gate-driven. A gate closes only when its exit criteria are eviden
 
 ## Gate 3 — Water environment
 
-- [ ] Water-field interface and sample validity.
-- [ ] Uniform and spatially varying current implementations.
+- [x] Uniform water-field reference implementation and contract tests.
+- [ ] Spatially varying current implementations.
 - [ ] Density and buoyancy inputs.
 - [ ] Surface/depth boundary representation.
 - [ ] Time-dependent environmental fields.
