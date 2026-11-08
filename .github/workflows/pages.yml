@@ -2,7 +2,7 @@ name: Publish integration lab to GitHub Pages
 
 on:
   push:
-    branches: [integration/library-demo-matrix]
+    branches: [main]
   workflow_dispatch:
 
 permissions:
