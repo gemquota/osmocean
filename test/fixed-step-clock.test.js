@@ -15,8 +15,8 @@ test("advances only in fixed increments and reports interpolation alpha", () => 
 });
 
 test("equivalent elapsed time produces the same authoritative tick sequence", () => {
-  const a = createFixedStepClock({ stepSeconds: 0.01 });
-  const b = createFixedStepClock({ stepSeconds: 0.01 });
+  const a = createFixedStepClock({ stepSeconds: 0.01, maxStepsPerAdvance: 16 });
+  const b = createFixedStepClock({ stepSeconds: 0.01, maxStepsPerAdvance: 16 });
   const ticksA = [];
   const ticksB = [];
   for (let i = 0; i < 10; i += 1) a.advance(0.01, state => ticksA.push(state.tick));
@@ -84,10 +84,10 @@ test("failed step is not committed to the clock", () => {
 
 test("prevents re-entrant advance and reset during a step", () => {
   const clock = createFixedStepClock({ stepSeconds: 0.1 });
-  assert.throws(() => clock.advance(0.1, () => {
+  clock.advance(0.1, () => {
     assert.throws(() => clock.advance(0, () => {}), /re-entrantly/);
     assert.throws(() => clock.reset(), /during a simulation step/);
-  }), undefined);
+  });
   assert.equal(clock.getSnapshot().tick, 1);
 });
 
