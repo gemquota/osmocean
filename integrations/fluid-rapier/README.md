@@ -14,7 +14,7 @@ This integration builds a dedicated Osmocean page into the pinned jeantimex/flui
 This is an executable pose/load coupling prototype, not a conservation-complete fluid/solid solver.
 
 - The upstream SPH obstacle is axis-aligned and supports one rectangular obstacle. The Rapier body is therefore rotation-locked; it cannot rotate independently of the SPH boundary.
-- The upstream collision response reflects/clamps particles against the AABB. It does not return collision impulses. Osmocean adds a separate pressure/relative-velocity load estimate to Rapier.
+- The upstream collision response reflects/clamps particles against the AABB. Rapier pose drives that moving boundary, while Osmocean adds a separate pressure/relative-velocity load estimate back to Rapier. The corresponding reaction impulse is not distributed to SPH particles.
 - Upstream SPH pressure parameters are visually tuned rather than SI-calibrated. The adapter therefore uses explicit force scaling and a maximum-force bound. The Archimedes estimate treats the 2D cross-section as unit depth and uses an effective fluid density; neither is a measured SI water column. The displayed force is marked as scaled.
 - Reaction impulses are not distributed back into SPH particle velocities. Momentum is not conserved across the fluid/body interface.
 - This demo is 2D. It is a useful integration and adapter experiment, not a substitute for 3D free-surface fluid-body coupling.
