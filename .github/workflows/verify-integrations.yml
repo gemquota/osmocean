@@ -1,0 +1,50 @@
+name: Verify physics integrations
+
+on:
+  pull_request:
+    paths:
+      - "src/adapters/**"
+      - "src/core/**"
+      - "test/**"
+      - "integrations/ocean-rapier/**"
+      - ".github/workflows/verify-integrations.yml"
+      - ".github/workflows/pages.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  adapter-and-upstream-build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Osmocean
+        uses: actions/checkout@v4
+      - name: Checkout pinned Ultra-Water source
+        uses: actions/checkout@v4
+        with:
+          repository: Humpalumps/Ultra-Water
+          ref: 30ea65ecb0a66b137aa200d099965634bdd84d51
+          path: _upstream/ultra-water
+          persist-credentials: false
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: _upstream/ultra-water/package-lock.json
+      - name: Run Osmocean adapter tests
+        run: npm test
+      - name: Inject Osmocean runtime adapter
+        run: |
+          mkdir -p _upstream/ultra-water/src/adapters _upstream/ultra-water/src/core
+          cp src/adapters/rapier-ultra-water.js _upstream/ultra-water/src/adapters/rapier-ultra-water.js
+          cp src/core/vector3.js _upstream/ultra-water/src/core/vector3.js
+          cp integrations/ocean-rapier/runtime/rapierFloaters.js _upstream/ultra-water/src/scene/rapierFloaters.js
+          node integrations/ocean-rapier/runtime/patch-upstream.mjs
+      - name: Build integrated upstream demo
+        working-directory: _upstream/ultra-water
+        run: |
+          npm ci
+          npm install --no-save @dimforge/rapier3d-compat
+          npm run build -- --base=/osmocean/ultra-water/
