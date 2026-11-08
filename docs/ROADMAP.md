@@ -24,7 +24,7 @@ The roadmap is gate-driven. A gate closes only when its exit criteria are eviden
 ## Gate 1 — Technical selection prototypes
 
 - [ ] Compare rendering candidates against the Mocean presentation and target devices.
-- [ ] Prototype spatially varying water-field sampling.
+- [x] Prototype spatially varying water-field sampling (affine, shear and planar-vortex analytic fields; bounded grid interpolation remains open).
 - [ ] Demonstrate a creature moving relative to moving water.
 - [ ] Compare surface-wave approaches independently from underwater flow.
 - [ ] Prototype contact / collision adapter boundaries.
@@ -121,8 +121,10 @@ Each implementation item must be decomposed into small, independently reviewable
 
 Do not mark a parent task complete while any required child task remains incomplete.
 
-## Distributed hydrodynamic loads
+## Water-field mechanics integration
 
+- [x] Compose sampled local water velocity and density with quadratic relative-flow drag.
+- [x] Propagate invalid spatial samples without inventing a fallback force.
 - [x] Evaluate discrete world-space surface drag samples using local flow and density.
 - [x] Include angular point velocity and accumulate total force and moment about the centre of mass.
 - [ ] Couple the resulting wrench to rigid-body force and torque integration.
