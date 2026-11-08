@@ -7,24 +7,23 @@ The roadmap is gate-driven. A gate closes only when its exit criteria are eviden
 - [x] Establish independent repository identity.
 - [x] Record architecture boundaries and engineering principles.
 - [x] Record Mocean as predecessor and reference implementation.
-- [x] Inventory Mocean root files, source modules, tests, phase specifications and CI/deployment workflows.
-- [x] Inspect merged Mocean PR #2 and open experiment PR #1.
-- [x] Record Mocean implementation status separately from visual acceptance and user approval.
+- [x] Inventory Mocean source modules, tests, phase specifications and CI/deployment workflows.
+- [x] Record implementation status separately from visual acceptance and user approval.
 - [x] Create feature-level port / reimplement / defer / retire migration ledger.
 - [ ] Capture representative visual baselines and compare the deployed presentation.
-- [x] Execute Osmocean's own CI workflow and record actual results (initial workflow run passed).
+- [x] Execute Osmocean's own CI workflow and record actual results.
 - [ ] Record dependency evaluations, licences, browser compatibility and mobile performance.
 - [x] Implement provisional world-axis and SI-unit contract.
 - [x] Implement fixed-step clock with bounded catch-up and explicit dropped-time accounting.
 - [ ] User review and approve coordinate, unit, timestep, state-ownership and determinism contracts.
 - [ ] Define initial browser/device targets and performance budgets.
 
-**Exit:** reviewed source inventory, traceable parity ledger, visual reference, verified Osmocean CI, stable contracts, and approved prototype questions.
+**Exit:** reviewed source inventory, traceable parity ledger, visual reference, verified CI, stable contracts, and approved prototype questions.
 
 ## Gate 1 — Technical selection prototypes
 
 - [ ] Compare rendering candidates against the Mocean presentation and target devices.
-- [x] Prototype spatially varying water-field sampling (affine, shear and planar-vortex analytic fields; bounded grid interpolation remains open).
+- [x] Prototype analytic affine/shear/vortex and bounded-grid spatial water-field sampling.
 - [ ] Demonstrate a creature moving relative to moving water.
 - [ ] Compare surface-wave approaches independently from underwater flow.
 - [ ] Prototype contact / collision adapter boundaries.
@@ -35,23 +34,25 @@ The roadmap is gate-driven. A gate closes only when its exit criteria are eviden
 
 ## Gate 2 — Simulation kernel
 
-- [x] Fixed-step clock and bounded catch-up (initial implementation; CI verification pending for this PR).
-- [ ] Deterministic update scheduler.
-- [ ] Seeded random streams.
+- [x] Fixed-step clock and bounded catch-up.
+- [x] Deterministic update scheduler.
+- [x] Seeded random streams.
+- [x] Quaternion and local/world transform conventions.
+- [x] Six-degree-of-freedom rigid-body state and full body-space inertia tensor.
+- [x] World-space force/torque integration contract.
 - [ ] Entity identity and lifecycle.
-- [ ] Quaternion and local/world transform conventions.
-- [ ] Force and torque accumulation contracts.
 - [ ] Snapshot and render-interpolation boundary.
-- [ ] Numerical test harness and reproducibility fixtures.
+- [ ] Numerical test harness and long-run reproducibility fixtures.
 
 **Exit:** deterministic test scenarios and validated module contracts.
 
 ## Gate 3 — Water environment
 
 - [x] Uniform water-field reference implementation and contract tests.
-- [ ] Spatially varying current implementations.
-- [ ] Density and buoyancy inputs.
-- [ ] Surface/depth boundary representation.
+- [x] Analytic spatial fields and bounded grid interpolation.
+- [x] Local water-relative drag sampling.
+- [x] Distributed surface drag and angular point velocity.
+- [x] Local-density buoyancy using explicit waterline and volume quadrature.
 - [ ] Time-dependent environmental fields.
 - [ ] Optional temperature / pressure / salinity capabilities.
 - [ ] Field visualisation and sampling diagnostics.
@@ -60,11 +61,11 @@ The roadmap is gate-driven. A gate closes only when its exit criteria are eviden
 
 ## Gate 4 — Creature mechanics and locomotion
 
-- [ ] Port/reimplement Mocean flexible-body and gait concepts against the new contracts.
-- [ ] Six-degree-of-freedom rigid-body state.
-- [ ] Local relative-water velocity sampling.
-- [ ] Buoyancy, drag, propulsion, and control-surface forces.
-- [ ] Rotational response and angular inertia.
+- [x] Couple distributed drag and buoyancy wrenches to rigid-body integration.
+- [x] Transform body-local surface quadrature into world space.
+- [ ] Generate surface and volume quadrature weights from production body geometry.
+- [ ] Add propulsion and control-surface force models.
+- [ ] Validate full six-degree-of-freedom response against reference scenarios.
 - [ ] Flexible body / articulated anatomy interface.
 - [ ] Energy limits and recovery.
 - [ ] Manoeuvre intent separated from physical response.
@@ -81,7 +82,7 @@ The roadmap is gate-driven. A gate closes only when its exit criteria are eviden
 - [ ] Coupling tests between surface and underwater fields.
 - [ ] Rendering remains a consumer of simulation state.
 
-**Exit:** visual environment communicates the simulated conditions without becoming the source of physical truth.
+**Exit:** visual environment communicates simulated conditions without becoming the source of physical truth.
 
 ## Gate 6 — Behaviour and ecosystem
 
@@ -107,26 +108,13 @@ The roadmap is gate-driven. A gate closes only when its exit criteria are eviden
 
 **Exit:** release candidate with parity report, known limitations, and deployment verification.
 
-## Work decomposition rules
+## Distributed fluid mechanics acceptance
 
-Each implementation item must be decomposed into small, independently reviewable tasks with:
-
-- explicit source modules and interfaces,
-- preconditions and dependencies,
-- implementation notes,
-- automated acceptance tests,
-- visual acceptance where applicable,
-- performance implications,
-- rollback / replacement considerations.
-
-Do not mark a parent task complete while any required child task remains incomplete.
-
-## Water-field mechanics integration
-
-- [x] Compose sampled local water velocity and density with quadratic relative-flow drag.
-- [x] Propagate invalid spatial samples without inventing a fallback force.
-- [x] Evaluate discrete world-space surface drag samples using local flow and density.
-- [x] Include angular point velocity and accumulate total force and moment about the centre of mass.
-- [ ] Couple the resulting wrench to rigid-body force and torque integration.
-- [ ] Generate surface quadrature points from body geometry and orientation.
-- [ ] Characterise spatial sampling convergence, timestep sensitivity, and energy dissipation under representative flows.
+- [x] Sample local water-relative drag and density.
+- [x] Accumulate distributed surface forces and moments including angular point velocity.
+- [x] Transform body-local surface quadrature into world space.
+- [x] Evaluate discrete submerged-volume buoyancy using local density.
+- [x] Assemble fluid loads and integrate body weight, drag and buoyancy through one rigid-body step.
+- [ ] Generate quadrature weights from meshes or anatomical geometry.
+- [ ] Characterise timestep sensitivity and spatial quadrature convergence over a parameter sweep.
+- [ ] Validate torque-free asymmetric rigid-body motion against an analytic reference.
