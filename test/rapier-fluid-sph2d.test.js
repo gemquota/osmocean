@@ -37,7 +37,7 @@ test('viscous loading follows fluid velocity relative to the body', () => {
 
 test('particles outside the interaction band contribute no load', () => {
   const result = estimateSphBoundaryLoad({
-    state: state([{ x: 0, y: 2, density: 100, vx: 50 }]),
+    state: state([{ x: 5, y: 2, density: 100, vx: 50 }]),
     config, bodyPosition: { x: 0, y: 0 },
   });
   assert.equal(result.contactParticles, 0);
@@ -50,4 +50,13 @@ test('resultant load is bounded', () => {
     config, bodyPosition: { x: 0, y: 0 }, maxForce: 5,
   });
   assert.ok(Math.hypot(result.force.x, result.force.y) <= 5 + 1e-9);
+});
+
+test('local particle envelope generates upward Archimedes buoyancy', () => {
+  const result = estimateSphBoundaryLoad({
+    state: state([{ x: 0, y: 2, density: 10 }]),
+    config, bodyPosition: { x: 0, y: 0 }, pressureScale: 0, dragScale: 0,
+  });
+  assert.ok(result.buoyancyForce.y > 0);
+  assert.equal(result.submergedFraction, 1);
 });
