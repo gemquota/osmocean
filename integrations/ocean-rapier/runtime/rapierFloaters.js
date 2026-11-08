@@ -32,6 +32,7 @@ export class RapierFloaters {
     this.impacts = [];
     this.lastResultTime = undefined;
     this.batches = new Map();
+    this.nextLayoutTag = 1;
     this.patchMaterial = patchMaterial;
     this.hud = document.createElement('div');
     Object.assign(this.hud.style, {
@@ -88,16 +89,17 @@ export class RapierFloaters {
         proxy.pending = { xz: new Float32Array(xz), count, tag, time };
       },
     };
+    const layoutTag = this.nextLayoutTag++;
     const adapter = createRapierWaterBodyAdapter({
       body: rigidBody,
       waterQuery: proxy,
       volumeSamples,
       surfaceSamples,
-      layoutTag: this.bodies.length + 1,
+      layoutTag,
       maxReadbackAge: 0.18,
     });
     const body = {
-      ...desc, rigidBody, adapter, queryProxy: proxy, mass,
+      ...desc, rigidBody, adapter, queryProxy: proxy, layoutTag, mass,
       pos: new THREE.Vector3(pos.x, pos.y, pos.z),
       radius: desc.size.length() / 2,
       wet: false,
@@ -169,7 +171,6 @@ export class RapierFloaters {
     if (!batch || query.resultCount < this.count || !query.result) return;
     for (const { body, offset, count } of batch) {
       const proxy = body.queryProxy;
-      proxy.resultTag = proxy.pending?.tag ?? body.adapter.sampleCount; // overwritten below with the adapter's stable tag
       proxy.resultTag = body.layoutTag;
       proxy.resultTime = query.resultTime;
       proxy.resultCount = count;
