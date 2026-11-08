@@ -4,7 +4,7 @@ const file = '_upstream/ultra-water/src/main.js';
 let source = await readFile(file, 'utf8');
 const replacements = [
   ["import { Floaters } from './scene/floaters.js';", "import { RapierFloaters } from './scene/rapierFloaters.js';\nimport RAPIER from '@dimforge/rapier3d-compat';\n\nawait RAPIER.init();"],
-  ["const floaters = new Floaters({ scene, heightAt: islandHeight, patchMaterial: terrain.patchProp });", "const floaters = new RapierFloaters({ RAPIER, scene, patchMaterial: terrain.patchProp });"],
+  ["const floaters = new Floaters({ scene, heightAt: islandHeight, patchMaterial: terrain.patchProp });", "const floaters = new RapierFloaters({ RAPIER, scene, heightAt: islandHeight, patchMaterial: terrain.patchProp });"],
   ["floaters.ingest(query, 1);", "floaters.ingest(query);"],
   ["const pts = floaters.collectPoints([camera.position]);\n  query.submit(pts, floaters.count, floaters.layout, elapsed);", "const pts = floaters.collectPoints([camera.position], elapsed);\n  query.submit(pts, floaters.count, floaters.layout, elapsed);"],
 ];
