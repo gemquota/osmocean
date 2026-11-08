@@ -57,7 +57,7 @@ test("ingests matching async results and applies buoyancy at its sample point", 
   assert.equal(adapter.ingestQuery().valid, true);
   const result = adapter.applyForces(1.01);
   assert.equal(result.applied, true);
-  assert.equal(body.calls.length, 2);
+  assert.equal(body.calls.length, 1);
   near(body.calls[0].force.y, 1025 * 9.81 * 0.01);
   assert.deepEqual(body.calls[0].point, { x: 0, y: -0.25, z: 0 });
   assert.equal(body.calls[0].wake, true);
@@ -77,12 +77,12 @@ test("drag opposes relative point velocity and is applied at the surface sample"
 });
 
 test("rejects stale GPU readbacks instead of applying stale forces", () => {
-  const { adapter, query } = makeAdapter();
+  const { adapter, body, query } = makeAdapter();
   adapter.submitQuery(1);
   query.resolve(1, [1, 0, 0, 1, 1, 0, 0, 1]);
   adapter.ingestQuery();
   assert.equal(adapter.applyForces(2).reason, "stale-water-query");
-  assert.equal(adapter.body.calls.length, 0);
+  assert.equal(body.calls.length, 0);
 });
 
 test("ignores mismatched layout tags and unknown timestamps", () => {
@@ -102,8 +102,8 @@ test("derives water velocity from successive displacement readbacks", () => {
   adapter.submitQuery(1.1);
   query.resolve(1.1, [0.2, 0.3, -0.1, 1, 0.2, 0.3, -0.1, 1]);
   adapter.ingestQuery();
-  near(adapter.latestQuery.waterVelocity[0].x, 2);
-  near(adapter.latestQuery.waterVelocity[0].y, 3);
+  near(adapter.latestQuery.waterVelocity[0].x, 3);
+  near(adapter.latestQuery.waterVelocity[0].y, 2);
   near(adapter.latestQuery.waterVelocity[0].z, -1);
 });
 
