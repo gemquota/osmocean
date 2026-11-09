@@ -80,6 +80,10 @@ const bootDiagnostics = [
 ].join('\n');
 main = replaceExactly(main, 'const REFLECT_LAYER = 1;', bootDiagnostics, 'Rapier WASM initialization and visible startup diagnostics');
 main = replaceExactly(main,
+  'scene.add(terrain.group);',
+  'scene.add(terrain.group);\nconst osmoceanUnified = await createUnifiedCoupling({ THREE, scene });',
+  'single shared Three.js scene initialization');
+main = replaceExactly(main,
   'const floaters = new Floaters({ scene, heightAt: islandHeight, patchMaterial: terrain.patchProp });',
   "const floaters = new RapierFloaters({ RAPIER, scene, heightAt: islandHeight, patchMaterial: terrain.patchProp, query });\nwindow.__osmoceanBootStatus = 'rapier-world-ready';",
   'floater runtime construction');
