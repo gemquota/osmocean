@@ -30,11 +30,28 @@ adapter = replaceExactly(adapter, '"../core/vector3.js"', '"./vector3.js"', 'ada
 write(path.join(osmoceanDir, 'rapier-ultra-water.js'), adapter);
 copy(path.join(repoRoot, 'scripts/upstream/rapierFloaters.js'), path.join(upstream, 'src/scene/rapierFloaters.js'));
 
+
+// Import the pinned SPH implementation into the Ultra-Water application so all
+// three engines share the same Three.js scene and animation lifecycle.
+const fluidRoot = path.resolve(process.argv[3] || '_upstream/fluid');
+for (const file of [
+  'config.ts', 'kernels.ts', 'physics.ts', 'spatial.ts', 'spawn.ts', 'types.ts'
+]) copy(path.join(fluidRoot, 'src/sph/2d/common', file), path.join(osmoceanDir, 'sph/common', file));
+for (const file of ['sim.ts', 'renderer.ts']) copy(
+  path.join(fluidRoot, 'src/sph/2d/canvas2d', file),
+  path.join(osmoceanDir, 'sph/canvas2d', file)
+);
+copy(path.join(repoRoot, 'src/adapters/rapier-fluid-sph2d.js'), path.join(osmoceanDir, 'rapier-fluid-sph2d.js'));
+copy(path.join(repoRoot, 'scripts/upstream/UnifiedCoupling.js'), path.join(osmoceanDir, 'UnifiedCoupling.js'));
+manifest.dependencies['@dimforge/rapier2d-compat'] = '0.21.0';
+write(packagePath, JSON.stringify(manifest, null, 2) + '\n');
+
 const mainPath = path.join(upstream, 'src/main.js');
 let main = read(mainPath);
 main = replaceExactly(main,
   "import { Floaters } from './scene/floaters.js';",
-  "import { RapierFloaters } from './scene/rapierFloaters.js';\nimport * as RAPIER from '@dimforge/rapier3d-compat';",
+  "import { RapierFloaters } from './scene/rapierFloaters.js';\nimport * as RAPIER from '@dimforge/rapier3d-compat';
+import { createUnifiedCoupling } from './osmocean/UnifiedCoupling.js';",
   'floater import');
 const bootDiagnostics = [
   "const bootError = document.createElement('pre');",
@@ -93,7 +110,8 @@ let upstreamHtml = read(upstreamHtmlPath);
 upstreamHtml = replaceExactly(upstreamHtml, '<title>Gelatin Water</title>', '<title>Ultra-Water + Rapier | Osmocean</title>', 'upstream page title');
 write(upstreamHtmlPath, upstreamHtml);
 write(mainPath, main);
-main = replaceExactly(main, '  ocean.update(dt, timer);', `
+main = replaceExactly(main, '  osmoceanUnified.step(dt, elapsed, ocean.params);
+  ocean.update(dt, timer);', `
   // Device tilt changes the actual OceanSim wind spectrum, not just the camera or floaters.
   // Rebuild only after a meaningful change to avoid recompiling the FFT spectrum every frame.
   const deviceTilt = window.osmoceanTilt;
@@ -113,4 +131,4 @@ main = replaceExactly(main, '  ocean.update(dt, timer);', `
   ocean.update(dt, timer);
 `, 'device tilt OceanSim wind coupling');
 
-console.log('Integrated pinned Ultra-Water source with Rapier-owned floater bodies and startup diagnostics.');
+console.log('Integrated Ultra-Water, pinned SPH and Rapier into one Three.js scene and render lifecycle.');
