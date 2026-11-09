@@ -8,9 +8,9 @@ Osmocean is the independent successor to [Mocean](https://github.com/gemquota/mo
 
 ## Project status
 
-**Status: foundation stage.**
+**Status: executable integration prototype.**
 
-The repository now contains a source audit and initial executable kernel contracts. It does not yet contain a production simulation engine, validated hydrodynamics model, or third-party runtime dependency.
+The repository now builds a unified browser scene from pinned Ultra-Water and jeantimex/fluid sources. The FFT ocean, SPH near-field slice and Rapier rigid bodies share one Three.js renderer, one scene, one Rapier world and one fixed-step callback. This is a working integration prototype, not a production or conservation-complete fluid/solid solver.
 
 - [Architecture](docs/ARCHITECTURE.md)
 - [Roadmap and gates](docs/ROADMAP.md)
@@ -47,6 +47,6 @@ The successor adds a shared water environment, spatially varying currents, envir
 
 ## Development
 
-The runtime stack will be selected after focused prototypes, not by installing a collection of impressive-sounding libraries and hoping they agree.
+The runtime adapters are replaceable modules. The current coupling uses a reduced-order wave boundary and scaled SPH-to-body loads; conservative momentum exchange, a volumetric 3D near-field solver and validated marine hydrodynamics remain future work.
 
 See [ROADMAP.md](docs/ROADMAP.md) for gates and acceptance criteria.
