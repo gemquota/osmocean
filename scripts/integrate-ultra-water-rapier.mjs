@@ -102,7 +102,7 @@ main = replaceExactly(main, '  ocean.update(dt, timer);', `
   window.__osmoceanBaseWind ||= { speed: ocean.params.windSpeed, direction: ocean.params.windDirection };
   const baseWind = window.__osmoceanBaseWind;
   const tiltMagnitude = Math.hypot(tiltX, tiltY);
-  const targetDirection = baseWind.direction + Math.atan2(tiltX, -tiltY || 1e-6) * 180 / Math.PI * 0.55;
+  const targetDirection = tiltMagnitude > 0.25 ? baseWind.direction + Math.atan2(tiltX, -tiltY) * 180 / Math.PI * 0.55 : baseWind.direction;
   const targetSpeed = Math.max(1, Math.min(25, baseWind.speed + tiltMagnitude * 0.55));
   const directionDelta = ((targetDirection - ocean.params.windDirection + 540) % 360) - 180;
   if (Math.abs(directionDelta) >= 3 || Math.abs(targetSpeed - ocean.params.windSpeed) >= 0.2) {
