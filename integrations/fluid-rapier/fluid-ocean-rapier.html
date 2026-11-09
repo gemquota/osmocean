@@ -3,117 +3,16 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <meta name="theme-color" content="#041019">
-  <meta name="description" content="A full-screen coupled simulation: Ultra-Water ocean waves drive a local SPH fluid domain with optional Rapier rigid-body physics.">
-  <title>Osmocean | Full-screen Ocean + SPH + Rapier</title>
-  <link rel="stylesheet" href="./src/osmocean/fluid-ocean-rapier.css">
+  <meta http-equiv="refresh" content="0;url=../ultra-water/">
+  <title>Osmocean | Unified simulation</title>
+  <style>body{margin:0;background:#041019;color:#dff8f1;font:14px system-ui;display:grid;min-height:100vh;place-items:center}a{color:#91ead0}</style>
 </head>
 <body>
-  <main class="triplet" aria-label="Coupled ocean, fluid and rigid-body simulation">
-    <section class="ocean-pane" aria-label="Ultra-Water far-field ocean">
-      <iframe id="ocean-frame" src="../ultra-water/" title="Ultra-Water far-field ocean" allow="accelerometer; gyroscope; fullscreen"></iframe>
-      <div class="pane-tag"><span>01</span> FAR FIELD <b>ULTRA-WATER / FFT OCEAN</b></div>
-    </section>
-    <section class="fluid-pane" aria-label="Local SPH fluid domain">
-      <canvas id="sim-canvas" aria-label="Local SPH domain driven by sampled ocean waves"></canvas>
-      <div class="pane-tag"><span>02</span> NEAR FIELD <b>SPH <i id="engine-state">INITIALISING</i></b></div>
-      <div class="telemetry">
-        <span id="ocean-state">WAITING FOR OCEAN QUERY</span>
-        <span id="force-state">BODY LOAD: 0</span>
-      </div>
-    </section>
-    <header class="hud">
-      <div class="brand"><strong>OSMOCEAN</strong><span>THREE-SOLVER COUPLING</span></div>
-      <div class="actions">
-        <button id="pause" type="button">PAUSE</button>
-        <button id="reset" type="button">RESET BODY</button>
-        <button id="tilt" type="button" aria-pressed="false">ENABLE TILT</button>
-        <button id="fullscreen" type="button">FULLSCREEN</button>
-        <a href="./fluid-ocean-rapier.html?rapier=0" id="rapier-toggle">RAPIER ON</a>
-        <a href="../lab.html">LAB</a>
-      </div>
-    </header>
-    <div class="coupling-mark" aria-hidden="true"><span>WAVE FIELD</span><b>↓</b><span>SURFACE FORCING</span></div>
+  <main>
+    <h1>Osmocean unified simulation</h1>
+    <p>The old split-screen prototype has been retired. Opening the single-scene simulation…</p>
+    <p><a href="../ultra-water/">Open the unified ocean, SPH and Rapier simulation</a></p>
   </main>
-  <script type="module" src="./src/osmocean/fluid-ocean-rapier.ts"></script>
-  <script>
-    const rapier = new URLSearchParams(location.search).get('rapier') !== '0';
-    const toggle = document.getElementById('rapier-toggle');
-    toggle.textContent = rapier ? 'RAPIER ON' : 'RAPIER OFF';
-    toggle.href = rapier ? './fluid-ocean-rapier.html?rapier=0' : './fluid-ocean-rapier.html';
-    toggle.setAttribute('aria-label', rapier ? 'Disable Rapier rigid body' : 'Enable Rapier rigid body');
-    const tiltButton = document.getElementById('tilt');
-    const oceanFrame = document.getElementById('ocean-frame');
-    const tiltState = { enabled: false, baseline: null, x: 0, y: 0, z: 0 };
-    const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
-    const publishTilt = () => {
-      window.osmoceanTilt = { x: tiltState.x, y: tiltState.y, z: tiltState.z, enabled: tiltState.enabled };
-      try {
-        if (oceanFrame.contentWindow) oceanFrame.contentWindow.osmoceanTilt = window.osmoceanTilt;
-      } catch {}
-      tiltButton.textContent = tiltState.enabled ? 'TILT ON' : 'ENABLE TILT';
-      tiltButton.setAttribute('aria-pressed', String(tiltState.enabled));
-    };
-    async function enableTilt() {
-      const Sensor = window.DeviceOrientationEvent;
-      if (!Sensor) {
-        tiltButton.textContent = 'TILT UNSUPPORTED';
-        return;
-      }
-      if (typeof Sensor.requestPermission === 'function') {
-        const permission = await Sensor.requestPermission();
-        if (permission !== 'granted') {
-          tiltButton.textContent = 'TILT DENIED';
-          return;
-        }
-      }
-      tiltState.enabled = true;
-      tiltState.baseline = null;
-      publishTilt();
-    }
-    window.addEventListener('deviceorientation', (event) => {
-      if (!tiltState.enabled || !Number.isFinite(event.beta) || !Number.isFinite(event.gamma)) return;
-      if (!tiltState.baseline) {
-        tiltState.baseline = { beta: event.beta, gamma: event.gamma };
-        return;
-      }
-      const radians = Math.PI / 180;
-      const db = (event.beta - tiltState.baseline.beta) * radians;
-      const dg = (event.gamma - tiltState.baseline.gamma) * radians;
-      const targetX = clamp(Math.sin(dg) * 9.81, -6.5, 6.5);
-      const targetY = clamp(-Math.sin(db) * 9.81, -6.5, 6.5);
-      const smoothing = 0.18;
-      tiltState.x += (targetX - tiltState.x) * smoothing;
-      tiltState.y += (targetY - tiltState.y) * smoothing;
-      publishTilt();
-    }, true);
-    tiltButton.addEventListener('click', async () => {
-      if (tiltState.enabled) {
-        tiltState.enabled = false;
-        tiltState.baseline = null;
-        tiltState.x = tiltState.y = tiltState.z = 0;
-        publishTilt();
-      } else {
-        try { await enableTilt(); }
-        catch (error) { tiltButton.textContent = 'TILT ERROR'; tiltButton.title = error?.message || String(error); }
-      }
-    });
-    oceanFrame.addEventListener('load', publishTilt);
-    publishTilt();
-
-    const fullscreen = document.getElementById('fullscreen');
-    fullscreen.addEventListener('click', async () => {
-      try {
-        if (document.fullscreenElement) await document.exitFullscreen();
-        else await document.documentElement.requestFullscreen();
-      } catch (error) {
-        fullscreen.textContent = 'FULLSCREEN UNAVAILABLE';
-        fullscreen.title = error?.message || String(error);
-      }
-    });
-    document.addEventListener('fullscreenchange', () => {
-      fullscreen.textContent = document.fullscreenElement ? 'EXIT FULLSCREEN' : 'FULLSCREEN';
-    });
-  </script>
+  <script>location.replace('../ultra-water/');</script>
 </body>
 </html>
