@@ -50,8 +50,7 @@ const mainPath = path.join(upstream, 'src/main.js');
 let main = read(mainPath);
 main = replaceExactly(main,
   "import { Floaters } from './scene/floaters.js';",
-  "import { RapierFloaters } from './scene/rapierFloaters.js';\nimport * as RAPIER from '@dimforge/rapier3d-compat';
-import { createUnifiedCoupling } from './osmocean/UnifiedCoupling.js';",
+  "import { RapierFloaters } from './scene/rapierFloaters.js';\nimport * as RAPIER from '@dimforge/rapier3d-compat';\nimport { createUnifiedCoupling } from './osmocean/UnifiedCoupling.js';",
   'floater import');
 const bootDiagnostics = [
   "const bootError = document.createElement('pre');",
@@ -134,5 +133,6 @@ main = replaceExactly(main, '  osmoceanUnified.step(dt, elapsed, ocean.params);
   }
   ocean.update(dt, timer);
 `, 'device tilt OceanSim wind coupling');
+write(mainPath, main);
 
 console.log('Integrated Ultra-Water, pinned SPH and Rapier into one Three.js scene and render lifecycle.');
