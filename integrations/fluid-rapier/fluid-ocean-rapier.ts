@@ -5,7 +5,9 @@ import { applyOceanSurfaceBoundary } from './fluid-ocean-boundary.js';
 
 type Probe = { x: number; z: number };
 type OceanSample = { count: number; time: number; points: Probe[]; data: Float32Array };
+type TiltState = { x: number; y: number; z: number; enabled: boolean };
 type OceanWindow = Window & {
+  osmoceanTilt?: TiltState;
   osmoceanOceanProbes?: Probe[];
   osmoceanOceanProbeResults?: OceanSample;
 };
@@ -20,6 +22,7 @@ const oceanLabel = document.querySelector<HTMLElement>('#ocean-state')!;
 const pauseButton = document.querySelector<HTMLButtonElement>('#pause')!;
 const resetButton = document.querySelector<HTMLButtonElement>('#reset')!;
 const oceanFrame = document.querySelector<HTMLIFrameElement>('#ocean-frame');
+const tiltLabel = document.querySelector<HTMLButtonElement>('#tilt');
 const rapierEnabled = new URLSearchParams(location.search).get('rapier') !== '0';
 
 await RAPIER.init();
@@ -122,6 +125,20 @@ function ingestOceanBoundary() {
 }
 
 function fixedStep() {
+  const tilt = (window as Window & { osmoceanTilt?: TiltState }).osmoceanTilt;
+  const tiltX = tilt?.enabled ? tilt.x : 0;
+  const tiltY = tilt?.enabled ? tilt.y : 0;
+  // Apply device tilt as an acceleration field to every SPH particle. This
+  // changes the solver state, not the camera or canvas transform.
+  if (tiltX !== 0 || tiltY !== 0) {
+    const velocities = sim.state.velocities;
+    for (let i = 0; i < sim.state.count; i++) {
+      const k = i * 2;
+      velocities[k] += tiltX * FIXED_DT;
+      velocities[k + 1] += tiltY * FIXED_DT;
+    }
+  }
+  world.gravity = { x: tiltX, y: -sim.config.gravity + tiltY };
   if (body) {
     const position = body.translation();
     sim.config.obstacleCentre = { x: position.x, y: position.y };
@@ -165,6 +182,7 @@ function frame(now: number) {
   sim.draw();
   const engines = rapierEnabled ? 'SPH + RAPIER 2D' : 'SPH';
   stateLabel.textContent = `${engines} · ${sim.state.count.toLocaleString()} PARTICLES · ${paused ? 'PAUSED' : 'RUNNING'}`;
+  if (tiltLabel) tiltLabel.title = (window as Window & { osmoceanTilt?: TiltState }).osmoceanTilt?.enabled ? `Solver acceleration ${((window as Window & { osmoceanTilt?: TiltState }).osmoceanTilt?.x ?? 0).toFixed(1)}, ${((window as Window & { osmoceanTilt?: TiltState }).osmoceanTilt?.y ?? 0).toFixed(1)} m/s²` : 'Device tilt disabled';
   forceLabel.textContent = rapierEnabled
     ? `BODY LOAD: ${Math.hypot(lastForce.x, lastForce.y).toFixed(2)} (SCALED 2D)`
     : 'RAPIER BODY DISABLED';
