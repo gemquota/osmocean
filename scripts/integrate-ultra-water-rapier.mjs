@@ -43,7 +43,6 @@ for (const file of ['sim.ts', 'renderer.ts']) copy(
 );
 copy(path.join(repoRoot, 'src/adapters/rapier-fluid-sph2d.js'), path.join(osmoceanDir, 'rapier-fluid-sph2d.js'));
 copy(path.join(repoRoot, 'scripts/upstream/UnifiedCoupling.js'), path.join(osmoceanDir, 'UnifiedCoupling.js'));
-manifest.dependencies['@dimforge/rapier2d-compat'] = '0.21.0';
 write(packagePath, JSON.stringify(manifest, null, 2) + '\n');
 
 const mainPath = path.join(upstream, 'src/main.js');
@@ -79,12 +78,8 @@ const bootDiagnostics = [
 ].join('\n');
 main = replaceExactly(main, 'const REFLECT_LAYER = 1;', bootDiagnostics, 'Rapier WASM initialization and visible startup diagnostics');
 main = replaceExactly(main,
-  'scene.add(terrain.group);',
-  'scene.add(terrain.group);\nconst osmoceanUnified = await createUnifiedCoupling({ THREE, scene });',
-  'single shared Three.js scene initialization');
-main = replaceExactly(main,
   'const floaters = new Floaters({ scene, heightAt: islandHeight, patchMaterial: terrain.patchProp });',
-  "const floaters = new RapierFloaters({ RAPIER, scene, heightAt: islandHeight, patchMaterial: terrain.patchProp, query });\nwindow.__osmoceanBootStatus = 'rapier-world-ready';",
+  "const floaters = new RapierFloaters({ RAPIER, scene, heightAt: islandHeight, patchMaterial: terrain.patchProp, query });\nconst osmoceanUnified = createUnifiedCoupling({ THREE, scene, RAPIER, floaters });\nwindow.__osmoceanBootStatus = 'rapier-world-ready';",
   'floater runtime construction');
 main = replaceExactly(main,
   'const pts = floaters.collectPoints([camera.position]);',
