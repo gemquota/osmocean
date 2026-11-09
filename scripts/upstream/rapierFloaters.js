@@ -54,6 +54,7 @@ export class RapierFloaters {
     scene.add(this.scene);
     this.world = new RAPIER.World({ x: 0, y: -GRAVITY, z: 0 });
     this.world.timestep = FIXED_DT;
+    this.baseGravity = { x: 0, y: -GRAVITY, z: 0 };
     this.world.numSolverIterations = 8;
     this.world.numInternalPgsIterations = 2;
     this.bodies = [];
@@ -219,6 +220,13 @@ export class RapierFloaters {
 
   step(dt, simulationTime = this.queryTime) {
     this.queryTime = simulationTime;
+    // Device tilt changes the actual Rapier gravity vector, so buoyant bodies
+    // respond dynamically instead of the camera or ocean mesh merely rotating.
+    const tilt = window.osmoceanTilt;
+    const enabled = tilt?.enabled === true;
+    this.world.gravity = enabled
+      ? { x: Math.max(-6.5, Math.min(6.5, tilt.x || 0)), y: -GRAVITY + Math.max(-6.5, Math.min(6.5, tilt.y || 0)), z: Math.max(-6.5, Math.min(6.5, tilt.z || 0)) }
+      : this.baseGravity;
     dt = Math.min(Math.max(dt, 0), 0.05);
     this.time += dt;
     this.accumulator = Math.min(this.accumulator + dt, FIXED_DT * MAX_SUBSTEPS);
