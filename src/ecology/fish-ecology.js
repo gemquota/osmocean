@@ -172,11 +172,15 @@ export class FishEcology {
   getStats() {
     const n = this.fish.length;
     if (!n) return { population: 0, meanSpeed: 0, meanSize: 0, meanEnergy: 0 };
-    return this.fish.reduce((out, f) => {
+    const totals = this.fish.reduce((out, f) => {
       out.meanSpeed += f.genes.speed;
       out.meanSize += f.genes.size;
       out.meanEnergy += f.energy;
       return out;
-    }, { population: n, meanSpeed: 0, meanSize: 0, meanEnergy: 0, geneticVariation: 0 });
+    }, { population: n, meanSpeed: 0, meanSize: 0, meanEnergy: 0 });
+    totals.meanSpeed /= n;
+    totals.meanSize /= n;
+    totals.meanEnergy /= n;
+    return totals;
   }
 }
