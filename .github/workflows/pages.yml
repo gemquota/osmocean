@@ -47,7 +47,7 @@ jobs:
           cache-dependency-path: _upstream/ultra-water/package-lock.json
       - name: Apply Osmocean Rapier integration
         run: |
-          node scripts/integrate-ultra-water-rapier.mjs _upstream/ultra-water
+          node scripts/integrate-ultra-water-rapier.mjs _upstream/ultra-water _upstream/fluid
       - name: Install and build Ultra-Water
         working-directory: _upstream/ultra-water
         run: |

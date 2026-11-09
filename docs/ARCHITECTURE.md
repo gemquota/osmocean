@@ -134,7 +134,38 @@ Never run two independent systems as authoritative owners of the same physical e
 - Mobile browser performance is a first-class constraint.
 - GPU acceleration is an implementation option, not a prerequisite for correct simulation semantics.
 
-## 8. Testing evidence
+## 8. Current unified browser integration
+
+The hosted `/ultra-water/` application is the current three-engine integration target. It is built from pinned upstream sources during CI; it is not a page that places three independent demos beside one another.
+
+```text
+Ultra-Water main render loop / Three.js scene
+  ├─ FFT ocean surface, sky, terrain and water-query renderer
+  ├─ SPH adapter
+  │    ├─ pinned jeantimex/fluid 2D SPH state + solver
+  │    └─ reduced-order wave-boundary forcing from live ocean parameters
+  └─ RapierFloaters / one Rapier 3D world
+       ├─ ocean floaters and their water-query forces
+       └─ local SPH-coupled rigid body
+              ↑ estimated SPH pressure / drag load
+```
+
+The integration has one visible WebGL renderer, one Three.js scene, one Rapier 3D world, and one Rapier fixed-step schedule. `RapierFloaters.addCoupledStep()` provides the fixed-step hook. The SPH adapter advances and applies its estimated body load from that hook before the shared `world.step()`. The local particles and rigid body are Three.js objects in the ocean scene; the SPH solver's hidden canvas exists only to satisfy the upstream solver factory and is not a second visible renderer.
+
+The old `/fluid/fluid-ocean-rapier.html` split-screen route redirects to `/ultra-water/`.
+
+### Current physical limits
+
+- The local SPH solver is a 2D cross-section, not a volumetric 3D near-field fluid.
+- Its obstacle boundary is axis-aligned; the coupled rigid body is rotation-locked to match it.
+- The local wave boundary is a reduced-order forcing model driven by live FFT ocean wind/wave parameters. It does not yet sample the exact GPU-displaced FFT surface at every SPH boundary particle.
+- SPH pressure parameters are visually tuned, not SI-calibrated. Pressure/drag loads use explicit scaling and a force cap.
+- The body receives estimated loads from SPH, but equal-and-opposite reaction impulses are not distributed back to SPH particles. Mass and momentum are not conserved across this interface.
+- Rapier owns rigid-body state; SPH owns particle state; Ultra-Water owns ocean surface state. The shared scene and timestep do not magically make the underlying numerical models conservative.
+
+These limitations are deliberate and visible. The unified runtime is an executable architecture/integration milestone, not a validated production ocean solver.
+
+## 9. Testing evidence
 
 Every feature records its evidence level:
 

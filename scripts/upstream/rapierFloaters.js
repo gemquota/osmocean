@@ -70,7 +70,15 @@ export class RapierFloaters {
     this.accumulator = 0;
     this.impacts = [];
     this.adapters = [];
+    this.coupledSteps = new Set();
+    this.paused = false;
     this.addTerrainCollider();
+  }
+
+  addCoupledStep(callback) {
+    if (typeof callback !== 'function') throw new TypeError('coupled step must be a function');
+    this.coupledSteps.add(callback);
+    return () => this.coupledSteps.delete(callback);
   }
 
   addTerrainCollider() {
@@ -220,6 +228,7 @@ export class RapierFloaters {
 
   step(dt, simulationTime = this.queryTime) {
     this.queryTime = simulationTime;
+    if (this.paused) return;
     // Device tilt changes the actual Rapier gravity vector, so buoyant bodies
     // respond dynamically instead of the camera or ocean mesh merely rotating.
     const tilt = window.osmoceanTilt;
@@ -232,6 +241,7 @@ export class RapierFloaters {
     this.accumulator = Math.min(this.accumulator + dt, FIXED_DT * MAX_SUBSTEPS);
     let steps = 0;
     while (this.accumulator + 1e-9 >= FIXED_DT && steps < MAX_SUBSTEPS) {
+      for (const callback of this.coupledSteps) callback(FIXED_DT, this.queryTime);
       for (const item of this.bodies) item.adapter.applyForces(this.queryTime);
       this.world.step();
       this.accumulator -= FIXED_DT;

@@ -30,11 +30,26 @@ adapter = replaceExactly(adapter, '"../core/vector3.js"', '"./vector3.js"', 'ada
 write(path.join(osmoceanDir, 'rapier-ultra-water.js'), adapter);
 copy(path.join(repoRoot, 'scripts/upstream/rapierFloaters.js'), path.join(upstream, 'src/scene/rapierFloaters.js'));
 
+
+// Import the pinned SPH implementation into the Ultra-Water application so all
+// three engines share the same Three.js scene and animation lifecycle.
+const fluidRoot = path.resolve(process.argv[3] || '_upstream/fluid');
+for (const file of [
+  'config.ts', 'kernels.ts', 'physics.ts', 'spatial.ts', 'spawn.ts', 'types.ts'
+]) copy(path.join(fluidRoot, 'src/sph/2d/common', file), path.join(osmoceanDir, 'sph/common', file));
+for (const file of ['sim.ts', 'renderer.ts']) copy(
+  path.join(fluidRoot, 'src/sph/2d/canvas2d', file),
+  path.join(osmoceanDir, 'sph/canvas2d', file)
+);
+copy(path.join(repoRoot, 'src/adapters/rapier-fluid-sph2d.js'), path.join(osmoceanDir, 'rapier-fluid-sph2d.js'));
+copy(path.join(repoRoot, 'scripts/upstream/UnifiedCoupling.js'), path.join(osmoceanDir, 'UnifiedCoupling.js'));
+write(packagePath, JSON.stringify(manifest, null, 2) + '\n');
+
 const mainPath = path.join(upstream, 'src/main.js');
 let main = read(mainPath);
 main = replaceExactly(main,
   "import { Floaters } from './scene/floaters.js';",
-  "import { RapierFloaters } from './scene/rapierFloaters.js';\nimport * as RAPIER from '@dimforge/rapier3d-compat';",
+  "import { RapierFloaters } from './scene/rapierFloaters.js';\nimport * as RAPIER from '@dimforge/rapier3d-compat';\nimport { createUnifiedCoupling } from './osmocean/UnifiedCoupling.js';",
   'floater import');
 const bootDiagnostics = [
   "const bootError = document.createElement('pre');",
@@ -64,13 +79,13 @@ const bootDiagnostics = [
 main = replaceExactly(main, 'const REFLECT_LAYER = 1;', bootDiagnostics, 'Rapier WASM initialization and visible startup diagnostics');
 main = replaceExactly(main,
   'const floaters = new Floaters({ scene, heightAt: islandHeight, patchMaterial: terrain.patchProp });',
-  "const floaters = new RapierFloaters({ RAPIER, scene, heightAt: islandHeight, patchMaterial: terrain.patchProp, query });\nwindow.__osmoceanBootStatus = 'rapier-world-ready';",
+  "const floaters = new RapierFloaters({ RAPIER, scene, heightAt: islandHeight, patchMaterial: terrain.patchProp, query });\nlet osmoceanUnified = null;\nwindow.__osmoceanBootStatus = 'rapier-world-ready';",
   'floater runtime construction');
 main = replaceExactly(main,
   'const pts = floaters.collectPoints([camera.position]);',
   'const pts = floaters.collectPoints([camera.position], elapsed);',
   'batched query collection');
-main = replaceExactly(main, 'floaters.step(dt);', 'floaters.step(dt, elapsed);', 'current simulation time for readback age');
+main = replaceExactly(main, 'floaters.step(dt);', 'osmoceanUnified.step(dt, elapsed, ocean.params);\n  floaters.step(dt, elapsed);', 'shared unified world frame and current simulation time');
 main = replaceExactly(main,
   'const query = new WaterQuery(renderer, surface, 512);',
   'const query = new WaterQuery(renderer, surface, 1024);',
@@ -112,5 +127,7 @@ main = replaceExactly(main, '  ocean.update(dt, timer);', `
   }
   ocean.update(dt, timer);
 `, 'device tilt OceanSim wind coupling');
+main = replaceExactly(main, 'views[ui.view]();', 'views[ui.view]();\nosmoceanUnified = createUnifiedCoupling({ THREE, scene, RAPIER, floaters, controls });', 'initialize unified scene after the camera preset');
+write(mainPath, main);
 
-console.log('Integrated pinned Ultra-Water source with Rapier-owned floater bodies and startup diagnostics.');
+console.log('Integrated Ultra-Water, pinned SPH and Rapier into one Three.js scene and render lifecycle.');
