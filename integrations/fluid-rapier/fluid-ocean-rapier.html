@@ -2,40 +2,58 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="theme-color" content="#06131c">
-  <title>Osmocean | Ocean + SPH + Rapier</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#041019">
+  <meta name="description" content="A full-screen coupled simulation: Ultra-Water ocean waves drive a local SPH fluid domain with optional Rapier rigid-body physics.">
+  <title>Osmocean | Full-screen Ocean + SPH + Rapier</title>
   <link rel="stylesheet" href="./src/osmocean/fluid-ocean-rapier.css">
 </head>
 <body>
-  <main class="triple-shell">
-    <header>
-      <a href="/osmocean/lab.html">← OSMOCEAN INTEGRATION LAB</a>
-      <span>FFT OCEAN → LOCAL SPH → RAPIER 2D</span>
+  <main class="triplet" aria-label="Coupled ocean, fluid and rigid-body simulation">
+    <section class="ocean-pane" aria-label="Ultra-Water far-field ocean">
+      <iframe id="ocean-frame" src="../ultra-water/" title="Ultra-Water far-field ocean" allow="accelerometer; gyroscope; fullscreen"></iframe>
+      <div class="pane-tag"><span>01</span> FAR FIELD <b>ULTRA-WATER / FFT OCEAN</b></div>
+    </section>
+    <section class="fluid-pane" aria-label="Local SPH fluid domain">
+      <canvas id="sim-canvas" aria-label="Local SPH domain driven by sampled ocean waves"></canvas>
+      <div class="pane-tag"><span>02</span> NEAR FIELD <b>SPH <i id="engine-state">INITIALISING</i></b></div>
+      <div class="telemetry">
+        <span id="ocean-state">WAITING FOR OCEAN QUERY</span>
+        <span id="force-state">BODY LOAD: 0</span>
+      </div>
+    </section>
+    <header class="hud">
+      <div class="brand"><strong>OSMOCEAN</strong><span>THREE-SOLVER COUPLING</span></div>
+      <div class="actions">
+        <button id="pause" type="button">PAUSE</button>
+        <button id="reset" type="button">RESET BODY</button>
+        <button id="fullscreen" type="button">FULLSCREEN</button>
+        <a href="./fluid-ocean-rapier.html?rapier=0" id="rapier-toggle">RAPIER ON</a>
+        <a href="../lab.html">LAB</a>
+      </div>
     </header>
-    <section class="intro">
-      <p class="eyebrow">LIVE COUPLED PROTOTYPE / 02</p>
-      <h1>Far field.<br><em>Near field.</em></h1>
-      <p>Ultra-Water supplies sampled wave height and displacement. The local SPH domain receives a surface-profile forcing signal. Rapier optionally owns a rigid obstacle inside that local domain. Each engine retains a clear state owner.</p>
-    </section>
-    <section class="systems">
-      <article class="system ocean-system">
-        <div class="system-title"><span>01 / FAR-FIELD</span><strong>ULTRA-WATER · FFT OCEAN</strong></div>
-        <iframe id="ocean-frame" src="../ultra-water/" title="Ultra-Water far-field ocean" allow="accelerometer; gyroscope; fullscreen"></iframe>
-      </article>
-      <article class="system fluid-system">
-        <div class="system-title"><span>02 / LOCAL DOMAIN</span><strong>CANVAS2D SPH <span id="engine-state">INITIALISING</span></strong></div>
-        <div class="fluid-viewport"><canvas id="sim-canvas" aria-label="Local SPH domain coupled to ocean wave samples"></canvas></div>
-        <div class="telemetry"><span id="ocean-state">WAITING FOR OCEAN QUERY</span><span id="force-state">BODY LOAD: 0</span></div>
-      </article>
-    </section>
-    <section class="controls">
-      <button id="pause" type="button">PAUSE</button>
-      <button id="reset" type="button">RESET BODY</button>
-      <span>Use ?rapier=0 for Fluid + Ultra-Water without the rigid body.</span>
-    </section>
-    <footer>ONE-WAY FAR-FIELD WAVE FORCING · LOCAL SPH · OPTIONAL RAPIER 2D · NOT A CONSERVATIVE THREE-WAY SOLVER</footer>
+    <div class="coupling-mark" aria-hidden="true"><span>WAVE FIELD</span><b>↓</b><span>SURFACE FORCING</span></div>
   </main>
   <script type="module" src="./src/osmocean/fluid-ocean-rapier.ts"></script>
+  <script>
+    const rapier = new URLSearchParams(location.search).get('rapier') !== '0';
+    const toggle = document.getElementById('rapier-toggle');
+    toggle.textContent = rapier ? 'RAPIER ON' : 'RAPIER OFF';
+    toggle.href = rapier ? './fluid-ocean-rapier.html?rapier=0' : './fluid-ocean-rapier.html';
+    toggle.setAttribute('aria-label', rapier ? 'Disable Rapier rigid body' : 'Enable Rapier rigid body');
+    const fullscreen = document.getElementById('fullscreen');
+    fullscreen.addEventListener('click', async () => {
+      try {
+        if (document.fullscreenElement) await document.exitFullscreen();
+        else await document.documentElement.requestFullscreen();
+      } catch (error) {
+        fullscreen.textContent = 'FULLSCREEN UNAVAILABLE';
+        fullscreen.title = error?.message || String(error);
+      }
+    });
+    document.addEventListener('fullscreenchange', () => {
+      fullscreen.textContent = document.fullscreenElement ? 'EXIT FULLSCREEN' : 'FULLSCREEN';
+    });
+  </script>
 </body>
 </html>
