@@ -132,20 +132,20 @@ main = replaceExactly(main, 'views[ui.view]();', 'views[ui.view]();\\nosmoceanUn
 // Add fish ecology after the Rapier integration has transformed the upstream entry point.
 copy(path.join(repoRoot, 'src/ecology/fish-ecology.js'), path.join(upstream, 'src/ecology/fish-ecology.js'));
 main = replaceExactly(main,
-  "import { RapierFloaters } from './scene/rapierFloaters.js';\\nimport * as RAPIER from '@dimforge/rapier3d-compat';\\nimport { createUnifiedCoupling } from './osmocean/UnifiedCoupling.js';",
-  "import { RapierFloaters } from './scene/rapierFloaters.js';\\nimport * as RAPIER from '@dimforge/rapier3d-compat';\\nimport { createUnifiedCoupling } from './osmocean/UnifiedCoupling.js';\\nimport { FishEcology } from './ecology/fish-ecology.js';",
+  "import { RapierFloaters } from './scene/rapierFloaters.js';\nimport * as RAPIER from '@dimforge/rapier3d-compat';\nimport { createUnifiedCoupling } from './osmocean/UnifiedCoupling.js';",
+  "import { RapierFloaters } from './scene/rapierFloaters.js';\nimport * as RAPIER from '@dimforge/rapier3d-compat';\nimport { createUnifiedCoupling } from './osmocean/UnifiedCoupling.js';\nimport { FishEcology } from './ecology/fish-ecology.js';",
   'native fish ecology import');
 main = replaceExactly(main,
-  "const floaters = new RapierFloaters({ RAPIER, scene, heightAt: islandHeight, patchMaterial: terrain.patchProp, query });\\nlet osmoceanUnified = null;\\nwindow.__osmoceanBootStatus = 'rapier-world-ready';",
-  "const floaters = new RapierFloaters({ RAPIER, scene, heightAt: islandHeight, patchMaterial: terrain.patchProp, query });\\nconst ecology = new FishEcology(THREE, scene, { population: 72, seed: 0x51f15e });\\nlet osmoceanUnified = null;\\nwindow.__osmoceanBootStatus = 'rapier-world-ready';",
+  "const floaters = new RapierFloaters({ RAPIER, scene, heightAt: islandHeight, patchMaterial: terrain.patchProp, query });\nlet osmoceanUnified = null;\nwindow.__osmoceanBootStatus = 'rapier-world-ready';",
+  "const floaters = new RapierFloaters({ RAPIER, scene, heightAt: islandHeight, patchMaterial: terrain.patchProp, query });\nconst ecology = new FishEcology(THREE, scene, { population: 72, seed: 0x51f15e });\nlet osmoceanUnified = null;\nwindow.__osmoceanBootStatus = 'rapier-world-ready';",
   'native fish ecology construction');
 main = replaceExactly(main,
   "if (mobile) gui.close();",
-  "const fEcology = gui.addFolder('Ecology');\\nfEcology.add(ecology.params, 'population', 0, 250, 1).onChange((n) => ecology.populate(n));\\nfEcology.add(ecology.params, 'worldRadius', 20, 300, 1);\\nfEcology.add(ecology.params, 'neighbourRadius', 4, 40, 1);\\nfEcology.add(ecology.params, 'maxDepth', 5, 60, 1);\\nfEcology.close();\\nif (mobile) gui.close();",
+  "const fEcology = gui.addFolder('Ecology');\nfEcology.add(ecology.params, 'population', 0, 250, 1).onChange((n) => ecology.populate(n));\nfEcology.add(ecology.params, 'worldRadius', 20, 300, 1);\nfEcology.add(ecology.params, 'neighbourRadius', 4, 40, 1);\nfEcology.add(ecology.params, 'maxDepth', 5, 60, 1);\nfEcology.close();\nif (mobile) gui.close();",
   'live ecology controls');
 main = replaceExactly(main,
   '  floaters.step(dt, elapsed);',
-  '  floaters.step(dt, elapsed);\\n  ecology.update(dt, elapsed, camWater);',
+  '  floaters.step(dt, elapsed);\n  ecology.update(dt, elapsed, camWater);',
   'fish ecology frame update');
 main = replaceExactly(main,
   'camera, controls, sky, post, surface, ocean, terrain, timer, views, quality, renderer, floaters, query, underwater, spray, snow, caustics, floatShadow, physicsEngine: \'Rapier 3D 0.21.0\',',
