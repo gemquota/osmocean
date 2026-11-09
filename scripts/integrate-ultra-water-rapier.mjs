@@ -108,8 +108,7 @@ let upstreamHtml = read(upstreamHtmlPath);
 upstreamHtml = replaceExactly(upstreamHtml, '<title>Gelatin Water</title>', '<title>Ultra-Water + Rapier | Osmocean</title>', 'upstream page title');
 write(upstreamHtmlPath, upstreamHtml);
 write(mainPath, main);
-main = replaceExactly(main, '  osmoceanUnified.step(dt, elapsed, ocean.params);
-  ocean.update(dt, timer);', `
+main = replaceExactly(main, '  ocean.update(dt, timer);', `
   // Device tilt changes the actual OceanSim wind spectrum, not just the camera or floaters.
   // Rebuild only after a meaningful change to avoid recompiling the FFT spectrum every frame.
   const deviceTilt = window.osmoceanTilt;
