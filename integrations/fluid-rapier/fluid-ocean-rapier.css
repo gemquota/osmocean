@@ -14,6 +14,7 @@ html,body{width:100%;height:100%;min-height:100%;margin:0;overflow:hidden;backgr
 .actions{gap:7px}
 .actions button,.actions a{display:inline-flex;align-items:center;justify-content:center;min-height:34px;padding:0 11px;border:1px solid #44616a;background:#071923dd;color:var(--mint);font:10px monospace;letter-spacing:.07em;text-decoration:none;cursor:pointer;border-radius:3px}
 .actions button:active,.actions a:active{background:#15313a}
+#tilt[aria-pressed="true"]{background:#164b45;border-color:var(--mint);color:#fff}
 .pane-tag{position:absolute;z-index:4;top:70px;left:14px;display:flex;align-items:center;gap:8px;padding:7px 9px;background:#031019c9;border:1px solid #52717b55;color:#b5cbd0;font:9px monospace;letter-spacing:.09em;pointer-events:none}
 .pane-tag>span{color:var(--mint)}
 .pane-tag b{font-weight:400;color:#e6f3ef}
