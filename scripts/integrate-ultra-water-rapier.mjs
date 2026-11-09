@@ -128,6 +128,28 @@ main = replaceExactly(main, '  ocean.update(dt, timer);', `
   ocean.update(dt, timer);
 `, 'device tilt OceanSim wind coupling');
 main = replaceExactly(main, 'views[ui.view]();', 'views[ui.view]();\nosmoceanUnified = createUnifiedCoupling({ THREE, scene, RAPIER, floaters, controls });', 'initialize unified scene after the camera preset');
+// Add the native ecology layer to the same upstream scene and frame loop.
+copy(path.join(repoRoot, 'src/ecology/fish-ecology.js'), path.join(upstream, 'src/ecology/fish-ecology.js'));
+main = replaceExactly(main,
+  "import { Floaters } from './scene/floaters.js';",
+  "import { Floaters } from './scene/floaters.js';\nimport { FishEcology } from './ecology/fish-ecology.js';",
+  'native fish ecology import');
+main = replaceExactly(main,
+  "const floaters = new RapierFloaters({ RAPIER, scene, heightAt: islandHeight, patchMaterial: terrain.patchProp, query });\nlet osmoceanUnified = null;\nwindow.__osmoceanBootStatus = 'rapier-world-ready';",
+  "const floaters = new RapierFloaters({ RAPIER, scene, heightAt: islandHeight, patchMaterial: terrain.patchProp, query });\nconst ecology = new FishEcology(THREE, scene, { population: 72, seed: 0x51f15e });\nlet osmoceanUnified = null;\nwindow.__osmoceanBootStatus = 'rapier-world-ready';",
+  'native fish ecology construction');
+main = replaceExactly(main,
+  "if (mobile) gui.close();",
+  "const fEcology = gui.addFolder('Ecology');\nfEcology.add(ecology.params, 'population', 0, 250, 1).onChange((n) => ecology.populate(n));\nfEcology.add(ecology.params, 'worldRadius', 20, 300, 1);\nfEcology.add(ecology.params, 'neighbourRadius', 4, 40, 1);\nfEcology.add(ecology.params, 'maxDepth', 5, 60, 1);\nfEcology.close();\nif (mobile) gui.close();",
+  'live ecology controls');
+main = replaceExactly(main,
+  '  floaters.step(dt);',
+  '  floaters.step(dt);\n  ecology.update(dt, elapsed, camWater);',
+  'fish ecology frame update');
+main = replaceExactly(main,
+  'camera, controls, sky, post, surface, ocean, terrain, timer, views, quality, renderer, floaters, query, underwater, spray, snow, caustics, floatShadow,',
+  'camera, controls, sky, post, surface, ocean, terrain, timer, views, quality, renderer, floaters, query, underwater, spray, snow, caustics, floatShadow, ecology,',
+  'expose ecology diagnostics');
 write(mainPath, main);
 
-console.log('Integrated Ultra-Water, pinned SPH and Rapier into one Three.js scene and render lifecycle.');
+console.log('Integrated Ultra-Water, Rapier and native fish ecology into one Three.js scene and render lifecycle.');
