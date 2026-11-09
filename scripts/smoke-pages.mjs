@@ -16,7 +16,13 @@ const failures = [];
 async function openPage(path, label) {
   const page = await browser.newPage({ viewport: { width: 1365, height: 900 } });
   const errors = [];
+  const badOsmoceanResponses = [];
   page.on('pageerror', error => errors.push(error.message));
+  page.on('response', response => {
+    if (response.status() >= 400 && /\\/osmocean\\/(fluid|ultra-water)\\//.test(new URL(response.url()).pathname)) {
+      badOsmoceanResponses.push(`${response.status()} ${response.url()}`);
+    }
+  });
   const response = await page.goto(`${base}${path}`, { waitUntil: 'domcontentloaded', timeout: 45000 });
   if (!response || !response.ok()) throw new Error(`${label}: HTTP ${response?.status() ?? 'no response'}`);
   await page.locator('#sim-canvas').waitFor({ state: 'visible', timeout: 20000 });
@@ -33,7 +39,7 @@ async function openPage(path, label) {
     null, { timeout: 30000 },
   );
   console.log(`PASS ${label}: canvas ${Math.round(canvasSize.rectWidth)}x${Math.round(canvasSize.rectHeight)}; ${await page.locator('#engine-state').innerText()}`);
-  return { page, errors };
+  return { page, errors, badOsmoceanResponses };
 }
 
 try {
@@ -52,11 +58,14 @@ try {
     null, { timeout: 60000 },
   );
   const pairOcean = await pair.page.locator('#ocean-state').innerText();
+  const pairFrame = await pair.page.locator('#ocean-frame').evaluate(el => ({ src: el.src, ready: el.contentDocument?.readyState, title: el.contentDocument?.title, probeCount: el.contentWindow?.osmoceanOceanProbes?.length ?? 0, resultTime: el.contentWindow?.osmoceanOceanProbeResults?.time ?? null }));
+  console.log(`PAIR OCEAN FRAME ${JSON.stringify(pairFrame)}`);
   const pairBody = await pair.page.locator('#force-state').innerText();
   if (!pairBody.includes('RAPIER BODY DISABLED')) throw new Error(`Fluid + Ultra-Water: unexpected body state: ${pairBody}`);
   console.log(`PASS Fluid + Ultra-Water: ${pairOcean}; ${pairBody}`);
   await pair.page.close();
   if (pair.errors.length) failures.push(`Fluid + Ultra-Water page errors: ${pair.errors.join('; ')}`);
+  if (pair.badOsmoceanResponses.length) failures.push(`Fluid + Ultra-Water HTTP errors: ${pair.badOsmoceanResponses.join('; ')}`);
 
   const triple = await openPage('/fluid/fluid-ocean-rapier.html?rapier=1', 'All three engines');
   await triple.page.waitForFunction(() =>
@@ -69,6 +78,7 @@ try {
   console.log(`PASS All three engines: ${tripleOcean}; ${tripleBody}`);
   await triple.page.close();
   if (triple.errors.length) failures.push(`Three-engine page errors: ${triple.errors.join('; ')}`);
+  if (triple.badOsmoceanResponses.length) failures.push(`Three-engine HTTP errors: ${triple.badOsmoceanResponses.join('; ')}`);
 
   if (failures.length) throw new Error(failures.join('\n'));
   console.log('ALL OSMOCEAN RUNTIME SMOKE TESTS PASSED');
