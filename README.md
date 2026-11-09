@@ -8,9 +8,9 @@ Osmocean is the independent successor to [Mocean](https://github.com/gemquota/mo
 
 ## Project status
 
-**Status: executable integration prototype.**
+**Status: integration prototype with an initial native fish-agent layer under verification.**
 
-The repository now builds a unified browser scene from pinned Ultra-Water and jeantimex/fluid sources. The FFT ocean, SPH near-field slice and Rapier rigid bodies share one Three.js renderer, one scene, one Rapier world and one fixed-step callback. This is a working integration prototype, not a production or conservation-complete fluid/solid solver.
+The repository builds a unified browser scene from pinned Ultra-Water and jeantimex/fluid sources. The FFT ocean and Rapier rigid bodies share one Three.js renderer, one scene, one Rapier world and one fixed-step callback. A native fish-agent layer is being added directly to that Ultra-Water scene. The SPH experiments remain separate prototypes rather than a claimed three-way production solver. This is not a production or conservation-complete fluid/solid solver.
 
 - [Architecture](docs/ARCHITECTURE.md)
 - [Roadmap and gates](docs/ROADMAP.md)
@@ -50,3 +50,10 @@ The successor adds a shared water environment, spatially varying currents, envir
 The runtime adapters are replaceable modules. The current coupling uses a reduced-order wave boundary and scaled SPH-to-body loads; conservative momentum exchange, a volumetric 3D near-field solver and validated marine hydrodynamics remain future work.
 
 See [ROADMAP.md](docs/ROADMAP.md) for gates and acceptance criteria.
+
+
+## Native ecology layer
+
+The first ecology increment adds deterministic fish agents directly to the Ultra-Water scene and render loop. Fish have heritable movement traits (speed, size, cohesion, alignment, separation, sensory range, metabolism and camouflage), spatially indexed neighbour queries, schooling/separation steering, a bounded water-column habitat and a live population control. Their meshes use the upstream scene's renderer, camera, lighting and underwater post-processing.
+
+This is an initial locomotion/population foundation, not a completed ecosystem. Feeding, energy recovery, reproduction, mutation, neural-network brains, predation, food webs, environmental gradients and population-history tooling remain unimplemented until separately tested.
