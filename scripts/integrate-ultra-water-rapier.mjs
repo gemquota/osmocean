@@ -127,7 +127,7 @@ main = replaceExactly(main, '  ocean.update(dt, timer);', `
   }
   ocean.update(dt, timer);
 `, 'device tilt OceanSim wind coupling');
-main = replaceExactly(main, 'views[ui.view]();', 'views[ui.view]();\\nosmoceanUnified = createUnifiedCoupling({ THREE, scene, RAPIER, floaters, controls });', 'initialize unified scene after the camera preset');
+main = replaceExactly(main, 'views[ui.view]();', 'views[ui.view]();\nosmoceanUnified = createUnifiedCoupling({ THREE, scene, RAPIER, floaters, controls });', 'initialize unified scene after the camera preset');
 
 // Add fish ecology after the Rapier integration has transformed the upstream entry point.
 copy(path.join(repoRoot, 'src/ecology/fish-ecology.js'), path.join(upstream, 'src/ecology/fish-ecology.js'));
