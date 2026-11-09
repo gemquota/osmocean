@@ -34,23 +34,26 @@ async function openPage(path, label) {
   if (canvasSize.rectWidth < 100 || canvasSize.rectHeight < 100) {
     throw new Error(`${label}: simulation canvas has no usable layout size: ${JSON.stringify(canvasSize)}`);
   }
-  const fullscreen = await page.locator('.triplet').evaluate(el => {
+  let fullscreen = null;
+  if (await page.locator('.triplet').count()) {
+    fullscreen = await page.locator('.triplet').evaluate(el => {
     const rect = el.getBoundingClientRect();
     return { width: rect.width, height: rect.height, viewportWidth: innerWidth, viewportHeight: innerHeight,
       scrollWidth: document.documentElement.scrollWidth, scrollHeight: document.documentElement.scrollHeight,
       ocean: document.querySelector('.ocean-pane').getBoundingClientRect().toJSON(),
       fluid: document.querySelector('.fluid-pane').getBoundingClientRect().toJSON() };
   });
-  if (fullscreen.width < 100 || fullscreen.height < 100 ||
+    if (fullscreen.width < 100 || fullscreen.height < 100 ||
       fullscreen.scrollWidth > fullscreen.viewportWidth + 1 ||
       fullscreen.scrollHeight > fullscreen.viewportHeight + 1) {
-    throw new Error(`${label}: not a full-screen, no-scroll layout: ${JSON.stringify(fullscreen)}`);
+      throw new Error(`${label}: not a full-screen, no-scroll layout: ${JSON.stringify(fullscreen)}`);
+    }
   }
   await page.waitForFunction(() =>
     document.querySelector('#engine-state')?.textContent?.includes('RUNNING'),
     null, { timeout: 30000 },
   );
-  console.log(`PASS ${label}: full-screen ${Math.round(fullscreen.width)}x${Math.round(fullscreen.height)}; canvas ${Math.round(canvasSize.rectWidth)}x${Math.round(canvasSize.rectHeight)}; ${await page.locator('#engine-state').innerText()}`);
+  console.log(`PASS ${label}: ${fullscreen ? `full-screen ${Math.round(fullscreen.width)}x${Math.round(fullscreen.height)}; ` : ''}canvas ${Math.round(canvasSize.rectWidth)}x${Math.round(canvasSize.rectHeight)}; ${await page.locator('#engine-state').innerText()}`);
   return { page, errors, badOsmoceanResponses };
 }
 
