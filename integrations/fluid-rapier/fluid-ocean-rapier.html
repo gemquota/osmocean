@@ -27,6 +27,7 @@
       <div class="actions">
         <button id="pause" type="button">PAUSE</button>
         <button id="reset" type="button">RESET BODY</button>
+        <button id="tilt" type="button" aria-pressed="false">ENABLE TILT</button>
         <button id="fullscreen" type="button">FULLSCREEN</button>
         <a href="./fluid-ocean-rapier.html?rapier=0" id="rapier-toggle">RAPIER ON</a>
         <a href="../lab.html">LAB</a>
@@ -41,6 +42,65 @@
     toggle.textContent = rapier ? 'RAPIER ON' : 'RAPIER OFF';
     toggle.href = rapier ? './fluid-ocean-rapier.html?rapier=0' : './fluid-ocean-rapier.html';
     toggle.setAttribute('aria-label', rapier ? 'Disable Rapier rigid body' : 'Enable Rapier rigid body');
+    const tiltButton = document.getElementById('tilt');
+    const oceanFrame = document.getElementById('ocean-frame');
+    const tiltState = { enabled: false, baseline: null, x: 0, y: 0, z: 0 };
+    const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+    const publishTilt = () => {
+      window.osmoceanTilt = { x: tiltState.x, y: tiltState.y, z: tiltState.z, enabled: tiltState.enabled };
+      try {
+        if (oceanFrame.contentWindow) oceanFrame.contentWindow.osmoceanTilt = window.osmoceanTilt;
+      } catch {}
+      tiltButton.textContent = tiltState.enabled ? 'TILT ON' : 'ENABLE TILT';
+      tiltButton.setAttribute('aria-pressed', String(tiltState.enabled));
+    };
+    async function enableTilt() {
+      const Sensor = window.DeviceOrientationEvent;
+      if (!Sensor) {
+        tiltButton.textContent = 'TILT UNSUPPORTED';
+        return;
+      }
+      if (typeof Sensor.requestPermission === 'function') {
+        const permission = await Sensor.requestPermission();
+        if (permission !== 'granted') {
+          tiltButton.textContent = 'TILT DENIED';
+          return;
+        }
+      }
+      tiltState.enabled = true;
+      tiltState.baseline = null;
+      publishTilt();
+    }
+    window.addEventListener('deviceorientation', (event) => {
+      if (!tiltState.enabled || !Number.isFinite(event.beta) || !Number.isFinite(event.gamma)) return;
+      if (!tiltState.baseline) {
+        tiltState.baseline = { beta: event.beta, gamma: event.gamma };
+        return;
+      }
+      const radians = Math.PI / 180;
+      const db = (event.beta - tiltState.baseline.beta) * radians;
+      const dg = (event.gamma - tiltState.baseline.gamma) * radians;
+      const targetX = clamp(Math.sin(dg) * 9.81, -6.5, 6.5);
+      const targetY = clamp(-Math.sin(db) * 9.81, -6.5, 6.5);
+      const smoothing = 0.18;
+      tiltState.x += (targetX - tiltState.x) * smoothing;
+      tiltState.y += (targetY - tiltState.y) * smoothing;
+      publishTilt();
+    }, true);
+    tiltButton.addEventListener('click', async () => {
+      if (tiltState.enabled) {
+        tiltState.enabled = false;
+        tiltState.baseline = null;
+        tiltState.x = tiltState.y = tiltState.z = 0;
+        publishTilt();
+      } else {
+        try { await enableTilt(); }
+        catch (error) { tiltButton.textContent = 'TILT ERROR'; tiltButton.title = error?.message || String(error); }
+      }
+    });
+    oceanFrame.addEventListener('load', publishTilt);
+    publishTilt();
+
     const fullscreen = document.getElementById('fullscreen');
     fullscreen.addEventListener('click', async () => {
       try {
