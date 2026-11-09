@@ -27,12 +27,12 @@
       <div class="actions">
         <button id="pause" type="button">PAUSE</button>
         <button id="reset" type="button">RESET BODY</button>
+        <button id="fullscreen" type="button">FULLSCREEN</button>
         <a href="./fluid-ocean-rapier.html?rapier=0" id="rapier-toggle">RAPIER ON</a>
         <a href="../lab.html">LAB</a>
       </div>
     </header>
     <div class="coupling-mark" aria-hidden="true"><span>WAVE FIELD</span><b>↓</b><span>SURFACE FORCING</span></div>
-    <footer class="footer-note">ONE-WAY OCEAN → SPH WAVE FORCING · OPTIONAL RAPIER 2D BODY · NOT A CONSERVATIVE THREE-WAY SOLVER</footer>
   </main>
   <script type="module" src="./src/osmocean/fluid-ocean-rapier.ts"></script>
   <script>
@@ -41,6 +41,19 @@
     toggle.textContent = rapier ? 'RAPIER ON' : 'RAPIER OFF';
     toggle.href = rapier ? './fluid-ocean-rapier.html?rapier=0' : './fluid-ocean-rapier.html';
     toggle.setAttribute('aria-label', rapier ? 'Disable Rapier rigid body' : 'Enable Rapier rigid body');
+    const fullscreen = document.getElementById('fullscreen');
+    fullscreen.addEventListener('click', async () => {
+      try {
+        if (document.fullscreenElement) await document.exitFullscreen();
+        else await document.documentElement.requestFullscreen();
+      } catch (error) {
+        fullscreen.textContent = 'FULLSCREEN UNAVAILABLE';
+        fullscreen.title = error?.message || String(error);
+      }
+    });
+    document.addEventListener('fullscreenchange', () => {
+      fullscreen.textContent = document.fullscreenElement ? 'EXIT FULLSCREEN' : 'FULLSCREEN';
+    });
   </script>
 </body>
 </html>
