@@ -93,4 +93,24 @@ let upstreamHtml = read(upstreamHtmlPath);
 upstreamHtml = replaceExactly(upstreamHtml, '<title>Gelatin Water</title>', '<title>Ultra-Water + Rapier | Osmocean</title>', 'upstream page title');
 write(upstreamHtmlPath, upstreamHtml);
 write(mainPath, main);
+main = replaceExactly(main, '  ocean.update(dt, timer);', `
+  // Device tilt changes the actual OceanSim wind spectrum, not just the camera or floaters.
+  // Rebuild only after a meaningful change to avoid recompiling the FFT spectrum every frame.
+  const deviceTilt = window.osmoceanTilt;
+  const tiltX = deviceTilt?.enabled ? Math.max(-6.5, Math.min(6.5, deviceTilt.x || 0)) : 0;
+  const tiltY = deviceTilt?.enabled ? Math.max(-6.5, Math.min(6.5, deviceTilt.y || 0)) : 0;
+  window.__osmoceanBaseWind ||= { speed: ocean.params.windSpeed, direction: ocean.params.windDirection };
+  const baseWind = window.__osmoceanBaseWind;
+  const tiltMagnitude = Math.hypot(tiltX, tiltY);
+  const targetDirection = baseWind.direction + Math.atan2(tiltX, -tiltY || 1e-6) * 180 / Math.PI * 0.55;
+  const targetSpeed = Math.max(1, Math.min(25, baseWind.speed + tiltMagnitude * 0.55));
+  const directionDelta = ((targetDirection - ocean.params.windDirection + 540) % 360) - 180;
+  if (Math.abs(directionDelta) >= 3 || Math.abs(targetSpeed - ocean.params.windSpeed) >= 0.2) {
+    ocean.params.windDirection = ((ocean.params.windDirection + Math.max(-3, Math.min(3, directionDelta)) + 540) % 360) - 180;
+    ocean.params.windSpeed += Math.max(-0.2, Math.min(0.2, targetSpeed - ocean.params.windSpeed));
+    ocean.dirty = true;
+  }
+  ocean.update(dt, timer);
+`, 'device tilt OceanSim wind coupling');
+
 console.log('Integrated pinned Ultra-Water source with Rapier-owned floater bodies and startup diagnostics.');
