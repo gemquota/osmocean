@@ -180,6 +180,7 @@ export function createUnifiedCoupling({ THREE, scene, RAPIER, floaters }) {
   document.body.appendChild(hud);
   hud.querySelector('#osmocean-unified-pause').addEventListener('click', event => {
     paused = !paused;
+    floaters.paused = paused;
     event.currentTarget.textContent = paused ? 'RESUME' : 'PAUSE';
   });
   hud.querySelector('#osmocean-unified-reset').addEventListener('click', reset);
@@ -187,8 +188,8 @@ export function createUnifiedCoupling({ THREE, scene, RAPIER, floaters }) {
   window.__osmoceanUnified = {
     engines: ['Ultra-Water FFT ocean', 'jeantimex/fluid SPH', 'Rapier 3D shared world'],
     getDiagnostics: () => ({ fixedSteps, particles: sph.state.count, waveEnergy, bodyForce: lastForce, paused, time: simulationTime }),
-    pause: () => { paused = true; },
-    resume: () => { paused = false; },
+    pause: () => { paused = true; floaters.paused = true; },
+    resume: () => { paused = false; floaters.paused = false; },
     reset
   };
   updateVisuals();
