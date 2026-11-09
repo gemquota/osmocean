@@ -79,7 +79,7 @@ const bootDiagnostics = [
 main = replaceExactly(main, 'const REFLECT_LAYER = 1;', bootDiagnostics, 'Rapier WASM initialization and visible startup diagnostics');
 main = replaceExactly(main,
   'const floaters = new Floaters({ scene, heightAt: islandHeight, patchMaterial: terrain.patchProp });',
-  "const floaters = new RapierFloaters({ RAPIER, scene, heightAt: islandHeight, patchMaterial: terrain.patchProp, query });\nconst osmoceanUnified = createUnifiedCoupling({ THREE, scene, RAPIER, floaters });\nwindow.__osmoceanBootStatus = 'rapier-world-ready';",
+  "const floaters = new RapierFloaters({ RAPIER, scene, heightAt: islandHeight, patchMaterial: terrain.patchProp, query });\nlet osmoceanUnified = null;\nwindow.__osmoceanBootStatus = 'rapier-world-ready';",
   'floater runtime construction');
 main = replaceExactly(main,
   'const pts = floaters.collectPoints([camera.position]);',
@@ -128,6 +128,7 @@ main = replaceExactly(main, '  osmoceanUnified.step(dt, elapsed, ocean.params);
   }
   ocean.update(dt, timer);
 `, 'device tilt OceanSim wind coupling');
+main = replaceExactly(main, 'views[ui.view]();', 'views[ui.view]();\nosmoceanUnified = createUnifiedCoupling({ THREE, scene, RAPIER, floaters, controls });', 'initialize unified scene after the camera preset');
 write(mainPath, main);
 
 console.log('Integrated Ultra-Water, pinned SPH and Rapier into one Three.js scene and render lifecycle.');
