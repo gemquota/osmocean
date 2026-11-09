@@ -10,7 +10,7 @@ const FIXED_DT = 1 / 120;
  * its single world.step(). SPH particles and rigid bodies render in the
  * existing Ultra-Water Three.js scene and renderer.
  */
-export function createUnifiedCoupling({ THREE, scene, RAPIER, floaters }) {
+export function createUnifiedCoupling({ THREE, scene, RAPIER, floaters, controls }) {
   if (!THREE || !scene || !RAPIER || !floaters?.world || !floaters?.addCoupledStep) {
     throw new TypeError('Three.js scene, Rapier and shared floater world are required');
   }
@@ -31,7 +31,8 @@ export function createUnifiedCoupling({ THREE, scene, RAPIER, floaters }) {
 
   // This body belongs to the same Rapier 3D world and fixed-step schedule as
   // the ocean floaters. Its Z thickness is finite; SPH remains a 2D slice.
-  const start = { x: 0, y: -0.55, z: 0 };
+  const origin = { x: controls?.target?.x ?? 0, y: 0, z: controls?.target?.z ?? 0 };
+  const start = { x: origin.x, y: -0.55, z: origin.z };
   const body = floaters.world.createRigidBody(
     RAPIER.RigidBodyDesc.dynamic()
       .setTranslation(start.x, start.y, start.z)
@@ -110,7 +111,7 @@ export function createUnifiedCoupling({ THREE, scene, RAPIER, floaters }) {
   function coupledFixedStep(dt, time) {
     if (paused) return;
     const p = body.translation();
-    sph.config.obstacleCentre = { x: p.x, y: p.y };
+    sph.config.obstacleCentre = { x: p.x - origin.x, y: p.y - origin.y };
     applyWaveBoundary(time);
     sph.step(dt);
 
@@ -144,9 +145,9 @@ export function createUnifiedCoupling({ THREE, scene, RAPIER, floaters }) {
     const n = Math.min(sph.state.count, particleCount);
     for (let i = 0; i < n; i++) {
       const j = i * 2, k = i * 3;
-      positions[k] = pos[j];
-      positions[k + 1] = pos[j + 1];
-      positions[k + 2] = 0;
+      positions[k] = origin.x + pos[j];
+      positions[k + 1] = origin.y + pos[j + 1];
+      positions[k + 2] = origin.z;
       const speed = Math.hypot(vel[j], vel[j + 1]);
       const t = clamp(speed / 8, 0, 1);
       colors[k] = 0.12 + 0.82 * t;
