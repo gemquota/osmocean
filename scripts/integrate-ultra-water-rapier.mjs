@@ -85,7 +85,7 @@ main = replaceExactly(main,
   'const pts = floaters.collectPoints([camera.position]);',
   'const pts = floaters.collectPoints([camera.position], elapsed);',
   'batched query collection');
-main = replaceExactly(main, 'floaters.step(dt);', 'floaters.step(dt, elapsed);', 'current simulation time for readback age');
+main = replaceExactly(main, 'floaters.step(dt);', 'osmoceanUnified.step(dt, elapsed, ocean.params);\n  floaters.step(dt, elapsed);', 'shared unified world frame and current simulation time');
 main = replaceExactly(main,
   'const query = new WaterQuery(renderer, surface, 512);',
   'const query = new WaterQuery(renderer, surface, 1024);',
