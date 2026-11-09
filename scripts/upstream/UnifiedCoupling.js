@@ -18,7 +18,7 @@ export function createUnifiedCoupling({ THREE, scene, RAPIER, floaters, controls
   const hiddenCanvas = document.createElement('canvas');
   hiddenCanvas.width = 800;
   hiddenCanvas.height = 450;
-  hiddenCanvas.style.cssText = 'position:fixed;left:-10000px;top:0;width:800px;height:450px;pointer-events:none';
+  hiddenCanvas.style.cssText = 'position:fixed;left:-10000px;top:0;width:800px;height:450px;visibility:hidden;pointer-events:none';
   document.body.appendChild(hiddenCanvas);
 
   const sph = createSim(hiddenCanvas);
