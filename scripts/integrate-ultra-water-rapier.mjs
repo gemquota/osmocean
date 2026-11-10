@@ -49,7 +49,7 @@ const mainPath = path.join(upstream, 'src/main.js');
 let main = read(mainPath);
 main = replaceExactly(main,
   "import { Floaters } from './scene/floaters.js';",
-  "import { Floaters } from './scene/floaters.js';\nimport { RapierFloaters } from './scene/rapierFloaters.js';\nimport * as RAPIER from '@dimforge/rapier3d-compat';\nimport { createUnifiedCoupling } from './osmocean/UnifiedCoupling.js';",
+  "import { Floaters } from './scene/floaters.js';\nimport { RapierFloaters } from './scene/rapierFloaters.js';\nimport * as RAPIER from '@dimforge/rapier3d-compat';\nimport { createUnifiedCoupling } from './osmocean/UnifiedCoupling.js';\nimport { FishEcology } from './ecology/fish-ecology.js';\nimport { createReef } from './ecology/reef-environment.js';",
   'floater import');
 const bootDiagnostics = [
   "const bootError = document.createElement('pre');",
@@ -138,20 +138,6 @@ main = replaceExactly(main, 'views[ui.view]();', 'views[ui.view]();\ncontrols.ta
 // Add fish ecology after the Rapier integration has transformed the upstream entry point.
 copy(path.join(repoRoot, 'src/ecology/fish-ecology.js'), path.join(upstream, 'src/ecology/fish-ecology.js'));
 copy(path.join(repoRoot, 'src/ecology/reef-environment.js'), path.join(upstream, 'src/ecology/reef-environment.js'));
-main = replaceExactly(main,
-  `import { Floaters } from './scene/floaters.js';
-import { RapierFloaters } from './scene/rapierFloaters.js';
-import * as RAPIER from '@dimforge/rapier3d-compat';
-import { createUnifiedCoupling } from './osmocean/UnifiedCoupling.js';
-import { FishEcology } from './ecology/fish-ecology.js';
-import { createReef } from './ecology/reef-environment.js';`,
-  `import { Floaters } from './scene/floaters.js';
-import { RapierFloaters } from './scene/rapierFloaters.js';
-import * as RAPIER from '@dimforge/rapier3d-compat';
-import { createUnifiedCoupling } from './osmocean/UnifiedCoupling.js';
-import { FishEcology } from './ecology/fish-ecology.js';
-import { createReef } from './ecology/reef-environment.js';`,
-  'native fish ecology import');
 main = replaceExactly(main,
   "let floaters;\ntry { floaters = window.__osmoceanRapierReady ? new RapierFloaters({ RAPIER, scene, heightAt: islandHeight, patchMaterial: terrain.patchProp, query }) : new Floaters({ scene, heightAt: islandHeight, patchMaterial: terrain.patchProp }); } catch (error) { reportBootError(error); floaters = new Floaters({ scene, heightAt: islandHeight, patchMaterial: terrain.patchProp }); }\nlet osmoceanUnified = null;\nwindow.__osmoceanBootStatus = window.__osmoceanRapierReady ? 'rapier-world-ready' : 'fallback-world-ready';",
   `let floaters;
