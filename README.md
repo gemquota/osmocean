@@ -13,6 +13,7 @@ Osmocean is the independent successor to [Mocean](https://github.com/gemquota/mo
 The repository builds a browser scene from pinned Ultra-Water and jeantimex/fluid sources. The FFT ocean, Rapier rigid bodies and native fish ecology share the Ultra-Water Three.js renderer and scene. The ecology layer now includes inherited and mutating traits, a compact heritable neural policy, schooling, food-resource regrowth, feeding and energy budgets, mating/reproduction, evolved aggression and size-dependent predation, environmental gradients, and a live population-history observatory. The SPH experiments remain separate prototypes rather than a claimed three-way production solver. Ecological parameters are intentionally simplified and are not a validated marine-ecology model.
 
 - [Architecture](docs/ARCHITECTURE.md)
+- [Fish models, behaviour and attribution](docs/FISH-MODELS-AND-SOCIAL-ECOLOGY.md)
 - [Roadmap and gates](docs/ROADMAP.md)
 - [Gate 0 kernel contracts](docs/GATE-0-KERNEL-CONTRACTS.md)
 - [Mocean source audit](docs/MOCEAN-AUDIT.md)
