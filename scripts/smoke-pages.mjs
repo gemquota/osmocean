@@ -14,7 +14,7 @@ try {
     const response = await page.goto(`${base}/ultra-water/`, { waitUntil: 'domcontentloaded', timeout: 60000 });
     if (!response?.ok()) throw new Error(`Unified scene HTTP ${response?.status() ?? 'no response'}`);
 
-    await page.waitForFunction(() => Boolean(window.__osmoceanUnified), null, { timeout: 60000 });
+    await page.waitForFunction(() => Boolean(window.__osmoceanUnified) || ['scene-initialized', 'error'].includes(window.__osmoceanBootStatus), null, { timeout: 60000 });
     await page.locator('#osmocean-unified-status').waitFor({ state: 'visible', timeout: 10000 });
     await page.waitForFunction(() => {
       const c = [...document.querySelectorAll('canvas')].filter(el => {
@@ -33,11 +33,15 @@ try {
       }).length,
       iframes: document.querySelectorAll('iframe').length,
       status: document.querySelector('#osmocean-unified-status')?.textContent,
+      bootStatus: window.__osmoceanBootStatus,
+      hasUnified: Boolean(window.__osmoceanUnified),
+      bootError: document.querySelector('#osmocean-boot-error')?.textContent || null,
       diagnostics: window.__osmoceanUnified?.getDiagnostics?.(),
       viewport: [innerWidth, innerHeight],
       scroll: [document.documentElement.scrollWidth, document.documentElement.scrollHeight],
     }));
-    await page.screenshot({ path: `smoke-${viewport.width}.png`, fullPage: false, timeout: 0, animations: 'disabled' });
+    try { await page.screenshot({ path: `smoke-${viewport.width}.png`, fullPage: false, timeout: 15000, animations: 'disabled' }); } catch (error) { errors.push(`Screenshot capture failed: ${error.message}`); }
+    if (!structure.hasUnified) throw new Error(`Unified Rapier/SPH startup did not complete: ${JSON.stringify(structure)}`);
     if (structure.visibleCanvases !== 1 || structure.iframes !== 0) {
       throw new Error(`Expected one renderer and no embedded applications: ${JSON.stringify(structure)}`);
     }
