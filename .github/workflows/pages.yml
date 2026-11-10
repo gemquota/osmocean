@@ -39,6 +39,17 @@ jobs:
           ref: 9daf3ae2add7dedc3eadcc10da5e4a44ef1b771f
           path: _upstream/fluid
           persist-credentials: false
+      - name: Checkout pinned PolyFish model and licence
+        uses: actions/checkout@v4
+        with:
+          repository: unclemattmakes/polyfish
+          ref: 1c0d7636f2c71fd81d001a597c13554f9cbdd417
+          path: _upstream/polyfish
+          sparse-checkout: |
+            assets/models/fish_rigged.glb
+            LICENSE
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
@@ -47,7 +58,7 @@ jobs:
           cache-dependency-path: _upstream/ultra-water/package-lock.json
       - name: Apply Osmocean Rapier integration
         run: |
-          node scripts/integrate-ultra-water-rapier.mjs _upstream/ultra-water _upstream/fluid
+          node scripts/integrate-ultra-water-rapier.mjs _upstream/ultra-water _upstream/fluid _upstream/polyfish
       - name: Install and build Ultra-Water
         working-directory: _upstream/ultra-water
         run: |
