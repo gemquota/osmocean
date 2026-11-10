@@ -22,19 +22,19 @@ export class FishEcology {
   rand(){let x=this.rng|0;x^=x<<13;x^=x>>>17;x^=x<<5;this.rng=x|0;return(x>>>0)/4294967296;}
   range(a,b){return a+this.rand()*(b-a);}
   clamp(v,a,b){return Math.max(a,Math.min(b,v));}
-  genes(parent){
+  genes(parent,mate=null){
     const ranges={speed:[1.2,7,3.4],size:[.45,1.8,1],metabolism:[.35,1.5,.8],sensoryRange:[7,34,18],
       cohesion:[0,1.8,.7],alignment:[0,1.8,.8],separation:[.2,2.2,1.1],aggression:[0,1,.25],
       sociality:[0,1,.5],kinAffinity:[0,1,.5],camouflage:[0,1,.5],feedingSpecialisation:[0,1,.5],fertility:[.2,1.4,.8]};
     const g={};for(const [k,[lo,hi,d]] of Object.entries(ranges)){
-      let v=parent?parent.genes[k]:this.range(lo,hi);
+      let v=parent?(mate?(parent.genes[k]+mate.genes[k])*.5:parent.genes[k]):this.range(lo,hi);
       if(parent&&this.rand()<this.params.mutationRate)v+=this.range(-1,1)*(hi-lo)*this.params.mutationStrength;
       g[k]=this.clamp(v,lo,hi);
     }return g;
   }
-  makeFish(parent=null){
-    const T=this.T,g=this.genes(parent),brain=Array.from({length:12},(_,i)=>{
-      const v=parent?parent.brain[i]:this.range(-1,1);
+  makeFish(parent=null,mate=null){
+    const T=this.T,g=this.genes(parent,mate),brain=Array.from({length:12},(_,i)=>{
+      const v=parent?(mate?(parent.brain[i]+mate.brain[i])*.5:parent.brain[i]):this.range(-1,1);
       return this.clamp(v+(parent&&this.rand()<this.params.mutationRate?this.range(-.35,.35):0),-2,2);
     });
     const root=new T.Group(),mat=this.mats[Math.floor(this.rand()*this.mats.length)];
@@ -47,7 +47,7 @@ export class FishEcology {
       p?p.z+this.range(-2,2):this.range(-this.params.worldRadius*.7,this.params.worldRadius*.7));
     this.group.add(root);const heading=new T.Vector3(this.rand()-.5,this.range(-.15,.15),this.rand()-.5).normalize();
     return{id:this.nextId++,parentId:parent?.id??null,root,tail,genes:g,brain,heading,
-      velocity:heading.clone().multiplyScalar(g.speed*.5),energy:parent?.energy*.45??this.range(.7,1),
+      velocity:heading.clone().multiplyScalar(g.speed*.5),energy:parent?parent.energy*.45:this.range(.7,1),
       age:0,cooldown:0,phase:this.rand()*Math.PI*2,generation:parent?parent.generation+1:0,offspring:0,eaten:0};
   }
   populate(n){n=this.clamp(Math.round(n),0,500);while(this.fish.length<n)this.fish.push(this.makeFish());while(this.fish.length>n)this.group.remove(this.fish.pop().root);this.params.population=n;}
@@ -83,7 +83,16 @@ export class FishEcology {
       const env=this.environmentAt(p),steer=new T.Vector3(),food=this.nearestResource(p,f.genes.sensoryRange),w=f.brain;
       if(count){coh.multiplyScalar(1/count).sub(p).normalize().multiplyScalar(f.genes.cohesion);ali.multiplyScalar(1/count).normalize().multiplyScalar(f.genes.alignment);steer.add(coh).add(ali).addScaledVector(sep,f.genes.separation);}
       if(food)steer.addScaledVector(food.mesh.position.clone().sub(p).normalize(),w[0]*(.15+f.genes.feedingSpecialisation));
-      steer.addScaledVector(env.current,w[1]*.22);steer.y+=w[2]*(env.oxygen-.5)+w[3]*(env.temperature-.5);
+      steer.addScaledVector(env.current,w[1]*.22);
+      steer.y+=w[2]*(env.oxygen-.5)+w[3]*(env.temperature-.5);
+      steer.addScaledVector(coh.clone().normalize(),w[4]*f.genes.sociality*.25);
+      steer.addScaledVector(sep.clone().normalize(),w[5]*.18);
+      steer.addScaledVector(new T.Vector3(0,env.light-.5,0),w[6]*.12);
+      steer.addScaledVector(new T.Vector3(-p.x,0,-p.z).normalize(),w[7]*.08);
+      steer.addScaledVector(food?food.mesh.position.clone().sub(p).normalize():new T.Vector3(),w[8]*.12);
+      steer.y+=w[9]*(env.nutrient-.5)*.08;
+      steer.addScaledVector(env.current,w[10]*.08);
+      steer.addScaledVector(new T.Vector3(0,env.oxygen-.5,0),w[11]*.08);
       if(threat)steer.addScaledVector(p.clone().sub(threat.root.position).normalize(),1.4*(1-f.genes.aggression));
       if(prey)steer.addScaledVector(prey.root.position.clone().sub(p).normalize(),1.2*f.genes.aggression);
       if(Math.hypot(p.x,p.z)>this.params.worldRadius)steer.add(new T.Vector3(-p.x,0,-p.z).normalize().multiplyScalar(2));
@@ -93,7 +102,7 @@ export class FishEcology {
       if(speed>1e-6)f.velocity.multiplyScalar(T.MathUtils.damp(speed,target,1.8,step)/speed);p.addScaledVector(f.velocity,step);
       f.age+=step;f.cooldown=Math.max(0,f.cooldown-step);f.energy-=f.genes.metabolism*step*.0018+Math.max(0,.55-env.oxygen)*step*.003;
       if(food&&p.distanceTo(food.mesh.position)<1.8&&food.biomass>0){const bite=Math.min(food.biomass,this.params.feedingRate*step*8);food.biomass-=bite;f.energy=Math.min(1.5,f.energy+bite*.8);f.eaten+=bite;food.mesh.scale.setScalar(Math.max(.08,food.biomass));if(food.biomass<=.02)food.respawn=this.range(8,22);}
-      if(f.energy>this.params.reproductionEnergy&&f.cooldown<=0&&mate&&f.id<mate.id&&this.fish.length+births.length<500){births.push(this.makeFish(f));f.energy*=.62;mate.energy*=.92;f.cooldown=mate.cooldown=this.params.reproductionCooldown/f.genes.fertility;f.offspring++;mate.offspring++;}
+      if(f.energy>this.params.reproductionEnergy&&f.cooldown<=0&&mate&&f.id<mate.id&&this.fish.length+births.length<500){births.push(this.makeFish(f,mate));f.energy*=.62;mate.energy*=.92;f.cooldown=mate.cooldown=this.params.reproductionCooldown/f.genes.fertility;f.offspring++;mate.offspring++;}
       if(prey&&p.distanceTo(prey.root.position)<1.1&&f.energy<1.2&&this.rand()<this.params.predationRate*step*2){f.energy=Math.min(1.5,f.energy+prey.genes.size*.42);f.eaten+=prey.genes.size;deaths.add(prey);}
       if(f.energy<=.08||f.age>1800)deaths.add(f);
       f.heading.copy(f.velocity).normalize();if(f.heading.lengthSq())f.root.quaternion.setFromUnitVectors(new T.Vector3(1,0,0),f.heading);
