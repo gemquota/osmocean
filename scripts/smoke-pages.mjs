@@ -40,8 +40,9 @@ try {
       viewport: [innerWidth, innerHeight],
       scroll: [document.documentElement.scrollWidth, document.documentElement.scrollHeight],
     }));
-    try { await page.screenshot({ path: `smoke-${viewport.width}.png`, fullPage: false, timeout: 15000, animations: 'disabled' }); } catch (error) { errors.push(`Screenshot capture failed: ${error.message}`); }
     if (!structure.hasUnified) throw new Error(`Unified Rapier/SPH startup did not complete: ${JSON.stringify(structure)}`);
+    const ecology = await page.evaluate(() => ({ mode: window.__osmoceanDisplayMode, cameraY: window.app?.camera?.position?.y, fish: window.__osmoceanEcology?.fish?.length ?? 0, reefChildren: window.__osmoceanEcology?.group?.children?.length ?? 0, reefVisible: window.__osmoceanEcology?.group?.visible }));
+    if (ecology.mode !== 'UNDERWATER REEF' || !(ecology.cameraY < 0) || ecology.fish < 50 || ecology.reefChildren < 100 || !ecology.reefVisible) throw new Error(`Underwater reef population missing: ${JSON.stringify(ecology)}`);
     if (structure.visibleCanvases !== 1 || structure.iframes !== 0) {
       throw new Error(`Expected one renderer and no embedded applications: ${JSON.stringify(structure)}`);
     }
