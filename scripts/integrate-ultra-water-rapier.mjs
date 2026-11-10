@@ -49,7 +49,7 @@ const mainPath = path.join(upstream, 'src/main.js');
 let main = read(mainPath);
 main = replaceExactly(main,
   "import { Floaters } from './scene/floaters.js';",
-  "import { RapierFloaters } from './scene/rapierFloaters.js';\nimport * as RAPIER from '@dimforge/rapier3d-compat';\nimport { createUnifiedCoupling } from './osmocean/UnifiedCoupling.js';",
+  "import { Floaters } from './scene/floaters.js';\nimport { RapierFloaters } from './scene/rapierFloaters.js';\nimport * as RAPIER from '@dimforge/rapier3d-compat';\nimport { createUnifiedCoupling } from './osmocean/UnifiedCoupling.js';",
   'floater import');
 const bootDiagnostics = [
   "const bootError = document.createElement('pre');",
@@ -65,12 +65,14 @@ const bootDiagnostics = [
   "window.addEventListener('error', (event) => reportBootError(event.error || event.message));",
   "window.addEventListener('unhandledrejection', (event) => reportBootError(event.reason));",
   "window.__osmoceanBootStatus = 'rapier-initializing';",
+  "window.__osmoceanRapierReady = false;",
   "try {",
   "  await RAPIER.init();",
   "  window.__osmoceanBootStatus = 'rapier-ready';",
+  "  window.__osmoceanRapierReady = true;",
   "} catch (error) {",
   "  reportBootError(error);",
-  "  throw error;",
+  "  window.__osmoceanRapierReady = false;",
   "}",
   "document.title = 'Ultra-Water + Rapier | Osmocean';",
   "",
@@ -79,13 +81,13 @@ const bootDiagnostics = [
 main = replaceExactly(main, 'const REFLECT_LAYER = 1;', bootDiagnostics, 'Rapier WASM initialization and visible startup diagnostics');
 main = replaceExactly(main,
   'const floaters = new Floaters({ scene, heightAt: islandHeight, patchMaterial: terrain.patchProp });',
-  "const floaters = new RapierFloaters({ RAPIER, scene, heightAt: islandHeight, patchMaterial: terrain.patchProp, query });\nlet osmoceanUnified = null;\nwindow.__osmoceanBootStatus = 'rapier-world-ready';",
+  "let floaters;\ntry { floaters = window.__osmoceanRapierReady ? new RapierFloaters({ RAPIER, scene, heightAt: islandHeight, patchMaterial: terrain.patchProp, query }) : new Floaters({ scene, heightAt: islandHeight, patchMaterial: terrain.patchProp }); } catch (error) { reportBootError(error); floaters = new Floaters({ scene, heightAt: islandHeight, patchMaterial: terrain.patchProp }); }\nlet osmoceanUnified = null;\nwindow.__osmoceanBootStatus = window.__osmoceanRapierReady ? 'rapier-world-ready' : 'fallback-world-ready';",
   'floater runtime construction');
 main = replaceExactly(main,
   'const pts = floaters.collectPoints([camera.position]);',
   'const pts = floaters.collectPoints([camera.position], elapsed);',
   'batched query collection');
-main = replaceExactly(main, 'floaters.step(dt);', 'osmoceanUnified.step(dt, elapsed, ocean.params);\n  floaters.step(dt, elapsed);', 'shared unified world frame and current simulation time');
+main = replaceExactly(main, 'floaters.step(dt);', 'osmoceanUnified?.step(dt, elapsed, ocean.params);\n  floaters.step(dt, elapsed);', 'shared unified world frame and current simulation time');
 main = replaceExactly(main,
   'const query = new WaterQuery(renderer, surface, 512);',
   'const query = new WaterQuery(renderer, surface, 1024);',
@@ -127,7 +129,7 @@ main = replaceExactly(main, '  ocean.update(dt, timer);', `
   }
   ocean.update(dt, timer);
 `, 'device tilt OceanSim wind coupling');
-main = replaceExactly(main, 'views[ui.view]();', 'views[ui.view]();\nosmoceanUnified = createUnifiedCoupling({ THREE, scene, RAPIER, floaters, controls });', 'initialize unified scene after the camera preset');
+main = replaceExactly(main, 'views[ui.view]();', 'views[ui.view]();\nif (window.__osmoceanRapierReady && floaters instanceof RapierFloaters) { try { osmoceanUnified = createUnifiedCoupling({ THREE, scene, RAPIER, floaters, controls }); } catch (error) { reportBootError(error); } }', 'initialize unified scene after the camera preset');
 
 // Add fish ecology after the Rapier integration has transformed the upstream entry point.
 copy(path.join(repoRoot, 'src/ecology/fish-ecology.js'), path.join(upstream, 'src/ecology/fish-ecology.js'));
