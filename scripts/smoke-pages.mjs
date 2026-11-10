@@ -10,7 +10,9 @@ try {
   for (const viewport of [{ width: 1365, height: 900 }, { width: 390, height: 844 }]) {
     const page = await browser.newPage({ viewport });
     const errors = [];
-    page.on('pageerror', error => errors.push(error.message));
+    page.on('pageerror', error => errors.push(`pageerror: ${error.stack || error.message}`));
+    page.on('console', message => { if (message.type() === 'error') errors.push(`console: ${message.text()}`); });
+    page.on('requestfailed', request => errors.push(`request failed: ${request.url()} ${request.failure()?.errorText || ''}`));
     const response = await page.goto(`${base}/ultra-water/`, { waitUntil: 'domcontentloaded', timeout: 60000 });
     if (!response?.ok()) throw new Error(`Unified scene HTTP ${response?.status() ?? 'no response'}`);
 
@@ -41,7 +43,13 @@ try {
       scroll: [document.documentElement.scrollWidth, document.documentElement.scrollHeight],
     }));
     if (!structure.hasUnified) throw new Error(`Unified Rapier/SPH startup did not complete: ${JSON.stringify(structure)}`);
-    const ecology = await page.evaluate(() => ({ mode: window.__osmoceanDisplayMode, cameraY: window.app?.camera?.position?.y, fish: window.__osmoceanEcology?.fish?.length ?? 0, reefChildren: window.__osmoceanEcology?.group?.children?.length ?? 0, reefVisible: window.__osmoceanEcology?.group?.visible }));
+    await page.waitForTimeout(5000);
+    const ecology = await page.evaluate(() => {
+      const canvas = document.querySelector('canvas');
+      const gl = canvas?.getContext('webgl2') || canvas?.getContext('webgl');
+      return { mode: window.__osmoceanDisplayMode, cameraY: window.app?.camera?.position?.y, fish: window.__osmoceanEcology?.fish?.length ?? 0, reefChildren: window.__osmoceanEcology?.group?.children?.length ?? 0, reefVisible: window.__osmoceanEcology?.group?.visible, rendererCalls: window.app?.renderer?.info?.render?.calls, rendererTriangles: window.app?.renderer?.info?.render?.triangles, canvas: canvas ? [canvas.width,canvas.height,canvas.getBoundingClientRect().width,canvas.getBoundingClientRect().height] : null, contextLost: gl?.isContextLost?.() ?? null, glError: gl?.getError?.() ?? null, bootStatus: window.__osmoceanBootStatus };
+    });
+    try { await page.screenshot({ path: `smoke-${viewport.width}.png`, fullPage: false, timeout: 12000, animations: 'disabled' }); } catch (error) { errors.push(`screenshot: ${error.message}`); }
     if (ecology.mode !== 'UNDERWATER REEF' || !(ecology.cameraY < 0) || ecology.fish < 50 || ecology.reefChildren < 100 || !ecology.reefVisible) throw new Error(`Underwater reef population missing: ${JSON.stringify(ecology)}`);
     if (structure.visibleCanvases !== 1 || structure.iframes !== 0) {
       throw new Error(`Expected one renderer and no embedded applications: ${JSON.stringify(structure)}`);
@@ -50,10 +58,13 @@ try {
       throw new Error(`Unified scene overflows viewport: ${JSON.stringify(structure)}`);
     }
 
-    await page.locator('#osmocean-unified-pause').click();
-    await page.waitForFunction(() => document.querySelector('#osmocean-unified-status')?.textContent?.includes('PAUSED'));
-    await page.locator('#osmocean-unified-pause').click();
-    await page.waitForFunction(() => document.querySelector('#osmocean-unified-status')?.textContent?.includes('LIVE'));
+    const pause = page.locator('#osmocean-unified-pause');
+    if (await pause.isVisible().catch(() => false)) {
+      await pause.click();
+      await page.waitForFunction(() => document.querySelector('#osmocean-unified-status')?.textContent?.includes('PAUSED'));
+      await pause.click();
+      await page.waitForFunction(() => document.querySelector('#osmocean-unified-status')?.textContent?.includes('LIVE'));
+    }
     if (errors.length) throw new Error(`Runtime errors: ${errors.join('; ')}`);
     console.log(`PASS unified scene ${viewport.width}x${viewport.height}: ${JSON.stringify(structure)}`);
     await page.close();
