@@ -89,8 +89,16 @@ main = replaceExactly(main,
   'batched query collection');
 main = replaceExactly(main, 'floaters.step(dt);', 'osmoceanUnified?.step(dt, elapsed, ocean.params);\n  floaters.step(dt, elapsed);', 'shared unified world frame and current simulation time');
 main = replaceExactly(main,
+  `const quality = mobile
+  ? { resolution: 0.6, msaa: 2, reflections: true, reflectionScale: 0.35, autoResolution: true }
+  : { resolution: 1, msaa: 4, reflections: true, reflectionScale: 0.5 };`,
+  `const quality = mobile
+  ? { resolution: 0.5, msaa: 0, reflections: false, reflectionScale: 0.25, autoResolution: true }
+  : { resolution: 1, msaa: 4, reflections: true, reflectionScale: 0.5 };`,
+  'conservative mobile GPU profile');
+main = replaceExactly(main,
   'const query = new WaterQuery(renderer, surface, 512);',
-  'const query = new WaterQuery(renderer, surface, 1024);',
+  'const query = new WaterQuery(renderer, surface, mobile ? 512 : 1024);',
   'batched query capacity');
 main = replaceExactly(main,
   "const gui = new GUI({ title: 'Gelatin Water' });",
@@ -142,8 +150,8 @@ main = replaceExactly(main,
   "let floaters;\ntry { floaters = window.__osmoceanRapierReady ? new RapierFloaters({ RAPIER, scene, heightAt: islandHeight, patchMaterial: terrain.patchProp, query }) : new Floaters({ scene, heightAt: islandHeight, patchMaterial: terrain.patchProp }); } catch (error) { reportBootError(error); floaters = new Floaters({ scene, heightAt: islandHeight, patchMaterial: terrain.patchProp }); }\nlet osmoceanUnified = null;\nwindow.__osmoceanBootStatus = window.__osmoceanRapierReady ? 'rapier-world-ready' : 'fallback-world-ready';",
   `let floaters;
 try { floaters = window.__osmoceanRapierReady ? new RapierFloaters({ RAPIER, scene, heightAt: islandHeight, patchMaterial: terrain.patchProp, query }) : new Floaters({ scene, heightAt: islandHeight, patchMaterial: terrain.patchProp }); } catch (error) { reportBootError(error); floaters = new Floaters({ scene, heightAt: islandHeight, patchMaterial: terrain.patchProp }); }
-const ecology = new FishEcology(THREE, scene, { population: 110, worldRadius: 42, minDepth: 3, maxDepth: 26, resourceCount: 220, seed: 0x51f15e });
-const reef = createReef(THREE, ecology.group);
+const ecology = new FishEcology(THREE, scene, { population: mobile ? 64 : 110, worldRadius: 42, minDepth: 3, maxDepth: 26, resourceCount: mobile ? 140 : 220, seed: 0x51f15e });
+const reef = createReef(THREE, ecology.group, 0x71ef, mobile ? 0.6 : 1);
 let osmoceanUnified = null;
 window.__osmoceanBootStatus = window.__osmoceanRapierReady ? 'rapier-world-ready' : 'fallback-world-ready';`,
   `let floaters;
