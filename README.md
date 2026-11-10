@@ -8,9 +8,9 @@ Osmocean is the independent successor to [Mocean](https://github.com/gemquota/mo
 
 ## Project status
 
-**Status: integration prototype with an initial native fish-agent layer under verification.**
+**Status: native Ultra-Water ecology implementation integrated; deployment and runtime verification pending.**
 
-The repository builds a unified browser scene from pinned Ultra-Water and jeantimex/fluid sources. The FFT ocean and Rapier rigid bodies share one Three.js renderer, one scene, one Rapier world and one fixed-step callback. A native fish-agent layer is being added directly to that Ultra-Water scene. The SPH experiments remain separate prototypes rather than a claimed three-way production solver. This is not a production or conservation-complete fluid/solid solver.
+The repository builds a browser scene from pinned Ultra-Water and jeantimex/fluid sources. The FFT ocean, Rapier rigid bodies and native fish ecology share the Ultra-Water Three.js renderer and scene. The ecology layer now includes inherited and mutating traits, a compact heritable neural policy, schooling, food-resource regrowth, feeding and energy budgets, mating/reproduction, evolved aggression and size-dependent predation, environmental gradients, and a live population-history observatory. The SPH experiments remain separate prototypes rather than a claimed three-way production solver. Ecological parameters are intentionally simplified and are not a validated marine-ecology model.
 
 - [Architecture](docs/ARCHITECTURE.md)
 - [Roadmap and gates](docs/ROADMAP.md)
@@ -57,3 +57,19 @@ See [ROADMAP.md](docs/ROADMAP.md) for gates and acceptance criteria.
 The first ecology increment adds deterministic fish agents directly to the Ultra-Water scene and render loop. Fish have heritable movement traits (speed, size, cohesion, alignment, separation, sensory range, metabolism and camouflage), spatially indexed neighbour queries, schooling/separation steering, a bounded water-column habitat and a live population control. Their meshes use the upstream scene's renderer, camera, lighting and underwater post-processing.
 
 This is an initial locomotion/population foundation, not a completed ecosystem. Feeding, energy recovery, reproduction, mutation, neural-network brains, predation, food webs, environmental gradients and population-history tooling remain unimplemented until separately tested.
+
+
+## Native Ultra-Water ecology
+
+Fish agents are native scene objects, not an iframe or an adjacent demo. The ecology layer includes:
+
+- Heritable traits for speed, body size, metabolism, sensory range, schooling, aggression, sociality, kin affinity, camouflage, feeding specialisation and fertility.
+- Sexual inheritance from two parents, mutation rate/strength and generational ancestry.
+- A compact 12-weight heritable policy that maps food, current, oxygen, temperature, light and social cues into movement decisions.
+- Spatially indexed neighbour queries, schooling, separation, threat avoidance and size/aggression-dependent predation. There is no fixed predator species.
+- Regenerating food biomass, feeding, energy expenditure, oxygen stress, reproduction and mortality.
+- Spatially varying current, temperature, light, nutrient and oxygen fields.
+- A live observatory panel with population, resource, mean-trait and generation readouts plus population-history chart.
+- Runtime controls grouped into ecology, food web, evolution/predation and environment.
+
+The model is an interactive evolutionary sandbox. Its simplified resource and predation rules are useful for observing feedback and selection, but should not be interpreted as empirically calibrated population dynamics.
