@@ -138,7 +138,7 @@ main = replaceExactly(main,
   "import { RapierFloaters } from './scene/rapierFloaters.js';\nimport * as RAPIER from '@dimforge/rapier3d-compat';\nimport { createUnifiedCoupling } from './osmocean/UnifiedCoupling.js';\nimport { FishEcology } from './ecology/fish-ecology.js';",
   'native fish ecology import');
 main = replaceExactly(main,
-  "const floaters = new RapierFloaters({ RAPIER, scene, heightAt: islandHeight, patchMaterial: terrain.patchProp, query });\nlet osmoceanUnified = null;\nwindow.__osmoceanBootStatus = 'rapier-world-ready';",
+  "let floaters;\ntry { floaters = window.__osmoceanRapierReady ? new RapierFloaters({ RAPIER, scene, heightAt: islandHeight, patchMaterial: terrain.patchProp, query }) : new Floaters({ scene, heightAt: islandHeight, patchMaterial: terrain.patchProp }); } catch (error) { reportBootError(error); floaters = new Floaters({ scene, heightAt: islandHeight, patchMaterial: terrain.patchProp }); }\nconst ecology = new FishEcology(THREE, scene, { population: 72, seed: 0x51f15e });\nlet osmoceanUnified = null;\nwindow.__osmoceanBootStatus = window.__osmoceanRapierReady ? 'rapier-world-ready' : 'fallback-world-ready';",
   "const floaters = new RapierFloaters({ RAPIER, scene, heightAt: islandHeight, patchMaterial: terrain.patchProp, query });\nconst ecology = new FishEcology(THREE, scene, { population: 72, seed: 0x51f15e });\nlet osmoceanUnified = null;\nwindow.__osmoceanBootStatus = 'rapier-world-ready';",
   'native fish ecology construction');
 main = replaceExactly(main,
