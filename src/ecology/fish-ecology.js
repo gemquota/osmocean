@@ -1,4 +1,5 @@
 import { clone as cloneSkeleton } from 'three/addons/utils/SkeletonUtils.js';
+import { applySwimMaterial, updateSwimUniforms } from './polyfish-swim-material.js';
 
 /**
  * Native Ultra-Water ecosystem. Agent state is authoritative; meshes are views.
@@ -45,6 +46,7 @@ export class FishEcology {
     const root=new T.Group(),mat=this.mats[species];let tail=null,mixer=null;
     if(this.modelTemplate){
       const visual=cloneSkeleton(this.modelTemplate);
+      visual.traverse(child=>{if(child.isMesh||child.isSkinnedMesh){child.material=Array.isArray(child.material)?child.material.map(m=>m.clone()):child.material.clone();}});
       visual.updateMatrixWorld(true);
       const rawSize=new T.Box3().setFromObject(visual).getSize(new T.Vector3());
       const longest=rawSize.x>=rawSize.z&&rawSize.x>=rawSize.y?'x':rawSize.z>=rawSize.y?'z':'y';
@@ -55,6 +57,7 @@ export class FishEcology {
       visual.scale.setScalar((2.3*g.size)/Math.max(extent.x,extent.y,extent.z,1e-6));
       visual.updateMatrixWorld(true);
       visual.position.sub(new T.Box3().setFromObject(visual).getCenter(new T.Vector3()));
+      const swimData=applySwimMaterial(visual,'fish');
       root.add(visual);
       if(this.modelAnimations.length){
         mixer=new T.AnimationMixer(visual);
@@ -73,7 +76,7 @@ export class FishEcology {
       p?p.z+this.range(-2,2):this.range(-this.params.worldRadius*.7,this.params.worldRadius*.7));
     this.group.add(root);const heading=new T.Vector3(this.rand()-.5,this.range(-.15,.15),this.rand()-.5).normalize();
     const role=g.leadership>.72&&g.sociality>.55?'leader':g.curiosity>.72?'scout':g.affiliation>.72?'shoaler':g.aggression>.72&&g.boldness>.55?'hunter':g.feedingSpecialisation>.72?'forager':g.boldness<.25?'shy':'generalist';
-    return{id:this.nextId++,parentId:parent?.id??null,species,root,tail,mixer,role,genes:g,brain,heading,memory:{foodPosition:new T.Vector3(),foodTtl:0,threatPosition:new T.Vector3(),threatTtl:0},
+    return{id:this.nextId++,parentId:parent?.id??null,species,root,tail,mixer,swimData,swimPhase:this.range(0,Math.PI*2),role,genes:g,brain,heading,memory:{foodPosition:new T.Vector3(),foodTtl:0,threatPosition:new T.Vector3(),threatTtl:0},
       velocity:heading.clone().multiplyScalar(g.speed*.5),energy:parent?parent.energy*.45:this.range(.7,1),
       age:0,cooldown:0,phase:this.rand()*Math.PI*2,generation:parent?parent.generation+1:0,offspring:0,eaten:0};
   }
@@ -143,6 +146,7 @@ export class FishEcology {
       f.heading.copy(f.velocity).normalize();if(f.heading.lengthSq())f.root.quaternion.setFromUnitVectors(new T.Vector3(1,0,0),f.heading);
       if(f.tail)f.tail.rotation.y=Math.sin(elapsed*(5+f.genes.speed)+f.phase)*.55;
       if(f.mixer)f.mixer.update(step);
+      if(f.swimData){f.swimPhase+=step*(4+f.genes.speed*.4);updateSwimUniforms(f.swimData,f.swimPhase,.8,f.energy<.3);}
     }
     for(const f of deaths)this.group.remove(f.root);this.fish=this.fish.filter(f=>!deaths.has(f)).concat(births);
     for(const r of this.resources){if(r.biomass<=.02){r.respawn-=step;if(r.respawn<=0){r.biomass=1;r.mesh.scale.setScalar(1);}}else{const e=this.environmentAt(r.mesh.position);r.biomass=Math.min(1,r.biomass+this.params.resourceRegrowth*e.nutrient*e.light*(.5+e.oxygen*.5)*step);}}
