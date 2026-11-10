@@ -95,16 +95,17 @@ export class FishEcology {
     const births=[],deaths=new Set();
     for(const f of this.fish){
       const p=f.root.position,cx=Math.floor(p.x/cell),cy=Math.floor(p.y/cell),cz=Math.floor(p.z/cell);
-      const coh=new T.Vector3(),ali=new T.Vector3(),sep=new T.Vector3();let count=0,mate=null,prey=null,threat=null,leader=null;
+      const coh=new T.Vector3(),ali=new T.Vector3(),sep=new T.Vector3();let count=0,mate=null,prey=null,threat=null,leader=null,preyDistance=Infinity,threatDistance=Infinity;
       for(let x=-1;x<=1;x++)for(let y=-1;y<=1;y++)for(let z=-1;z<=1;z++){
         const bin=bins.get(`${cx+x},${cy+y},${cz+z}`);if(!bin)continue;
         for(const o of bin){if(o===f)continue;const d=o.root.position.clone().sub(p),d2=d.lengthSq();if(d2<1e-8||d2>Math.max(r2,f.genes.sensoryRange**2))continue;
           if(d2<=r2){count++;coh.add(o.root.position);ali.add(o.velocity);}
           if(d2<s2)sep.addScaledVector(d,-1/d2);
           const ratio=o.genes.size/f.genes.size;
-          if(ratio>1.25&&o.genes.aggression>.55&&d2<90)threat=o;
+          if(ratio>1.25&&o.genes.aggression>.55&&d2<90&&d2<threatDistance){threat=o;threatDistance=d2;}
           if(o.genes.leadership>f.genes.leadership+.2&&o.genes.sociality>.45&&d2<100&&(!leader||o.genes.leadership>leader.genes.leadership))leader=o;
-          if(f.genes.aggression>this.params.predationThreshold&&ratio<.72&&d2<64)prey=o;
+          const kin=o.id===f.parentId||o.parentId===f.id||(f.parentId!==null&&o.parentId===f.parentId);
+          if(!kin&&f.genes.aggression>this.params.predationThreshold&&ratio<.72&&d2<64&&d2<preyDistance){prey=o;preyDistance=d2;}
           if(!mate&&ratio>.8&&ratio<1.25&&d2<16&&o.energy>.55)mate=o;
         }
       }
