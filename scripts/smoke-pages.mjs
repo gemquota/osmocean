@@ -54,7 +54,7 @@ try {
     console.log(`RENDER DIAGNOSTICS ${viewport.width}x${viewport.height}: ${JSON.stringify({ structure, ecology, errors })}`);
     try {
       await page.evaluate(() => { const el = [...document.querySelectorAll('canvas')].find(x => { const r=x.getBoundingClientRect(); return r.width>100 && r.height>100; }); if (el) el.id='osmocean-renderer'; });
-      await page.locator('#osmocean-renderer').screenshot({ path: `smoke-${viewport.width}.png`, timeout: 12000, animations: 'disabled' });
+      await page.screenshot({ path: `smoke-${viewport.width}.png`, timeout: 12000, animations: 'disabled' });
     } catch (error) { console.warn(`Canvas screenshot unavailable at ${viewport.width}px: ${error.message}`); }
     if (ecology.mode !== 'UNDERWATER REEF' || !(ecology.cameraY < 0) || ecology.fish < 50 || !ecology.fishModelLoaded || Object.keys(ecology.fishRoles).length < 2 || ecology.reefChildren < 100 || !ecology.reefVisible) throw new Error(`Underwater reef population missing: ${JSON.stringify(ecology)}`);
     if (structure.visibleCanvases !== 1 || structure.iframes !== 0) {
@@ -66,10 +66,10 @@ try {
 
     const pause = page.locator('#osmocean-unified-pause');
     if (await pause.isVisible().catch(() => false)) {
-      await pause.click();
-      await page.waitForFunction(() => document.querySelector('#osmocean-unified-status')?.textContent?.includes('PAUSED'));
-      await pause.click();
-      await page.waitForFunction(() => document.querySelector('#osmocean-unified-status')?.textContent?.includes('LIVE'));
+      await page.evaluate(() => document.querySelector('#osmocean-unified-pause')?.click());
+      await page.waitForFunction(() => document.querySelector('#osmocean-unified-status')?.textContent?.includes('PAUSED'), null, { timeout: 5000 });
+      await page.evaluate(() => document.querySelector('#osmocean-unified-pause')?.click());
+      await page.waitForFunction(() => document.querySelector('#osmocean-unified-status')?.textContent?.includes('LIVE'), null, { timeout: 5000 });
     }
     if (errors.length) throw new Error(`Runtime errors: ${errors.join('; ')}`);
     console.log(`PASS unified scene ${viewport.width}x${viewport.height}: ${JSON.stringify(structure)}`);
