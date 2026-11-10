@@ -129,20 +129,39 @@ main = replaceExactly(main, '  ocean.update(dt, timer);', `
   }
   ocean.update(dt, timer);
 `, 'device tilt OceanSim wind coupling');
-main = replaceExactly(main, 'views[ui.view]();', 'views[ui.view]();\nif (window.__osmoceanRapierReady && floaters instanceof RapierFloaters) { try { osmoceanUnified = createUnifiedCoupling({ THREE, scene, RAPIER, floaters, controls }); } catch (error) { reportBootError(error); } }', 'initialize unified scene after the camera preset');
+main = replaceExactly(main, 'views[ui.view]();', 'views[ui.view]();\nconst reefHeading = camera.getWorldDirection(new THREE.Vector3());\necology.group.position.set(camera.position.x + reefHeading.x * 18, 0, camera.position.z + reefHeading.z * 18);\ncontrols.enabled = false; controls.enableRotate = false; controls.enablePan = false; controls.enableZoom = false;\nunderwater.params.scattering = 0.055; underwater.params.shafts = 2.1; underwater.params.shaftRange = 72;\nwindow.__osmoceanDisplayMode = \'UNDERWATER REEF\';\nif (window.__osmoceanRapierReady && floaters instanceof RapierFloaters) { try { osmoceanUnified = createUnifiedCoupling({ THREE, scene, RAPIER, floaters, controls }); } catch (error) { reportBootError(error); } }', 'initialize locked underwater reef scene');
 
 // Add fish ecology after the Rapier integration has transformed the upstream entry point.
 copy(path.join(repoRoot, 'src/ecology/fish-ecology.js'), path.join(upstream, 'src/ecology/fish-ecology.js'));
 copy(path.join(repoRoot, 'src/ecology/reef-environment.js'), path.join(upstream, 'src/ecology/reef-environment.js'));
 main = replaceExactly(main,
-  "import { Floaters } from './scene/floaters.js';\nimport { RapierFloaters } from './scene/rapierFloaters.js';\nimport * as RAPIER from '@dimforge/rapier3d-compat';\nimport { createUnifiedCoupling } from './osmocean/UnifiedCoupling.js';",
-  "import { Floaters } from './scene/floaters.js';\nimport { RapierFloaters } from './scene/rapierFloaters.js';\nimport * as RAPIER from '@dimforge/rapier3d-compat';\nimport { createUnifiedCoupling } from './osmocean/UnifiedCoupling.js';\nimport { FishEcology } from './ecology/fish-ecology.js';
-import { createReef } from './ecology/reef-environment.js';",
+  `import { Floaters } from './scene/floaters.js';
+import { RapierFloaters } from './scene/rapierFloaters.js';
+import * as RAPIER from '@dimforge/rapier3d-compat';
+import { createUnifiedCoupling } from './osmocean/UnifiedCoupling.js';
+import { FishEcology } from './ecology/fish-ecology.js';
+import { createReef } from './ecology/reef-environment.js';`,
+  `import { Floaters } from './scene/floaters.js';
+import { RapierFloaters } from './scene/rapierFloaters.js';
+import * as RAPIER from '@dimforge/rapier3d-compat';
+import { createUnifiedCoupling } from './osmocean/UnifiedCoupling.js';
+import { FishEcology } from './ecology/fish-ecology.js';
+import { createReef } from './ecology/reef-environment.js';`,
   'native fish ecology import');
 main = replaceExactly(main,
   "let floaters;\ntry { floaters = window.__osmoceanRapierReady ? new RapierFloaters({ RAPIER, scene, heightAt: islandHeight, patchMaterial: terrain.patchProp, query }) : new Floaters({ scene, heightAt: islandHeight, patchMaterial: terrain.patchProp }); } catch (error) { reportBootError(error); floaters = new Floaters({ scene, heightAt: islandHeight, patchMaterial: terrain.patchProp }); }\nlet osmoceanUnified = null;\nwindow.__osmoceanBootStatus = window.__osmoceanRapierReady ? 'rapier-world-ready' : 'fallback-world-ready';",
-  "let floaters;\ntry { floaters = window.__osmoceanRapierReady ? new RapierFloaters({ RAPIER, scene, heightAt: islandHeight, patchMaterial: terrain.patchProp, query }) : new Floaters({ scene, heightAt: islandHeight, patchMaterial: terrain.patchProp }); } catch (error) { reportBootError(error); floaters = new Floaters({ scene, heightAt: islandHeight, patchMaterial: terrain.patchProp }); }\nconst ecology = new FishEcology(THREE, scene, { population: 110, worldRadius: 42, minDepth: 3, maxDepth: 26, resourceCount: 220, seed: 0x51f15e });
-const reef = createReef(THREE, ecology.group);\nlet osmoceanUnified = null;\nwindow.__osmoceanBootStatus = window.__osmoceanRapierReady ? 'rapier-world-ready' : 'fallback-world-ready';",
+  `let floaters;
+try { floaters = window.__osmoceanRapierReady ? new RapierFloaters({ RAPIER, scene, heightAt: islandHeight, patchMaterial: terrain.patchProp, query }) : new Floaters({ scene, heightAt: islandHeight, patchMaterial: terrain.patchProp }); } catch (error) { reportBootError(error); floaters = new Floaters({ scene, heightAt: islandHeight, patchMaterial: terrain.patchProp }); }
+const ecology = new FishEcology(THREE, scene, { population: 110, worldRadius: 42, minDepth: 3, maxDepth: 26, resourceCount: 220, seed: 0x51f15e });
+const reef = createReef(THREE, ecology.group);
+let osmoceanUnified = null;
+window.__osmoceanBootStatus = window.__osmoceanRapierReady ? 'rapier-world-ready' : 'fallback-world-ready';`,
+  `let floaters;
+try { floaters = window.__osmoceanRapierReady ? new RapierFloaters({ RAPIER, scene, heightAt: islandHeight, patchMaterial: terrain.patchProp, query }) : new Floaters({ scene, heightAt: islandHeight, patchMaterial: terrain.patchProp }); } catch (error) { reportBootError(error); floaters = new Floaters({ scene, heightAt: islandHeight, patchMaterial: terrain.patchProp }); }
+const ecology = new FishEcology(THREE, scene, { population: 110, worldRadius: 42, minDepth: 3, maxDepth: 26, resourceCount: 220, seed: 0x51f15e });
+const reef = createReef(THREE, ecology.group);
+let osmoceanUnified = null;
+window.__osmoceanBootStatus = window.__osmoceanRapierReady ? 'rapier-world-ready' : 'fallback-world-ready';`,
   'native fish ecology construction');
 main = replaceExactly(main,
   "if (mobile) gui.close();",
