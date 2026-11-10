@@ -38,6 +38,7 @@ const polyfishRoot = path.resolve(process.argv[4] || '_upstream/polyfish');
 const fishModelSource = path.join(polyfishRoot, 'assets/models/fish_rigged.glb');
 if (!fs.existsSync(fishModelSource)) throw new Error('Pinned PolyFish model missing: ' + fishModelSource);
 copy(fishModelSource, path.join(upstream, 'public/models/osmocean/fish_rigged.glb'));
+copy(path.join(polyfishRoot, 'LICENSE'), path.join(upstream, 'public/models/osmocean/POLYFISH-LICENSE.txt'));
 for (const file of [
   'config.ts', 'kernels.ts', 'physics.ts', 'spatial.ts', 'spawn.ts', 'types.ts'
 ]) copy(path.join(fluidRoot, 'src/sph/2d/common', file), path.join(osmoceanDir, 'sph/common', file));
@@ -150,6 +151,7 @@ main = replaceExactly(main, 'views[ui.view]();', 'views[ui.view]();\ncontrols.ta
 // Add fish ecology after the Rapier integration has transformed the upstream entry point.
 copy(path.join(repoRoot, 'src/ecology/fish-ecology.js'), path.join(upstream, 'src/ecology/fish-ecology.js'));
 copy(path.join(repoRoot, 'src/ecology/reef-environment.js'), path.join(upstream, 'src/ecology/reef-environment.js'));
+copy(path.join(repoRoot, 'src/ecology/polyfish-swim-material.js'), path.join(upstream, 'src/ecology/polyfish-swim-material.js'));
 main = replaceExactly(main,
   "let floaters;\ntry { floaters = window.__osmoceanRapierReady ? new RapierFloaters({ RAPIER, scene, heightAt: islandHeight, patchMaterial: terrain.patchProp, query }) : new Floaters({ scene, heightAt: islandHeight, patchMaterial: terrain.patchProp }); } catch (error) { reportBootError(error); floaters = new Floaters({ scene, heightAt: islandHeight, patchMaterial: terrain.patchProp }); }\nlet osmoceanUnified = null;\nwindow.__osmoceanBootStatus = window.__osmoceanRapierReady ? 'rapier-world-ready' : 'fallback-world-ready';",
   `let floaters;
