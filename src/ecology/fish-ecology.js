@@ -1,186 +1,109 @@
 /**
- * Ultra-Water Ecology — first native fish-agent layer.
- * Rendering is a view of agent state; movement and traits live in this module.
- * No dependency on the SPH/Rapier experiments.
+ * Native Ultra-Water ecosystem. Agent state is authoritative; meshes are views.
+ * Compact evolutionary/ecological model for interactive simulation, not a validated
+ * marine-ecology research model.
  */
 export class FishEcology {
   constructor(THREE, scene, options = {}) {
-    this.THREE = THREE;
-    this.scene = scene;
-    this.params = {
-      population: options.population ?? 72,
-      worldRadius: options.worldRadius ?? 95,
-      minDepth: options.minDepth ?? 3,
-      maxDepth: options.maxDepth ?? 24,
-      neighbourRadius: options.neighbourRadius ?? 18,
-      separationRadius: options.separationRadius ?? 5,
-      maxAcceleration: options.maxAcceleration ?? 5,
-      ...options.params,
-    };
-    this.randomState = options.seed ?? 0x51f15e;
-    this.fish = [];
-    this.group = new THREE.Group();
-    this.group.name = 'Ultra-Water Ecology / fish population';
-    scene.add(this.group);
-    this.materials = [
-      new THREE.MeshStandardMaterial({ color: 0x65c8c8, roughness: 0.48, metalness: 0.04 }),
-      new THREE.MeshStandardMaterial({ color: 0xe7b75c, roughness: 0.52 }),
-      new THREE.MeshStandardMaterial({ color: 0x8b9ee8, roughness: 0.5 }),
-      new THREE.MeshStandardMaterial({ color: 0xb6d58b, roughness: 0.56 }),
-    ];
-    this.bodyGeometry = new THREE.SphereGeometry(1, 12, 8);
-    this.tailGeometry = new THREE.ConeGeometry(0.42, 0.8, 3);
-    this.eyeGeometry = new THREE.SphereGeometry(0.075, 6, 5);
-    this.populate(this.params.population);
+    this.T=THREE; this.scene=scene; this.rng=options.seed??0x51f15e;
+    this.params={population:72,worldRadius:95,minDepth:3,maxDepth:24,neighbourRadius:18,
+      separationRadius:5,maxAcceleration:5,resourceCount:180,resourceRegrowth:.035,
+      feedingRate:.22,reproductionEnergy:.82,reproductionCooldown:28,mutationRate:.08,
+      mutationStrength:.12,predationRate:.7,predationThreshold:.7,currentStrength:.55,
+      temperatureGradient:.45,oxygenGradient:.3,historyInterval:2,...options,...options.params};
+    this.fish=[];this.resources=[];this.history=[];this.elapsed=0;this.nextId=0;
+    this.group=new THREE.Group();this.group.name='Ultra-Water Ecology';scene.add(this.group);
+    this.mats=[0x65c8c8,0xe7b75c,0x8b9ee8,0xb6d58b,0xe58c80,0x9aadd1].map(color=>new THREE.MeshStandardMaterial({color,roughness:.5}));
+    this.bodyGeo=new THREE.SphereGeometry(1,12,8);this.tailGeo=new THREE.ConeGeometry(.42,.8,3);
+    this.eyeGeo=new THREE.SphereGeometry(.075,6,5);this.foodGeo=new THREE.SphereGeometry(.22,6,5);
+    this.foodMat=new THREE.MeshBasicMaterial({color:0x8be2a0});
+    this.populate(this.params.population);this.seedResources(this.params.resourceCount);
   }
-
-  random() {
-    // Small deterministic PRNG: reproducible populations from a saved seed.
-    let x = this.randomState | 0;
-    x ^= x << 13; x ^= x >>> 17; x ^= x << 5;
-    this.randomState = x | 0;
-    return (x >>> 0) / 4294967296;
+  rand(){let x=this.rng|0;x^=x<<13;x^=x>>>17;x^=x<<5;this.rng=x|0;return(x>>>0)/4294967296;}
+  range(a,b){return a+this.rand()*(b-a);}
+  clamp(v,a,b){return Math.max(a,Math.min(b,v));}
+  genes(parent){
+    const ranges={speed:[1.2,7,3.4],size:[.45,1.8,1],metabolism:[.35,1.5,.8],sensoryRange:[7,34,18],
+      cohesion:[0,1.8,.7],alignment:[0,1.8,.8],separation:[.2,2.2,1.1],aggression:[0,1,.25],
+      sociality:[0,1,.5],kinAffinity:[0,1,.5],camouflage:[0,1,.5],feedingSpecialisation:[0,1,.5],fertility:[.2,1.4,.8]};
+    const g={};for(const [k,[lo,hi,d]] of Object.entries(ranges)){
+      let v=parent?parent.genes[k]:this.range(lo,hi);
+      if(parent&&this.rand()<this.params.mutationRate)v+=this.range(-1,1)*(hi-lo)*this.params.mutationStrength;
+      g[k]=this.clamp(v,lo,hi);
+    }return g;
   }
-
-  makeFish(index) {
-    const T = this.THREE;
-    const genes = Object.freeze({
-      speed: 2.1 + this.random() * 2.6,
-      size: 0.65 + this.random() * 0.8,
-      cohesion: 0.25 + this.random() * 0.8,
-      alignment: 0.25 + this.random() * 0.9,
-      separation: 0.7 + this.random() * 1.1,
-      sensoryRange: 12 + this.random() * 14,
-      metabolism: 0.7 + this.random() * 0.7,
-      camouflage: this.random(),
+  makeFish(parent=null){
+    const T=this.T,g=this.genes(parent),brain=Array.from({length:12},(_,i)=>{
+      const v=parent?parent.brain[i]:this.range(-1,1);
+      return this.clamp(v+(parent&&this.rand()<this.params.mutationRate?this.range(-.35,.35):0),-2,2);
     });
-    const root = new T.Group();
-    const material = this.materials[Math.floor(this.random() * this.materials.length)];
-    const body = new T.Mesh(this.bodyGeometry, material);
-    body.scale.set(0.9 * genes.size, 0.42 * genes.size, 0.28 * genes.size);
-    body.castShadow = false;
-    body.receiveShadow = false;
-    root.add(body);
-    const tail = new T.Mesh(this.tailGeometry, material);
-    tail.rotation.z = Math.PI / 2;
-    tail.position.x = -0.82 * genes.size;
-    tail.scale.set(0.7 * genes.size, 0.58 * genes.size, 0.22 * genes.size);
-    root.add(tail);
-    const eyeMaterial = new T.MeshBasicMaterial({ color: 0x07151b });
-    for (const side of [-1, 1]) {
-      const eye = new T.Mesh(this.eyeGeometry, eyeMaterial);
-      eye.position.set(0.38 * genes.size, 0.12 * genes.size, side * 0.245 * genes.size);
-      root.add(eye);
-    }
-    root.position.set(
-      (this.random() - 0.5) * this.params.worldRadius * 1.4,
-      -(this.params.minDepth + this.random() * (this.params.maxDepth - this.params.minDepth)),
-      (this.random() - 0.5) * this.params.worldRadius * 1.4,
-    );
-    this.group.add(root);
-    const heading = new T.Vector3(this.random() - 0.5, (this.random() - 0.5) * 0.2, this.random() - 0.5).normalize();
-    return {
-      id: index, root, tail, genes, heading,
-      velocity: heading.clone().multiplyScalar(genes.speed * 0.55),
-      energy: 0.7 + this.random() * 0.3,
-      age: 0,
-      phase: this.random() * Math.PI * 2,
-    };
+    const root=new T.Group(),mat=this.mats[Math.floor(this.rand()*this.mats.length)];
+    const body=new T.Mesh(this.bodyGeo,mat);body.scale.set(.9*g.size,.42*g.size,.28*g.size);root.add(body);
+    const tail=new T.Mesh(this.tailGeo,mat);tail.rotation.z=Math.PI/2;tail.position.x=-.82*g.size;tail.scale.set(.7*g.size,.58*g.size,.22*g.size);root.add(tail);
+    for(const side of [-1,1]){const eye=new T.Mesh(this.eyeGeo,new T.MeshBasicMaterial({color:0x07151b}));eye.position.set(.38*g.size,.12*g.size,side*.245*g.size);root.add(eye);}
+    const p=parent?.root.position;
+    root.position.set(p?p.x+this.range(-2,2):this.range(-this.params.worldRadius*.7,this.params.worldRadius*.7),
+      p?p.y+this.range(-1,1):-this.range(this.params.minDepth,this.params.maxDepth),
+      p?p.z+this.range(-2,2):this.range(-this.params.worldRadius*.7,this.params.worldRadius*.7));
+    this.group.add(root);const heading=new T.Vector3(this.rand()-.5,this.range(-.15,.15),this.rand()-.5).normalize();
+    return{id:this.nextId++,parentId:parent?.id??null,root,tail,genes:g,brain,heading,
+      velocity:heading.clone().multiplyScalar(g.speed*.5),energy:parent?.energy*.45??this.range(.7,1),
+      age:0,cooldown:0,phase:this.rand()*Math.PI*2,generation:parent?parent.generation+1:0,offspring:0,eaten:0};
   }
-
-  populate(count) {
-    const target = Math.max(0, Math.min(500, Math.round(count)));
-    while (this.fish.length < target) this.fish.push(this.makeFish(this.fish.length));
-    while (this.fish.length > target) {
-      const fish = this.fish.pop();
-      this.group.remove(fish.root);
-      fish.root.traverse(node => { if (node.isMesh) node.geometry = node.geometry; });
-    }
-    this.params.population = target;
+  populate(n){n=this.clamp(Math.round(n),0,500);while(this.fish.length<n)this.fish.push(this.makeFish());while(this.fish.length>n)this.group.remove(this.fish.pop().root);this.params.population=n;}
+  seedResources(n){n=this.clamp(Math.round(n),0,1200);while(this.resources.length<n){const mesh=new this.T.Mesh(this.foodGeo,this.foodMat);mesh.position.set(this.range(-this.params.worldRadius,this.params.worldRadius),-this.range(this.params.minDepth,this.params.maxDepth),this.range(-this.params.worldRadius,this.params.worldRadius));this.group.add(mesh);this.resources.push({mesh,biomass:1,respawn:0});}while(this.resources.length>n)this.group.remove(this.resources.pop().mesh);this.params.resourceCount=n;}
+  environmentAt(p){
+    const depth=Math.max(0,-p.y),light=Math.exp(-depth/22);
+    const temperature=.5+.5*Math.sin(p.x*.012)*this.params.temperatureGradient;
+    const oxygen=this.clamp(.72+.22*Math.cos(p.z*.018)-depth*.008*this.params.oxygenGradient,.08,1);
+    const nutrient=this.clamp(.45+.35*Math.sin(p.x*.025+p.z*.018),.05,1);
+    const current=new this.T.Vector3(Math.sin(p.z*.018+this.elapsed*.12),Math.sin(p.x*.014+this.elapsed*.08)*.12,Math.cos(p.x*.016+this.elapsed*.1)).multiplyScalar(this.params.currentStrength);
+    return{depth,light,temperature,oxygen,nutrient,current};
   }
-
-  buildSpatialIndex() {
-    const cell = this.params.neighbourRadius;
-    const bins = new Map();
-    for (const fish of this.fish) {
-      const p = fish.root.position;
-      const key = `${Math.floor(p.x / cell)},${Math.floor(p.y / cell)},${Math.floor(p.z / cell)}`;
-      let bin = bins.get(key);
-      if (!bin) bins.set(key, bin = []);
-      bin.push(fish);
-    }
-    return { bins, cell };
-  }
-
-  update(dt, elapsed = 0, waterHeight = 0) {
-    if (!Number.isFinite(dt) || dt <= 0) return;
-    const T = this.THREE;
-    const { bins, cell } = this.buildSpatialIndex();
-    const radius2 = this.params.neighbourRadius ** 2;
-    const separation2 = this.params.separationRadius ** 2;
-    const maxStep = Math.min(dt, 1 / 20);
-    const next = [];
-    for (const fish of this.fish) {
-      const p = fish.root.position;
-      const cx = Math.floor(p.x / cell), cy = Math.floor(p.y / cell), cz = Math.floor(p.z / cell);
-      const cohesion = new T.Vector3(), alignment = new T.Vector3(), separation = new T.Vector3();
-      let neighbours = 0;
-      for (let x = -1; x <= 1; x++) for (let y = -1; y <= 1; y++) for (let z = -1; z <= 1; z++) {
-        const bin = bins.get(`${cx + x},${cy + y},${cz + z}`);
-        if (!bin) continue;
-        for (const other of bin) {
-          if (other === fish) continue;
-          const delta = other.root.position.clone().sub(p);
-          const d2 = delta.lengthSq();
-          if (d2 > radius2 || d2 < 1e-8) continue;
-          neighbours++;
-          cohesion.add(other.root.position);
-          alignment.add(other.velocity);
-          if (d2 < separation2) separation.addScaledVector(delta, -1 / d2);
+  nearestResource(p,r){let best=null,dmin=r*r;for(const x of this.resources)if(x.biomass>.02){const d=p.distanceToSquared(x.mesh.position);if(d<dmin){best=x;dmin=d;}}return best;}
+  spatial(){const cell=Math.max(4,this.params.neighbourRadius),bins=new Map();for(const f of this.fish){const p=f.root.position,k=`${Math.floor(p.x/cell)},${Math.floor(p.y/cell)},${Math.floor(p.z/cell)}`;if(!bins.has(k))bins.set(k,[]);bins.get(k).push(f);}return{bins,cell};}
+  update(dt,elapsed=0,waterHeight=0){
+    if(!Number.isFinite(dt)||dt<=0)return;const T=this.T,step=Math.min(dt,1/20);this.elapsed=elapsed;
+    const{bins,cell}=this.spatial(),r2=this.params.neighbourRadius**2,s2=this.params.separationRadius**2;
+    const births=[],deaths=new Set();
+    for(const f of this.fish){
+      const p=f.root.position,cx=Math.floor(p.x/cell),cy=Math.floor(p.y/cell),cz=Math.floor(p.z/cell);
+      const coh=new T.Vector3(),ali=new T.Vector3(),sep=new T.Vector3();let count=0,mate=null,prey=null,threat=null;
+      for(let x=-1;x<=1;x++)for(let y=-1;y<=1;y++)for(let z=-1;z<=1;z++){
+        const bin=bins.get(`${cx+x},${cy+y},${cz+z}`);if(!bin)continue;
+        for(const o of bin){if(o===f)continue;const d=o.root.position.clone().sub(p),d2=d.lengthSq();if(d2<1e-8||d2>Math.max(r2,f.genes.sensoryRange**2))continue;
+          if(d2<=r2){count++;coh.add(o.root.position);ali.add(o.velocity);}
+          if(d2<s2)sep.addScaledVector(d,-1/d2);
+          const ratio=o.genes.size/f.genes.size;
+          if(ratio>1.25&&o.genes.aggression>.55&&d2<90)threat=o;
+          if(f.genes.aggression>this.params.predationThreshold&&ratio<.72&&d2<64)prey=o;
+          if(!mate&&ratio>.8&&ratio<1.25&&d2<16&&o.energy>.55)mate=o;
         }
       }
-      const steer = new T.Vector3();
-      if (neighbours) {
-        cohesion.multiplyScalar(1 / neighbours).sub(p).normalize().multiplyScalar(fish.genes.cohesion);
-        alignment.multiplyScalar(1 / neighbours).normalize().multiplyScalar(fish.genes.alignment);
-        steer.add(cohesion).add(alignment).addScaledVector(separation, fish.genes.separation);
-      }
-      // Soft habitat bounds and depth preference keep agents in the water column.
-      const radial = Math.hypot(p.x, p.z);
-      if (radial > this.params.worldRadius) steer.add(new T.Vector3(-p.x, 0, -p.z).normalize().multiplyScalar(1.8));
-      if (p.y > waterHeight - this.params.minDepth) steer.y -= 1.2;
-      if (p.y < waterHeight - this.params.maxDepth) steer.y += 1.2;
-      steer.y += Math.sin(elapsed * 0.35 + fish.phase) * 0.08;
-      if (steer.lengthSq() > 1e-8) fish.velocity.addScaledVector(steer.normalize(), this.params.maxAcceleration * maxStep);
-      const speed = fish.velocity.length();
-      const targetSpeed = fish.genes.speed * (0.65 + fish.energy * 0.35);
-      if (speed > 1e-6) fish.velocity.multiplyScalar(T.MathUtils.damp(speed, targetSpeed, 1.8, maxStep) / speed);
-      p.addScaledVector(fish.velocity, maxStep);
-      fish.age += maxStep;
-      fish.energy = Math.max(0.05, fish.energy - fish.genes.metabolism * maxStep * 0.0007);
-      fish.heading.copy(fish.velocity).normalize();
-      if (fish.heading.lengthSq() > 1e-8) {
-        const forward = new T.Vector3(1, 0, 0);
-        fish.root.quaternion.setFromUnitVectors(forward, fish.heading);
-      }
-      fish.tail.rotation.y = Math.sin(elapsed * (5 + fish.genes.speed) + fish.phase) * 0.55;
-      next.push(fish);
+      const env=this.environmentAt(p),steer=new T.Vector3(),food=this.nearestResource(p,f.genes.sensoryRange),w=f.brain;
+      if(count){coh.multiplyScalar(1/count).sub(p).normalize().multiplyScalar(f.genes.cohesion);ali.multiplyScalar(1/count).normalize().multiplyScalar(f.genes.alignment);steer.add(coh).add(ali).addScaledVector(sep,f.genes.separation);}
+      if(food)steer.addScaledVector(food.mesh.position.clone().sub(p).normalize(),w[0]*(.15+f.genes.feedingSpecialisation));
+      steer.addScaledVector(env.current,w[1]*.22);steer.y+=w[2]*(env.oxygen-.5)+w[3]*(env.temperature-.5);
+      if(threat)steer.addScaledVector(p.clone().sub(threat.root.position).normalize(),1.4*(1-f.genes.aggression));
+      if(prey)steer.addScaledVector(prey.root.position.clone().sub(p).normalize(),1.2*f.genes.aggression);
+      if(Math.hypot(p.x,p.z)>this.params.worldRadius)steer.add(new T.Vector3(-p.x,0,-p.z).normalize().multiplyScalar(2));
+      if(p.y>waterHeight-this.params.minDepth)steer.y-=1.2;if(p.y<waterHeight-this.params.maxDepth)steer.y+=1.2;
+      steer.y+=Math.sin(elapsed*.35+f.phase)*.06;if(steer.lengthSq())f.velocity.addScaledVector(steer.normalize(),this.params.maxAcceleration*step);
+      f.velocity.addScaledVector(env.current,step*.18);const speed=f.velocity.length(),target=f.genes.speed*(.58+f.energy*.42);
+      if(speed>1e-6)f.velocity.multiplyScalar(T.MathUtils.damp(speed,target,1.8,step)/speed);p.addScaledVector(f.velocity,step);
+      f.age+=step;f.cooldown=Math.max(0,f.cooldown-step);f.energy-=f.genes.metabolism*step*.0018+Math.max(0,.55-env.oxygen)*step*.003;
+      if(food&&p.distanceTo(food.mesh.position)<1.8&&food.biomass>0){const bite=Math.min(food.biomass,this.params.feedingRate*step*8);food.biomass-=bite;f.energy=Math.min(1.5,f.energy+bite*.8);f.eaten+=bite;food.mesh.scale.setScalar(Math.max(.08,food.biomass));if(food.biomass<=.02)food.respawn=this.range(8,22);}
+      if(f.energy>this.params.reproductionEnergy&&f.cooldown<=0&&mate&&f.id<mate.id&&this.fish.length+births.length<500){births.push(this.makeFish(f));f.energy*=.62;mate.energy*=.92;f.cooldown=mate.cooldown=this.params.reproductionCooldown/f.genes.fertility;f.offspring++;mate.offspring++;}
+      if(prey&&p.distanceTo(prey.root.position)<1.1&&f.energy<1.2&&this.rand()<this.params.predationRate*step*2){f.energy=Math.min(1.5,f.energy+prey.genes.size*.42);f.eaten+=prey.genes.size;deaths.add(prey);}
+      if(f.energy<=.08||f.age>1800)deaths.add(f);
+      f.heading.copy(f.velocity).normalize();if(f.heading.lengthSq())f.root.quaternion.setFromUnitVectors(new T.Vector3(1,0,0),f.heading);
+      f.tail.rotation.y=Math.sin(elapsed*(5+f.genes.speed)+f.phase)*.55;
     }
-    this.fish = next;
+    for(const f of deaths)this.group.remove(f.root);this.fish=this.fish.filter(f=>!deaths.has(f)).concat(births);
+    for(const r of this.resources){if(r.biomass<=.02){r.respawn-=step;if(r.respawn<=0){r.biomass=1;r.mesh.scale.setScalar(1);}}else{const e=this.environmentAt(r.mesh.position);r.biomass=Math.min(1,r.biomass+this.params.resourceRegrowth*e.nutrient*e.light*(.5+e.oxygen*.5)*step);}}
+    if(elapsed-(this.history.at(-1)?.time??-this.params.historyInterval)>=this.params.historyInterval)this.recordHistory(elapsed);
   }
-
-  getStats() {
-    const n = this.fish.length;
-    if (!n) return { population: 0, meanSpeed: 0, meanSize: 0, meanEnergy: 0 };
-    const totals = this.fish.reduce((out, f) => {
-      out.meanSpeed += f.genes.speed;
-      out.meanSize += f.genes.size;
-      out.meanEnergy += f.energy;
-      return out;
-    }, { population: n, meanSpeed: 0, meanSize: 0, meanEnergy: 0 });
-    totals.meanSpeed /= n;
-    totals.meanSize /= n;
-    totals.meanEnergy /= n;
-    return totals;
-  }
+  recordHistory(time){const n=this.fish.length,avg=k=>n?this.fish.reduce((s,f)=>s+(f.genes[k]??f[k]??0),0)/n:0;this.history.push({time,population:n,resources:this.resources.reduce((s,r)=>s+r.biomass,0),meanSize:avg('size'),meanSpeed:avg('speed'),meanAggression:avg('aggression'),meanMetabolism:avg('metabolism'),meanEnergy:avg('energy'),meanGeneration:avg('generation')});if(this.history.length>1800)this.history.shift();}
+  getStats(){const n=this.fish.length,avg=k=>n?this.fish.reduce((s,f)=>s+(f.genes[k]??f[k]??0),0)/n:0;return{population:n,resources:this.resources.reduce((s,r)=>s+r.biomass,0),meanSpeed:avg('speed'),meanSize:avg('size'),meanAggression:avg('aggression'),meanMetabolism:avg('metabolism'),meanEnergy:avg('energy'),meanGeneration:avg('generation'),history:this.history};}
+  dispose(){this.scene.remove(this.group);for(const m of this.mats)m.dispose();this.foodMat.dispose();this.bodyGeo.dispose();this.tailGeo.dispose();this.eyeGeo.dispose();this.foodGeo.dispose();}
 }
