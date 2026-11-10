@@ -37,7 +37,7 @@ try {
       viewport: [innerWidth, innerHeight],
       scroll: [document.documentElement.scrollWidth, document.documentElement.scrollHeight],
     }));
-    await page.screenshot({ path: `smoke-${viewport.width}.png`, fullPage: false });
+    await page.screenshot({ path: `smoke-${viewport.width}.png`, fullPage: false, timeout: 0, animations: 'disabled' });
     if (structure.visibleCanvases !== 1 || structure.iframes !== 0) {
       throw new Error(`Expected one renderer and no embedded applications: ${JSON.stringify(structure)}`);
     }
