@@ -43,7 +43,7 @@ export class FishEcology {
       const v=parent?(mate?(parent.brain[i]+mate.brain[i])*.5:parent.brain[i]):this.range(-1,1);
       return this.clamp(v+(parent&&this.rand()<this.params.mutationRate?this.range(-.35,.35):0),-2,2);
     });
-    const root=new T.Group(),mat=this.mats[species];let tail=null,mixer=null;
+    const root=new T.Group(),mat=this.mats[species];let tail=null,mixer=null,swimData=null;
     if(this.modelTemplate){
       const visual=cloneSkeleton(this.modelTemplate);
       visual.traverse(child=>{if(child.isMesh||child.isSkinnedMesh){child.material=Array.isArray(child.material)?child.material.map(m=>m.clone()):child.material.clone();}});
@@ -57,7 +57,7 @@ export class FishEcology {
       visual.scale.setScalar((2.3*g.size)/Math.max(extent.x,extent.y,extent.z,1e-6));
       visual.updateMatrixWorld(true);
       visual.position.sub(new T.Box3().setFromObject(visual).getCenter(new T.Vector3()));
-      const swimData=applySwimMaterial(visual,'fish');
+      swimData=applySwimMaterial(visual,'fish');
       root.add(visual);
       if(this.modelAnimations.length){
         mixer=new T.AnimationMixer(visual);
