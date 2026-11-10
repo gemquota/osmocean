@@ -46,7 +46,7 @@ export class FishEcology {
     const root=new T.Group(),mat=this.mats[species];let tail=null,mixer=null,swimData=null;
     if(this.modelTemplate){
       const visual=cloneSkeleton(this.modelTemplate);
-      visual.traverse(child=>{if(child.isMesh||child.isSkinnedMesh){child.material=Array.isArray(child.material)?child.material.map(m=>m.clone()):child.material.clone();}});
+      visual.traverse(child=>{if((child.isMesh||child.isSkinnedMesh)&&child.material){child.material=Array.isArray(child.material)?child.material.map(m=>m.clone()):child.material.clone();}});
       visual.updateMatrixWorld(true);
       const rawSize=new T.Box3().setFromObject(visual).getSize(new T.Vector3());
       const longest=rawSize.x>=rawSize.z&&rawSize.x>=rawSize.y?'x':rawSize.z>=rawSize.y?'z':'y';
