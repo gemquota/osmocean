@@ -7,8 +7,8 @@ Osmocean's Ultra-Water build downloads the rigged fish model from [unclemattmake
 - Source asset: `assets/models/fish_rigged.glb`
 - Upstream licence: MIT; the upstream `LICENSE` file is checked out alongside the model.
 - Build destination: `public/models/osmocean/fish_rigged.glb` in the generated Ultra-Water application.
-- Runtime: Three.js `GLTFLoader` loads the model once; `SkeletonUtils.clone` creates per-fish skeleton-safe instances. Bounds are normalized and the longest model axis is aligned with the ecology's local forward axis.
-- Animation: all clips embedded in the GLB are played per fish when present. If loading fails, the existing procedural fish mesh remains as a visible fallback.
+- Runtime: Three.js `GLTFLoader` loads the model once; `SkeletonUtils.clone` creates per-fish skeleton-safe instances. The upstream MIT licence is copied beside the deployed model as `POLYFISH-LICENSE.txt`. Bounds are normalized and the longest model axis is aligned with the ecology's local forward axis.
+- Animation: all clips embedded in the GLB are played per fish when present. The PolyFish procedural vertex-swim shader is also adapted with per-fish uniforms, so the body flexes even when the GLB has no baked swim clip. Its source and MIT notice are retained in this repository. If loading fails, the existing procedural fish mesh remains as a visible fallback.
 
 The binary is deliberately fetched during the Pages build rather than duplicated in this repository. The pin makes the input reproducible and the upstream licence remains available at the source checkout.
 
