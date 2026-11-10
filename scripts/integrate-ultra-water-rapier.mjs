@@ -129,7 +129,11 @@ main = replaceExactly(main, '  ocean.update(dt, timer);', `
   }
   ocean.update(dt, timer);
 `, 'device tilt OceanSim wind coupling');
-main = replaceExactly(main, 'views[ui.view]();', 'views[ui.view]();\nconst reefHeading = camera.getWorldDirection(new THREE.Vector3());\necology.group.position.set(camera.position.x + reefHeading.x * 18, 0, camera.position.z + reefHeading.z * 18);\ncontrols.enabled = false; controls.enableRotate = false; controls.enablePan = false; controls.enableZoom = false;\nunderwater.params.scattering = 0.055; underwater.params.shafts = 2.1; underwater.params.shaftRange = 72;\nwindow.__osmoceanDisplayMode = \'UNDERWATER REEF\';\nif (window.__osmoceanRapierReady && floaters instanceof RapierFloaters) { try { osmoceanUnified = createUnifiedCoupling({ THREE, scene, RAPIER, floaters, controls }); } catch (error) { reportBootError(error); } }', 'initialize locked underwater reef scene');
+main = replaceExactly(main,
+  "const ui = { view: 'Lagoon', benchmark: () => benchButton.click(), exposure: 1 };\ngui.add(ui, 'view', Object.keys(views)).name('camera').onChange((v) => views[v]());",
+  "const ui = { view: 'Underwater', benchmark: () => benchButton.click(), exposure: 1 };",
+  'lock initial camera preset to underwater');
+main = replaceExactly(main, 'views[ui.view]();', 'views[ui.view]();\ncontrols.target.y = -10; controls.update();\nconst reefHeading = camera.getWorldDirection(new THREE.Vector3());\necology.group.position.set(camera.position.x + reefHeading.x * 18, 0, camera.position.z + reefHeading.z * 18);\ncontrols.enabled = false; controls.enableRotate = false; controls.enablePan = false; controls.enableZoom = false;\nunderwater.params.scattering = 0.055; underwater.params.shafts = 2.1; underwater.params.shaftRange = 72;\nwindow.__osmoceanDisplayMode = \'UNDERWATER REEF\';\nif (window.__osmoceanRapierReady && floaters instanceof RapierFloaters) { try { osmoceanUnified = createUnifiedCoupling({ THREE, scene, RAPIER, floaters, controls }); } catch (error) { reportBootError(error); } }', 'initialize locked underwater reef scene');
 
 // Add fish ecology after the Rapier integration has transformed the upstream entry point.
 copy(path.join(repoRoot, 'src/ecology/fish-ecology.js'), path.join(upstream, 'src/ecology/fish-ecology.js'));
