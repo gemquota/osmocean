@@ -6,7 +6,7 @@
 export class FishEcology {
   constructor(THREE, scene, options = {}) {
     this.T=THREE; this.scene=scene; this.rng=options.seed??0x51f15e;
-    this.params={population:72,worldRadius:95,minDepth:3,maxDepth:24,neighbourRadius:18,
+    this.params={population:110,worldRadius:42,minDepth:3,maxDepth:26,neighbourRadius:16,
       separationRadius:5,maxAcceleration:5,resourceCount:180,resourceRegrowth:.035,
       feedingRate:.22,reproductionEnergy:.82,reproductionCooldown:28,mutationRate:.08,
       mutationStrength:.12,predationRate:.7,predationThreshold:.7,currentStrength:.55,
@@ -14,7 +14,7 @@ export class FishEcology {
     this.fish=[];this.resources=[];this.history=[];this.elapsed=0;this.nextId=0;
     this.group=new THREE.Group();this.group.name='Ultra-Water Ecology';scene.add(this.group);
     this.mats=[0x65c8c8,0xe7b75c,0x8b9ee8,0xb6d58b,0xe58c80,0x9aadd1].map(color=>new THREE.MeshStandardMaterial({color,roughness:.5}));
-    this.bodyGeo=new THREE.SphereGeometry(1,12,8);this.tailGeo=new THREE.ConeGeometry(.42,.8,3);
+    this.bodyGeo=new THREE.SphereGeometry(1,16,10);this.tailGeo=new THREE.ConeGeometry(.42,.8,4);this.finGeo=new THREE.ConeGeometry(.18,.55,3);
     this.eyeGeo=new THREE.SphereGeometry(.075,6,5);this.foodGeo=new THREE.SphereGeometry(.22,6,5);
     this.foodMat=new THREE.MeshBasicMaterial({color:0x8be2a0});
     this.populate(this.params.population);this.seedResources(this.params.resourceCount);
@@ -33,20 +33,22 @@ export class FishEcology {
     }return g;
   }
   makeFish(parent=null,mate=null){
-    const T=this.T,g=this.genes(parent,mate),brain=Array.from({length:12},(_,i)=>{
+    const T=this.T,g=this.genes(parent,mate),species=parent?.species??Math.floor(this.rand()*this.mats.length),brain=Array.from({length:12},(_,i)=>{
       const v=parent?(mate?(parent.brain[i]+mate.brain[i])*.5:parent.brain[i]):this.range(-1,1);
       return this.clamp(v+(parent&&this.rand()<this.params.mutationRate?this.range(-.35,.35):0),-2,2);
     });
-    const root=new T.Group(),mat=this.mats[Math.floor(this.rand()*this.mats.length)];
-    const body=new T.Mesh(this.bodyGeo,mat);body.scale.set(.9*g.size,.42*g.size,.28*g.size);root.add(body);
-    const tail=new T.Mesh(this.tailGeo,mat);tail.rotation.z=Math.PI/2;tail.position.x=-.82*g.size;tail.scale.set(.7*g.size,.58*g.size,.22*g.size);root.add(tail);
+    const root=new T.Group(),mat=this.mats[species];
+    const body=new T.Mesh(this.bodyGeo,mat);const morph=[1,.82,1.22,.92,1.08,.72][species];body.scale.set(1.15*g.size*morph,.48*g.size*(species===2?1.25:1),.34*g.size*(species===4?1.35:1));root.add(body);
+    const tail=new T.Mesh(this.tailGeo,mat);tail.rotation.z=Math.PI/2;tail.position.x=-1.02*g.size*morph;tail.scale.set(.72*g.size,.62*g.size,.28*g.size);root.add(tail);
+    const dorsal=new T.Mesh(this.finGeo,mat);dorsal.position.set(-.05*g.size,.43*g.size,0);dorsal.rotation.z=Math.PI/2;dorsal.scale.set(.8*g.size,.8*g.size,.55*g.size);root.add(dorsal);
+    for(const side of [-1,1]){const fin=new T.Mesh(this.finGeo,mat);fin.position.set(.05*g.size,-.08*g.size,side*.24*g.size);fin.rotation.set(side*.5,0,Math.PI*.72);fin.scale.set(.48*g.size,.48*g.size,.35*g.size);root.add(fin);}
     for(const side of [-1,1]){const eye=new T.Mesh(this.eyeGeo,new T.MeshBasicMaterial({color:0x07151b}));eye.position.set(.38*g.size,.12*g.size,side*.245*g.size);root.add(eye);}
     const p=parent?.root.position;
     root.position.set(p?p.x+this.range(-2,2):this.range(-this.params.worldRadius*.7,this.params.worldRadius*.7),
       p?p.y+this.range(-1,1):-this.range(this.params.minDepth,this.params.maxDepth),
       p?p.z+this.range(-2,2):this.range(-this.params.worldRadius*.7,this.params.worldRadius*.7));
     this.group.add(root);const heading=new T.Vector3(this.rand()-.5,this.range(-.15,.15),this.rand()-.5).normalize();
-    return{id:this.nextId++,parentId:parent?.id??null,root,tail,genes:g,brain,heading,
+    return{id:this.nextId++,parentId:parent?.id??null,species,root,tail,genes:g,brain,heading,
       velocity:heading.clone().multiplyScalar(g.speed*.5),energy:parent?parent.energy*.45:this.range(.7,1),
       age:0,cooldown:0,phase:this.rand()*Math.PI*2,generation:parent?parent.generation+1:0,offspring:0,eaten:0};
   }

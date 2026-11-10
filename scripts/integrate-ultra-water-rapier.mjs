@@ -49,7 +49,7 @@ const mainPath = path.join(upstream, 'src/main.js');
 let main = read(mainPath);
 main = replaceExactly(main,
   "import { Floaters } from './scene/floaters.js';",
-  "import { Floaters } from './scene/floaters.js';\nimport { RapierFloaters } from './scene/rapierFloaters.js';\nimport * as RAPIER from '@dimforge/rapier3d-compat';\nimport { createUnifiedCoupling } from './osmocean/UnifiedCoupling.js';",
+  "import { Floaters } from './scene/floaters.js';\nimport { RapierFloaters } from './scene/rapierFloaters.js';\nimport * as RAPIER from '@dimforge/rapier3d-compat';\nimport { createUnifiedCoupling } from './osmocean/UnifiedCoupling.js';\nimport { FishEcology } from './ecology/fish-ecology.js';\nimport { createReef } from './ecology/reef-environment.js';",
   'floater import');
 const bootDiagnostics = [
   "const bootError = document.createElement('pre');",
@@ -103,7 +103,7 @@ for (const line of [
 ]) main = replaceExactly(main, line, '', 'legacy custom-integrator control');
 main = replaceExactly(main,
   'window.app = {\n  camera, controls, sky, post, surface, ocean, terrain, timer, views, quality, renderer, floaters, query, underwater, spray, snow, caustics, floatShadow,',
-  "window.__osmoceanBootStatus = 'scene-initialized';\nwindow.app = {\n  camera, controls, sky, post, surface, ocean, terrain, timer, views, quality, renderer, floaters, query, underwater, spray, snow, caustics, floatShadow, physicsEngine: 'Rapier 3D 0.21.0',",
+  "window.__osmoceanBootStatus = 'scene-initialized';\nwindow.app = {\n  camera, controls, sky, post, surface, ocean, terrain, timer, views, quality, renderer, floaters, query, underwater, spray, snow, caustics, floatShadow, physicsEngine: 'Rapier 3D 0.21.0', displayMode: 'UNDERWATER REEF', reef,",
   'runtime diagnostics export');
 const upstreamHtmlPath = path.join(upstream, 'index.html');
 let upstreamHtml = read(upstreamHtmlPath);
@@ -129,21 +129,33 @@ main = replaceExactly(main, '  ocean.update(dt, timer);', `
   }
   ocean.update(dt, timer);
 `, 'device tilt OceanSim wind coupling');
-main = replaceExactly(main, 'views[ui.view]();', 'views[ui.view]();\nif (window.__osmoceanRapierReady && floaters instanceof RapierFloaters) { try { osmoceanUnified = createUnifiedCoupling({ THREE, scene, RAPIER, floaters, controls }); } catch (error) { reportBootError(error); } }', 'initialize unified scene after the camera preset');
+main = replaceExactly(main,
+  "const ui = { view: 'Lagoon', benchmark: () => benchButton.click(), exposure: 1 };\ngui.add(ui, 'view', Object.keys(views)).name('camera').onChange((v) => views[v]());",
+  "const ui = { view: 'Underwater', benchmark: () => benchButton.click(), exposure: 1 };",
+  'lock initial camera preset to underwater');
+main = replaceExactly(main, 'views[ui.view]();', 'views[ui.view]();\ncontrols.target.y = -10; controls.update();\nconst reefHeading = camera.getWorldDirection(new THREE.Vector3());\necology.group.position.set(camera.position.x + reefHeading.x * 18, 0, camera.position.z + reefHeading.z * 18);\ncontrols.enabled = false; controls.enableRotate = false; controls.enablePan = false; controls.enableZoom = false;\nunderwater.params.scattering = 0.055; underwater.params.shafts = 2.1; underwater.params.shaftRange = 72;\nwindow.__osmoceanDisplayMode = \'UNDERWATER REEF\';\nif (window.__osmoceanRapierReady && floaters instanceof RapierFloaters) { try { osmoceanUnified = createUnifiedCoupling({ THREE, scene, RAPIER, floaters, controls }); } catch (error) { reportBootError(error); } }', 'initialize locked underwater reef scene');
 
 // Add fish ecology after the Rapier integration has transformed the upstream entry point.
 copy(path.join(repoRoot, 'src/ecology/fish-ecology.js'), path.join(upstream, 'src/ecology/fish-ecology.js'));
-main = replaceExactly(main,
-  "import { Floaters } from './scene/floaters.js';\nimport { RapierFloaters } from './scene/rapierFloaters.js';\nimport * as RAPIER from '@dimforge/rapier3d-compat';\nimport { createUnifiedCoupling } from './osmocean/UnifiedCoupling.js';",
-  "import { Floaters } from './scene/floaters.js';\nimport { RapierFloaters } from './scene/rapierFloaters.js';\nimport * as RAPIER from '@dimforge/rapier3d-compat';\nimport { createUnifiedCoupling } from './osmocean/UnifiedCoupling.js';\nimport { FishEcology } from './ecology/fish-ecology.js';",
-  'native fish ecology import');
+copy(path.join(repoRoot, 'src/ecology/reef-environment.js'), path.join(upstream, 'src/ecology/reef-environment.js'));
 main = replaceExactly(main,
   "let floaters;\ntry { floaters = window.__osmoceanRapierReady ? new RapierFloaters({ RAPIER, scene, heightAt: islandHeight, patchMaterial: terrain.patchProp, query }) : new Floaters({ scene, heightAt: islandHeight, patchMaterial: terrain.patchProp }); } catch (error) { reportBootError(error); floaters = new Floaters({ scene, heightAt: islandHeight, patchMaterial: terrain.patchProp }); }\nlet osmoceanUnified = null;\nwindow.__osmoceanBootStatus = window.__osmoceanRapierReady ? 'rapier-world-ready' : 'fallback-world-ready';",
-  "let floaters;\ntry { floaters = window.__osmoceanRapierReady ? new RapierFloaters({ RAPIER, scene, heightAt: islandHeight, patchMaterial: terrain.patchProp, query }) : new Floaters({ scene, heightAt: islandHeight, patchMaterial: terrain.patchProp }); } catch (error) { reportBootError(error); floaters = new Floaters({ scene, heightAt: islandHeight, patchMaterial: terrain.patchProp }); }\nconst ecology = new FishEcology(THREE, scene, { population: 72, seed: 0x51f15e });\nlet osmoceanUnified = null;\nwindow.__osmoceanBootStatus = window.__osmoceanRapierReady ? 'rapier-world-ready' : 'fallback-world-ready';",
+  `let floaters;
+try { floaters = window.__osmoceanRapierReady ? new RapierFloaters({ RAPIER, scene, heightAt: islandHeight, patchMaterial: terrain.patchProp, query }) : new Floaters({ scene, heightAt: islandHeight, patchMaterial: terrain.patchProp }); } catch (error) { reportBootError(error); floaters = new Floaters({ scene, heightAt: islandHeight, patchMaterial: terrain.patchProp }); }
+const ecology = new FishEcology(THREE, scene, { population: 110, worldRadius: 42, minDepth: 3, maxDepth: 26, resourceCount: 220, seed: 0x51f15e });
+const reef = createReef(THREE, ecology.group);
+let osmoceanUnified = null;
+window.__osmoceanBootStatus = window.__osmoceanRapierReady ? 'rapier-world-ready' : 'fallback-world-ready';`,
+  `let floaters;
+try { floaters = window.__osmoceanRapierReady ? new RapierFloaters({ RAPIER, scene, heightAt: islandHeight, patchMaterial: terrain.patchProp, query }) : new Floaters({ scene, heightAt: islandHeight, patchMaterial: terrain.patchProp }); } catch (error) { reportBootError(error); floaters = new Floaters({ scene, heightAt: islandHeight, patchMaterial: terrain.patchProp }); }
+const ecology = new FishEcology(THREE, scene, { population: 110, worldRadius: 42, minDepth: 3, maxDepth: 26, resourceCount: 220, seed: 0x51f15e });
+const reef = createReef(THREE, ecology.group);
+let osmoceanUnified = null;
+window.__osmoceanBootStatus = window.__osmoceanRapierReady ? 'rapier-world-ready' : 'fallback-world-ready';`,
   'native fish ecology construction');
 main = replaceExactly(main,
   "if (mobile) gui.close();",
-  "const fEcology = gui.addFolder('Ecology');\nfEcology.add(ecology.params, 'population', 0, 250, 1).onChange((n) => ecology.populate(n));\nfEcology.add(ecology.params, 'worldRadius', 20, 300, 1);\nfEcology.add(ecology.params, 'neighbourRadius', 4, 40, 1);\nfEcology.add(ecology.params, 'maxDepth', 5, 60, 1);\nfEcology.close();\nconst fFood = gui.addFolder('Food web & energy');\nfFood.add(ecology.params, 'resourceCount', 0, 500, 1).onChange(n => ecology.seedResources(n));\nfFood.add(ecology.params, 'resourceRegrowth', 0, 0.2, 0.005);\nfFood.add(ecology.params, 'feedingRate', 0.02, 1, 0.01);\nfFood.close();\nconst fEvolution = gui.addFolder('Evolution & predation');\nfEvolution.add(ecology.params, 'mutationRate', 0, 0.5, 0.01);\nfEvolution.add(ecology.params, 'mutationStrength', 0.01, 0.5, 0.01);\nfEvolution.add(ecology.params, 'reproductionEnergy', 0.4, 1.4, 0.02);\nfEvolution.add(ecology.params, 'predationThreshold', 0, 1, 0.02);\nfEvolution.add(ecology.params, 'predationRate', 0, 2, 0.02);\nfEvolution.close();\nconst fEnvironment = gui.addFolder('Environment');\nfEnvironment.add(ecology.params, 'currentStrength', 0, 2, 0.02);\nfEnvironment.add(ecology.params, 'temperatureGradient', 0, 1, 0.02);\nfEnvironment.add(ecology.params, 'oxygenGradient', 0, 1, 0.02);\nfEnvironment.close();\nwindow.__osmoceanEcology = ecology;\nif (mobile) gui.close();",
+  "const fEcology = gui.addFolder('Ecology');\nfEcology.add(ecology.params, 'population', 0, 300, 1).onChange((n) => ecology.populate(n));\nfEcology.add(ecology.params, 'worldRadius', 20, 300, 1);\nfEcology.add(ecology.params, 'neighbourRadius', 4, 40, 1);\nfEcology.add(ecology.params, 'maxDepth', 5, 60, 1);\nfEcology.close();\nconst fFood = gui.addFolder('Food web & energy');\nfFood.add(ecology.params, 'resourceCount', 0, 500, 1).onChange(n => ecology.seedResources(n));\nfFood.add(ecology.params, 'resourceRegrowth', 0, 0.2, 0.005);\nfFood.add(ecology.params, 'feedingRate', 0.02, 1, 0.01);\nfFood.close();\nconst fEvolution = gui.addFolder('Evolution & predation');\nfEvolution.add(ecology.params, 'mutationRate', 0, 0.5, 0.01);\nfEvolution.add(ecology.params, 'mutationStrength', 0.01, 0.5, 0.01);\nfEvolution.add(ecology.params, 'reproductionEnergy', 0.4, 1.4, 0.02);\nfEvolution.add(ecology.params, 'predationThreshold', 0, 1, 0.02);\nfEvolution.add(ecology.params, 'predationRate', 0, 2, 0.02);\nfEvolution.close();\nconst fEnvironment = gui.addFolder('Environment');\nfEnvironment.add(ecology.params, 'currentStrength', 0, 2, 0.02);\nfEnvironment.add(ecology.params, 'temperatureGradient', 0, 1, 0.02);\nfEnvironment.add(ecology.params, 'oxygenGradient', 0, 1, 0.02);\nfEnvironment.close();\nwindow.__osmoceanEcology = ecology;\nif (mobile) gui.close();",
   'live ecology controls');
 main = replaceExactly(main, 'window.__osmoceanEcology = ecology;',
   `window.__osmoceanEcology = ecology;
