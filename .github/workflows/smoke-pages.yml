@@ -35,3 +35,10 @@ jobs:
         run: npx playwright install --with-deps chromium
       - name: Test deployed simulation pages
         run: node scripts/smoke-pages.mjs
+      - name: Upload browser screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: osmocean-browser-smoke-screenshots
+          path: smoke-*.png
+          if-no-files-found: ignore
