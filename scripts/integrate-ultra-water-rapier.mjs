@@ -143,9 +143,25 @@ main = replaceExactly(main,
   "if (mobile) gui.close();",
   "const fEcology = gui.addFolder('Ecology');\nfEcology.add(ecology.params, 'population', 0, 250, 1).onChange((n) => ecology.populate(n));\nfEcology.add(ecology.params, 'worldRadius', 20, 300, 1);\nfEcology.add(ecology.params, 'neighbourRadius', 4, 40, 1);\nfEcology.add(ecology.params, 'maxDepth', 5, 60, 1);\nfEcology.close();\nconst fFood = gui.addFolder('Food web & energy');\nfFood.add(ecology.params, 'resourceCount', 0, 500, 1).onChange(n => ecology.seedResources(n));\nfFood.add(ecology.params, 'resourceRegrowth', 0, 0.2, 0.005);\nfFood.add(ecology.params, 'feedingRate', 0.02, 1, 0.01);\nfFood.close();\nconst fEvolution = gui.addFolder('Evolution & predation');\nfEvolution.add(ecology.params, 'mutationRate', 0, 0.5, 0.01);\nfEvolution.add(ecology.params, 'mutationStrength', 0.01, 0.5, 0.01);\nfEvolution.add(ecology.params, 'reproductionEnergy', 0.4, 1.4, 0.02);\nfEvolution.add(ecology.params, 'predationThreshold', 0, 1, 0.02);\nfEvolution.add(ecology.params, 'predationRate', 0, 2, 0.02);\nfEvolution.close();\nconst fEnvironment = gui.addFolder('Environment');\nfEnvironment.add(ecology.params, 'currentStrength', 0, 2, 0.02);\nfEnvironment.add(ecology.params, 'temperatureGradient', 0, 1, 0.02);\nfEnvironment.add(ecology.params, 'oxygenGradient', 0, 1, 0.02);\nfEnvironment.close();\nwindow.__osmoceanEcology = ecology;\nif (mobile) gui.close();",
   'live ecology controls');
+main = replaceExactly(main, 'window.__osmoceanEcology = ecology;',
+  `window.__osmoceanEcology = ecology;
+const ecologyPanel = document.createElement('section');
+ecologyPanel.id = 'osmocean-ecology-observatory';
+ecologyPanel.style.cssText = 'position:fixed;left:12px;bottom:12px;z-index:9999;width:270px;max-width:calc(100vw - 24px);padding:12px;background:rgba(5,18,28,.88);color:#d8f3ef;border:1px solid rgba(115,220,210,.3);border-radius:10px;font:12px/1.45 system-ui;backdrop-filter:blur(12px);';
+ecologyPanel.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center"><b style="letter-spacing:.12em">ECOLOGY OBSERVATORY</b><button id="eco-hide" style="background:#20414a;color:#d8f3ef;border:0;border-radius:5px;padding:4px 8px">Hide</button></div><div id="eco-stats" style="margin:8px 0;color:#b9d9d4">Initialising population…</div><canvas id="eco-history" width="246" height="76" style="width:100%;height:76px"></canvas><div style="opacity:.65;margin-top:4px">Population history · selectable live parameters in Ecology folders</div>';
+document.body.appendChild(ecologyPanel);
+ecologyPanel.querySelector('#eco-hide').onclick = () => { ecologyPanel.style.display = 'none'; };
+const ecologyToggle = document.createElement('button');
+ecologyToggle.textContent = 'ECOLOGY';
+ecologyToggle.style.cssText = 'position:fixed;left:12px;bottom:12px;z-index:9998;background:#123943;color:#d8f3ef;border:1px solid #4b9b98;border-radius:7px;padding:8px 12px;font:11px system-ui;letter-spacing:.12em;display:none';
+ecologyToggle.onclick = () => { ecologyPanel.style.display = 'block'; ecologyToggle.style.display = 'none'; };
+document.body.appendChild(ecologyToggle);
+ecologyPanel.querySelector('#eco-hide').onclick = () => { ecologyPanel.style.display = 'none'; ecologyToggle.style.display = 'block'; };
+window.__osmoceanEcologyPanel = ecologyPanel;`,
+  'mount ecology observatory panel');
 main = replaceExactly(main,
   '  floaters.step(dt, elapsed);',
-  '  floaters.step(dt, elapsed);\n  ecology.update(dt, elapsed, camWater);',
+  '  floaters.step(dt, elapsed);\n  ecology.update(dt, elapsed, camWater);\n  if (window.__osmoceanEcologyPanel && window.__osmoceanEcologyPanel.style.display !== \'none\') { const stats = ecology.getStats(); const label = window.__osmoceanEcologyPanel.querySelector(\'#eco-stats\'); if (label) label.textContent = `Fish ${stats.population} · food ${Math.round(stats.resources)} · generation ${stats.meanGeneration.toFixed(1)} · speed ${stats.meanSpeed.toFixed(2)} · aggression ${stats.meanAggression.toFixed(2)}`; const canvas = window.__osmoceanEcologyPanel.querySelector(\'#eco-history\'); if (canvas) { const ctx = canvas.getContext(\'2d\'); const rows = ecology.history; ctx.clearRect(0,0,canvas.width,canvas.height); if (rows.length > 1) { const max = Math.max(1,...rows.map(r=>r.population)); ctx.strokeStyle = \'#74d6c4\'; ctx.lineWidth = 2; ctx.beginPath(); rows.forEach((r,i)=>{const x=i/(rows.length-1)*canvas.width,y=canvas.height-r.population/max*(canvas.height-6)-3;i?ctx.lineTo(x,y):ctx.moveTo(x,y);}); ctx.stroke(); } } }',
   'fish ecology frame update');
 main = replaceExactly(main,
   'camera, controls, sky, post, surface, ocean, terrain, timer, views, quality, renderer, floaters, query, underwater, spray, snow, caustics, floatShadow, physicsEngine: \'Rapier 3D 0.21.0\',',
