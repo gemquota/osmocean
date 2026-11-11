@@ -462,7 +462,7 @@ viewerMain = viewerMain.replace("window.__osmoceanBootStatus = 'scene-initialize
 viewerMain = viewerMain.replace(/copy\(path\.join\(repoRoot, 'src\/ecology\/[^']+'\), path\.join\(upstream, 'src\/ecology\/[^']+'\)\);\n/g, '');
 viewerMain = viewerMain.replace(/copy\(path\.join\(repoRoot, 'scripts\/upstream\/rapierFloaters\.js'\), path\.join\(upstream, 'src\/scene\/rapierFloaters\.js'\)\);\n/g, '');
 viewerMain = viewerMain.replace(/  elapsed \+= dt;\n/, '  elapsed += dt;\n  marineViewer.update(dt, elapsed);\n');
-const forbiddenRuntime = /FishEcology|ecology\.|__osmoceanEcology|RapierFloaters|RAPIER|createUnifiedCoupling|new Floaters|floaters\.|query\.|spray\.|snow\.|FLOATER_KINDS|WaterQuery|MarineSnow|new Spray|\\bfFloat\\b/;
+const forbiddenRuntime = /FishEcology|ecology\.|__osmoceanEcology|RapierFloaters|RAPIER|createUnifiedCoupling|new Floaters|floaters\.|query\.|spray\.|snow\.|FLOATER_KINDS|WaterQuery|MarineSnow|new Spray|\bfFloat\b/;
 const forbiddenMatches = [...viewerMain.matchAll(new RegExp(forbiddenRuntime.source, 'g'))]
   .map(match => ({ token: match[0], context: viewerMain.slice(Math.max(0, match.index - 100), Math.min(viewerMain.length, match.index + 180)) }));
 if (forbiddenMatches.length) {
