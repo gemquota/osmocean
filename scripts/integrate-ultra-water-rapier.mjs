@@ -26,7 +26,6 @@ copy(path.join(repoRoot, 'src/core/heightfield-grid.js'), path.join(osmoceanDir,
 let adapter = read(path.join(osmoceanDir, 'rapier-ultra-water.js'));
 adapter = replaceExactly(adapter, '"../core/vector3.js"', '"./vector3.js"', 'adapter vector import');
 write(path.join(osmoceanDir, 'rapier-ultra-water.js'), adapter);
-copy(path.join(repoRoot, 'scripts/upstream/rapierFloaters.js'), path.join(upstream, 'src/scene/rapierFloaters.js'));
 
 
 // Import the pinned SPH implementation into the Ultra-Water application so all
@@ -266,10 +265,6 @@ main = replaceExactly(main,
 main = replaceExactly(main, 'views[ui.view]();', 'views[ui.view]();\ncontrols.target.y = mobile ? -8 : -10; controls.update(); camera.updateMatrixWorld(true);\nconst reefHeading = camera.getWorldDirection(new THREE.Vector3());\necology.group.position.set(camera.position.x + reefHeading.x * (mobile ? 4.5 : 10), 0, camera.position.z + reefHeading.z * (mobile ? 4.5 : 10));\nreef.group.position.y = -7.5;\ncontrols.enabled = false; controls.enableRotate = false; controls.enablePan = false; controls.enableZoom = false;\nunderwater.params.scattering = 0.055; underwater.params.shafts = 2.1; underwater.params.shaftRange = 72;\nwindow.__osmoceanDisplayMode = \'UNDERWATER REEF\';\nif (window.__osmoceanRapierReady && floaters instanceof RapierFloaters) { try { osmoceanUnified = createUnifiedCoupling({ THREE, scene, RAPIER, floaters, controls }); } catch (error) { reportBootError(error); } }', 'initialize locked underwater reef scene');
 
 // Add fish ecology after the Rapier integration has transformed the upstream entry point.
-copy(path.join(repoRoot, 'src/ecology/fish-ecology.js'), path.join(upstream, 'src/ecology/fish-ecology.js'));
-copy(path.join(repoRoot, 'src/ecology/aquatic-physics.js'), path.join(upstream, 'src/ecology/aquatic-physics.js'));
-copy(path.join(repoRoot, 'src/ecology/reef-environment.js'), path.join(upstream, 'src/ecology/reef-environment.js'));
-copy(path.join(repoRoot, 'src/ecology/polyfish-swim-material.js'), path.join(upstream, 'src/ecology/polyfish-swim-material.js'));
 main = replaceExactly(main,
   "let floaters;\ntry { floaters = window.__osmoceanRapierReady ? new RapierFloaters({ RAPIER, scene, heightAt: islandHeight, patchMaterial: terrain.patchProp, query }) : new Floaters({ scene, heightAt: islandHeight, patchMaterial: terrain.patchProp }); } catch (error) { reportBootError(error); floaters = new Floaters({ scene, heightAt: islandHeight, patchMaterial: terrain.patchProp }); }\nlet osmoceanUnified = null;\nwindow.__osmoceanBootStatus = window.__osmoceanRapierReady ? 'rapier-world-ready' : 'fallback-world-ready';",
   `let floaters;
