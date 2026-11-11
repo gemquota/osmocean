@@ -184,7 +184,7 @@ main = replaceExactly(main,
 main = replaceExactly(main, 'floaters.step(dt);', 'osmoceanUnified?.step(dt, elapsed, ocean.params);\n  floaters.step(dt, elapsed);', 'shared unified world frame and current simulation time');
 main = replaceExactly(main,
   `const mobile = args.has('mobile') || (!args.has('desktop') && matchMedia('(pointer: coarse)').matches);`,
-  `const mobile = args.has('mobile') || (!args.has('desktop') && (matchMedia('(pointer: coarse)').matches || navigator.webdriver));\nrenderer.shadowMap.enabled = !mobile;`,
+  `const mobile = args.has('mobile') || (!args.has('desktop') && (matchMedia('(pointer: coarse)').matches || navigator.webdriver));\n// Keep the sun shadow target enabled: underwater shafts sample its depth texture even on low-power devices.`,
   'use the low-cost GPU profile for software-rendered browsers and mobile devices');
 main = replaceExactly(main,
   `const quality = mobile
@@ -275,7 +275,7 @@ const speciesDefinitions = [
 ];
 const modelCatalog = (await Promise.all(speciesDefinitions.map(async definition => {
   try {
-    if (!definition.detail) return {...definition,scene:null,animations:[]};
+    if (definition.detail === false) return {...definition,scene:null,animations:[]};
     const gltf = await assetLoader.loadAsync(import.meta.env.BASE_URL + 'models/osmocean/species/' + definition.id + '.glb');
     return {...definition,scene:gltf.scene,animations:gltf.animations??[]};
   } catch (error) {
