@@ -17,8 +17,6 @@ function replaceExactly(source, before, after, label) {
 
 const packagePath = path.join(upstream, 'package.json');
 const manifest = JSON.parse(read(packagePath));
-manifest.dependencies ||= {};
-manifest.dependencies['@dimforge/rapier3d-compat'] = '0.21.0';
 write(packagePath, JSON.stringify(manifest, null, 2) + '\n');
 
 const osmoceanDir = path.join(upstream, 'src/osmocean');
@@ -34,12 +32,7 @@ copy(path.join(repoRoot, 'scripts/upstream/rapierFloaters.js'), path.join(upstre
 // Import the pinned SPH implementation into the Ultra-Water application so all
 // three engines share the same Three.js scene and animation lifecycle.
 const fluidRoot = path.resolve(process.argv[3] || '_upstream/fluid');
-const polyfishRoot = path.resolve(process.argv[4] || '_upstream/polyfish');
-const fishAssetsRoot = path.resolve(process.argv[5] || '_upstream/fish-assets');
-const fishModelSource = path.join(polyfishRoot, 'assets/models/fish_rigged.glb');
-if (!fs.existsSync(fishModelSource)) throw new Error('Pinned PolyFish model missing: ' + fishModelSource);
-copy(fishModelSource, path.join(upstream, 'public/models/osmocean/fish_rigged.glb'));
-copy(path.join(polyfishRoot, 'LICENSE'), path.join(upstream, 'public/models/osmocean/POLYFISH-LICENSE.txt'));
+const fishAssetsRoot = path.resolve(process.argv[4] || '_upstream/fish-assets');
 const detailedFish = [
   'anglerfish','black_lion_fish','coral_grouper','goblin_shark','humphead','lionfish',
   'parrot_fish','puffer','shark','sunfish','swordfish','tuna'
@@ -52,17 +45,6 @@ for (const species of detailedFish) {
 }
 copy(path.join(fishAssetsRoot, 'assets/quaternius/animated-fish-bundle/License.txt'),
   path.join(upstream, 'public/models/osmocean/species/QUATERNIUS-CC0-LICENSE.txt'));
-const pelagicSourceDir = path.join(repoRoot, '_downloaded/ocean-fauna');
-const pelagicCatalogPath = path.join(pelagicSourceDir, 'catalog.json');
-if (!fs.existsSync(pelagicCatalogPath)) throw new Error('Downloaded CC0 ocean fauna catalog missing; run scripts/download-ocean-fauna.mjs first');
-const pelagicCatalog = JSON.parse(read(pelagicCatalogPath));
-const pelagicModelDir = path.join(upstream, 'public/models/osmocean/pelagic');
-for (const species of pelagicCatalog.species) {
-  const source = path.join(pelagicSourceDir, species.file);
-  if (!fs.existsSync(source)) throw new Error('Downloaded pelagic model missing: ' + source);
-  copy(source, path.join(pelagicModelDir, species.file));
-}
-copy(pelagicCatalogPath, path.join(pelagicModelDir, 'catalog.json'));
 for (const file of [
   'config.ts', 'kernels.ts', 'physics.ts', 'spatial.ts', 'spawn.ts', 'types.ts'
 ]) copy(path.join(fluidRoot, 'src/sph/2d/common', file), path.join(osmoceanDir, 'sph/common', file));
