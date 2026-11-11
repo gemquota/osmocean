@@ -210,8 +210,14 @@ main = replaceExactly(main,
   "let floaters;\ntry { floaters = window.__osmoceanRapierReady ? new RapierFloaters({ RAPIER, scene, heightAt: islandHeight, patchMaterial: terrain.patchProp, query }) : new Floaters({ scene, heightAt: islandHeight, patchMaterial: terrain.patchProp }); } catch (error) { reportBootError(error); floaters = new Floaters({ scene, heightAt: islandHeight, patchMaterial: terrain.patchProp }); }\nlet osmoceanUnified = null;\nwindow.__osmoceanBootStatus = window.__osmoceanRapierReady ? 'rapier-world-ready' : 'fallback-world-ready';",
   `let floaters;
 try { floaters = window.__osmoceanRapierReady ? new RapierFloaters({ RAPIER, scene, heightAt: islandHeight, patchMaterial: terrain.patchProp, query }) : new Floaters({ scene, heightAt: islandHeight, patchMaterial: terrain.patchProp }); } catch (error) { reportBootError(error); floaters = new Floaters({ scene, heightAt: islandHeight, patchMaterial: terrain.patchProp }); }
-let fishGltf = null;\ntry { fishGltf = await new GLTFLoader().loadAsync(import.meta.env.BASE_URL + 'models/osmocean/fish_rigged.glb'); } catch (error) { console.warn('[Osmocean] Rigged fish model unavailable; using procedural fallback', error); }\nconst ecology = new FishEcology(THREE, scene, { population: mobile ? 64 : 110, worldRadius: 42, minDepth: 3, maxDepth: 26, resourceCount: mobile ? 140 : 220, seed: 0x51f15e, modelTemplate: fishGltf?.scene ?? null, modelAnimations: fishGltf?.animations ?? [] });
-const reef = createReef(THREE, ecology.group, 0x71ef, mobile ? 0.6 : 1);
+let fishGltf = null;\ntry { fishGltf = await new GLTFLoader().loadAsync(import.meta.env.BASE_URL + 'models/osmocean/fish_rigged.glb'); } catch (error) { console.warn('[Osmocean] Rigged fish model unavailable; using procedural fallback', error); }\nconst reefRockTemplates = [];
+const assetLoader = new GLTFLoader();
+for (const assetId of ['rock_moss_set_01','rock_moss_set_02','boulder_01']) {
+  try { const rockGltf = await assetLoader.loadAsync(import.meta.env.BASE_URL + 'models/osmocean/reef/' + assetId + '.gltf'); reefRockTemplates.push(rockGltf.scene); }
+  catch (error) { console.warn('[Osmocean] Optional CC0 rock asset unavailable:', assetId, error); }
+}
+const ecology = new FishEcology(THREE, scene, { population: mobile ? 64 : 110, worldRadius: 42, minDepth: 3, maxDepth: 26, resourceCount: mobile ? 140 : 220, seed: 0x51f15e, modelTemplate: fishGltf?.scene ?? null, modelAnimations: fishGltf?.animations ?? [] });
+const reef = createReef(THREE, ecology.group, 0x71ef, mobile ? 0.6 : 1, { rockTemplates: reefRockTemplates });
 let osmoceanUnified = null;
 window.__osmoceanBootStatus = window.__osmoceanRapierReady ? 'rapier-world-ready' : 'fallback-world-ready';`,
   `let floaters;
@@ -231,7 +237,7 @@ const ecologyPanel = document.createElement('section');
 ecologyPanel.id = 'osmocean-ecology-observatory';
 ecologyPanel.style.cssText = 'position:fixed;left:12px;bottom:12px;z-index:9999;width:270px;max-width:calc(100vw - 24px);padding:12px;background:rgba(5,18,28,.88);color:#d8f3ef;border:1px solid rgba(115,220,210,.3);border-radius:10px;font:12px/1.45 system-ui;backdrop-filter:blur(12px);';
 ecologyPanel.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center"><b style="letter-spacing:.12em">ECOLOGY OBSERVATORY</b><button id="eco-hide" style="background:#20414a;color:#d8f3ef;border:0;border-radius:5px;padding:4px 8px">Hide</button></div><div id="eco-stats" style="margin:8px 0;color:#b9d9d4">Initialising population…</div><canvas id="eco-history" width="246" height="76" style="width:100%;height:76px"></canvas><div style="opacity:.65;margin-top:4px">Population history · selectable live parameters in Ecology folders</div>';
-document.body.appendChild(ecologyPanel);
+document.body.appendChild(ecologyPanel);\nconst assetCredit = document.createElement('div'); assetCredit.textContent = 'CC0 reef rock assets · Powered by Poly Haven'; assetCredit.style.cssText = 'font-size:10px;opacity:.62;margin-top:3px'; ecologyPanel.appendChild(assetCredit);
 ecologyPanel.querySelector('#eco-hide').onclick = () => { ecologyPanel.style.display = 'none'; };
 const ecologyToggle = document.createElement('button');
 ecologyToggle.textContent = 'ECOLOGY';
@@ -241,9 +247,10 @@ document.body.appendChild(ecologyToggle);
 ecologyPanel.querySelector('#eco-hide').onclick = () => { ecologyPanel.style.display = 'none'; ecologyToggle.style.display = 'block'; };
 window.__osmoceanEcologyPanel = ecologyPanel;`,
   'mount ecology observatory panel');
+main = replaceExactly(main, '  elapsed += dt;', '  elapsed += dt;\n  ecology.update(dt, elapsed, camWater);', 'advance fish ecology before renderer subsystems');
 main = replaceExactly(main,
   '  floaters.step(dt, elapsed);',
-  '  floaters.step(dt, elapsed);\n  ecology.update(dt, elapsed, camWater);\n  if (window.__osmoceanEcologyPanel && window.__osmoceanEcologyPanel.style.display !== \'none\') { const stats = ecology.getStats(); const label = window.__osmoceanEcologyPanel.querySelector(\'#eco-stats\'); if (label) label.textContent = `Fish ${stats.population} · food ${Math.round(stats.resources)} · generation ${stats.meanGeneration.toFixed(1)} · speed ${stats.meanSpeed.toFixed(2)} · aggression ${stats.meanAggression.toFixed(2)}`; const canvas = window.__osmoceanEcologyPanel.querySelector(\'#eco-history\'); if (canvas) { const ctx = canvas.getContext(\'2d\'); const rows = ecology.history; ctx.clearRect(0,0,canvas.width,canvas.height); if (rows.length > 1) { const max = Math.max(1,...rows.map(r=>r.population)); ctx.strokeStyle = \'#74d6c4\'; ctx.lineWidth = 2; ctx.beginPath(); rows.forEach((r,i)=>{const x=i/(rows.length-1)*canvas.width,y=canvas.height-r.population/max*(canvas.height-6)-3;i?ctx.lineTo(x,y):ctx.moveTo(x,y);}); ctx.stroke(); } } }',
+  '  floaters.step(dt, elapsed);\n  if (window.__osmoceanEcologyPanel && window.__osmoceanEcologyPanel.style.display !== \'none\') { const stats = ecology.getStats(); const label = window.__osmoceanEcologyPanel.querySelector(\'#eco-stats\'); if (label) label.textContent = `Fish ${stats.population} · food ${Math.round(stats.resources)} · generation ${stats.meanGeneration.toFixed(1)} · speed ${stats.meanSpeed.toFixed(2)} · aggression ${stats.meanAggression.toFixed(2)}`; const canvas = window.__osmoceanEcologyPanel.querySelector(\'#eco-history\'); if (canvas) { const ctx = canvas.getContext(\'2d\'); const rows = ecology.history; ctx.clearRect(0,0,canvas.width,canvas.height); if (rows.length > 1) { const max = Math.max(1,...rows.map(r=>r.population)); ctx.strokeStyle = \'#74d6c4\'; ctx.lineWidth = 2; ctx.beginPath(); rows.forEach((r,i)=>{const x=i/(rows.length-1)*canvas.width,y=canvas.height-r.population/max*(canvas.height-6)-3;i?ctx.lineTo(x,y):ctx.moveTo(x,y);}); ctx.stroke(); } } }',
   'fish ecology frame update');
 main = replaceExactly(main,
   'camera, controls, sky, post, surface, ocean, terrain, timer, views, quality, renderer, floaters, query, underwater, spray, snow, caustics, floatShadow, physicsEngine: \'Rapier 3D 0.21.0\',',
