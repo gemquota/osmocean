@@ -56,6 +56,7 @@ export class FishEcology {
     const modelTemplate=modelEntry?.detail===false?this.modelTemplate:(modelEntry?.scene??this.modelTemplate);
     const modelAnimations=modelEntry?.detail===false?this.modelAnimations:(modelEntry?.animations?.length?modelEntry.animations:this.modelAnimations);
     const useModel=Boolean(modelTemplate&&this.modelInstances<this.modelBudget);
+    let surfaceClearance = 1.35 * g.size;
     if(useModel){
       this.modelInstances++;
       const visual=cloneSkeleton(modelTemplate);
@@ -70,7 +71,10 @@ export class FishEcology {
       const bounds=new T.Box3().setFromObject(visual),extent=bounds.getSize(new T.Vector3());
       visual.scale.setScalar((2.3*g.size*(modelEntry?.scale??1))/Math.max(extent.x,extent.y,extent.z,1e-6));
       visual.updateMatrixWorld(true);
-      visual.position.sub(new T.Box3().setFromObject(visual).getCenter(new T.Vector3()));
+      const visualBounds = new T.Box3().setFromObject(visual);
+      const visualSize = visualBounds.getSize(new T.Vector3());
+      surfaceClearance = visualSize.length() * 0.5;
+      visual.position.sub(visualBounds.getCenter(new T.Vector3()));
       root.add(visual);
       if(modelAnimations.length){
         mixer=new T.AnimationMixer(visual);
@@ -86,12 +90,15 @@ export class FishEcology {
     }
     const p=parent?.root.position;
     const preferredDepth=parent?this.clamp(parent.preferredDepth+this.range(-1.5,1.5),this.params.minDepth+1,this.params.maxDepth-1):this.range(this.params.minDepth+1,this.params.maxDepth-1);
+    const spawnY = p ? p.y + this.range(-1, 1) : -preferredDepth;
+    const submergedSpawnY = this.clamp(spawnY, -this.params.maxDepth + surfaceClearance,
+      -this.params.minDepth - surfaceClearance);
     root.position.set(p?p.x+this.range(-2,2):this.range(-this.params.worldRadius*.7,this.params.worldRadius*.7),
-      p?p.y+this.range(-1,1):-preferredDepth,
+      submergedSpawnY,
       p?p.z+this.range(-2,2):this.range(-this.params.worldRadius*.7,this.params.worldRadius*.7));
     this.group.add(root);const heading=new T.Vector3(this.rand()-.5,this.range(-.15,.15),this.rand()-.5).normalize();
     const role=g.leadership>.72&&g.sociality>.55?'leader':g.curiosity>.72?'scout':g.affiliation>.72?'shoaler':g.aggression>.72&&g.boldness>.55?'hunter':g.feedingSpecialisation>.72?'forager':g.boldness<.25?'shy':'generalist';
-    return{id:this.nextId++,parentId:parent?.id??null,species,speciesName:modelEntry?.name??`shoal-fish-${species}`,sizeClass:modelEntry?.sizeClass??'shoal',ecologicalRole:modelEntry?.role??'generalist',root,tail,mixer,swimData,swimPhase:this.range(0,Math.PI*2),role,genes:g,brain,heading,memory:{foodPosition:new T.Vector3(),foodTtl:0,threatPosition:new T.Vector3(),threatTtl:0},
+    return{id:this.nextId++,surfaceClearance:surfaceClearance??1.35*g.size,parentId:parent?.id??null,species,speciesName:modelEntry?.name??`shoal-fish-${species}`,sizeClass:modelEntry?.sizeClass??'shoal',ecologicalRole:modelEntry?.role??'generalist',root,tail,mixer,swimData,swimPhase:this.range(0,Math.PI*2),role,genes:g,brain,heading,memory:{foodPosition:new T.Vector3(),foodTtl:0,threatPosition:new T.Vector3(),threatTtl:0},
       velocity:heading.clone().multiplyScalar(g.speed*.5),preferredDepth,energy:parent?parent.energy*.45:this.range(.7,1),
       age:0,cooldown:0,phase:this.rand()*Math.PI*2,generation:parent?parent.generation+1:0,offspring:0,eaten:0,modelled:useModel};
   }
@@ -157,7 +164,7 @@ export class FishEcology {
       if(speed>1e-6)f.velocity.multiplyScalar(T.MathUtils.damp(speed,target,1.8,step)/speed);
       const fluidAcceleration=calculateAquaticAcceleration({velocity:f.velocity,waterVelocity:env.current,positionY:p.y,surfaceY:localSurface,preferredDepth:f.preferredDepth,bodySize:f.genes.size,waterDensity:this.params.waterDensity,bodyDensity:1025-(f.genes.buoyancy-.5)*14,dragCoefficient:this.params.dragCoefficient,gravity:this.params.gravity});
       f.velocity.add(new T.Vector3(fluidAcceleration.x,fluidAcceleration.y,fluidAcceleration.z).multiplyScalar(step));
-      p.addScaledVector(f.velocity,step);constrainFishDepth(p,f.velocity,localSurface,this.params.minDepth,this.params.maxDepth);
+      p.addScaledVector(f.velocity,step);constrainFishDepth(p,f.velocity,localSurface,this.params.minDepth,this.params.maxDepth,f.surfaceClearance??0);
       f.age+=step;f.cooldown=Math.max(0,f.cooldown-step);f.energy-=f.genes.metabolism*step*.0018+Math.max(0,.55-env.oxygen)*step*.003;
       if(food&&p.distanceTo(food.mesh.position)<1.8&&food.biomass>0){const bite=Math.min(food.biomass,this.params.feedingRate*step*8);food.biomass-=bite;f.energy=Math.min(1.5,f.energy+bite*.8);f.eaten+=bite;food.mesh.scale.setScalar(Math.max(.08,food.biomass));if(food.biomass<=.02)food.respawn=this.range(8,22);}
       if(f.energy>this.params.reproductionEnergy&&f.cooldown<=0&&mate&&f.id<mate.id&&this.fish.length+births.length<500){births.push(this.makeFish(f,mate));f.energy*=.62;mate.energy*=.92;f.cooldown=mate.cooldown=this.params.reproductionCooldown/f.genes.fertility;f.offspring++;mate.offspring++;}
