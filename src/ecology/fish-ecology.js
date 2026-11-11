@@ -10,7 +10,7 @@ import { calculateAquaticAcceleration, constrainFishDepth } from './aquatic-phys
 export class FishEcology {
   constructor(THREE, scene, options = {}) {
     this.T=THREE; this.scene=scene; this.rng=options.seed??0x51f15e;
-    this.modelTemplate=options.modelTemplate??null; this.modelAnimations=options.modelAnimations??[]; this.modelCatalog=options.modelCatalog??[]; this.modelBudget=options.modelBudget??14; this.modelInstances=0;
+    this.modelTemplate=options.modelTemplate??null; this.modelAnimations=options.modelAnimations??[]; this.modelCatalog=options.modelCatalog??[]; this.modelBudget=options.modelBudget??14; this.modelInstances=0; this.scaleMultiplier=options.scaleMultiplier??2.3;
     this.modelLoaded=Boolean(this.modelCatalog.some(item=>item.scene)||this.modelTemplate);
     this.params={population:110,worldRadius:42,minDepth:3,maxDepth:26,neighbourRadius:16,
       separationRadius:5,maxAcceleration:5,resourceCount:180,resourceRegrowth:.035,
