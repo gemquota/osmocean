@@ -46,6 +46,41 @@ try {
     }));
     if (!structure.hasUnified) throw new Error(`Unified Rapier/SPH startup did not complete: ${JSON.stringify(structure)}`);
     await page.waitForTimeout(5000);
+    const motion = await page.evaluate(async () => {
+      const fish = window.__osmoceanEcology?.fish ?? [];
+      const before = fish.slice(0, Math.min(12, fish.length)).map(f => f.root.position.clone());
+      await new Promise(resolve => setTimeout(resolve, 900));
+      const moved = fish.slice(0, before.length).filter((f, i) => f.root.position.distanceTo(before[i]) > 0.01).length;
+      let gestures = null;
+      if (matchMedia('(pointer: coarse)').matches || location.search.includes('mobile')) {
+        const target = window.app?.renderer?.domElement;
+        const camera = window.app?.camera;
+        const controls = window.app?.controls;
+        if (target && camera && controls) {
+          const startPosition = camera.position.clone();
+          const startTarget = controls.target.clone();
+          const startUp = camera.up.clone();
+          const touch = (identifier, x, y) => new Touch({ identifier, target, clientX: x, clientY: y });
+          const dispatch = (type, touches) => target.dispatchEvent(new TouchEvent(type, {
+            touches, targetTouches: touches, changedTouches: touches, bubbles: true, cancelable: true
+          }));
+          dispatch('touchstart', [touch(1, 120, 300), touch(2, 260, 300)]);
+          dispatch('touchmove', [touch(1, 105, 315), touch(2, 285, 325)]);
+          dispatch('touchend', []);
+          gestures = {
+            marker: Boolean(window.__osmoceanTouchGesture),
+            panned: controls.target.distanceTo(startTarget) > 0.01,
+            zoomed: camera.position.distanceTo(controls.target) !== startPosition.distanceTo(startTarget),
+            rotated: camera.up.distanceTo(startUp) > 0.001
+          };
+        }
+      }
+      return { sampled: before.length, moved, gestures };
+    });
+    if (motion.sampled < 1 || motion.moved < 1) throw new Error(`Fish motion not observable: ${JSON.stringify(motion)}`);
+    if (motion.gestures && (!motion.gestures.marker || !motion.gestures.panned || !motion.gestures.zoomed || !motion.gestures.rotated)) {
+      throw new Error(`Two-finger camera gesture incomplete: ${JSON.stringify(motion.gestures)}`);
+    }
     const ecology = await page.evaluate(() => {
       const canvas = window.app?.renderer?.domElement || [...document.querySelectorAll('canvas')].find(el => { const r = el.getBoundingClientRect(); return r.width > 100 && r.height > 100; });
       const gl = canvas?.getContext('webgl2') || canvas?.getContext('webgl');
