@@ -7,6 +7,17 @@ import { calculateAquaticAcceleration, constrainFishDepth } from './aquatic-phys
  * Compact evolutionary/ecological model for interactive simulation, not a validated
  * marine-ecology research model.
  */
+export function sampleOceanSpawn(random, worldRadius, coreRadius = 140, coreFraction = 0.35) {
+  if (typeof random !== 'function' || ![worldRadius, coreRadius, coreFraction].every(Number.isFinite) ||
+      worldRadius <= 0 || coreRadius < 0 || coreFraction < 0 || coreFraction > 1) {
+    throw new TypeError('ocean spawn sampling requires a random function and valid radius/fraction');
+  }
+  const range = random() < coreFraction ? Math.min(coreRadius, worldRadius) : worldRadius;
+  const radius = Math.sqrt(random()) * range;
+  const angle = random() * Math.PI * 2;
+  return Object.freeze({ x: Math.cos(angle) * radius, z: Math.sin(angle) * radius, radius, range });
+}
+
 export class FishEcology {
   constructor(THREE, scene, options = {}) {
     this.T=THREE; this.scene=scene; this.rng=options.seed??0x51f15e;
@@ -97,13 +108,12 @@ export class FishEcology {
     const spawnY = p ? p.y + this.range(-1, 1) : -preferredDepth;
     const submergedSpawnY = this.clamp(spawnY, -this.params.maxDepth + surfaceClearance,
       -this.params.minDepth - surfaceClearance);
-    const spawnRange = this.rand() < this.params.spawnCoreFraction
-      ? Math.min(this.params.spawnCoreRadius, this.params.worldRadius)
-      : this.params.worldRadius;
-    const spawnRadius = Math.sqrt(this.rand()) * spawnRange;
-    const spawnAngle = this.range(0, Math.PI * 2);
-    const spawnX = Math.cos(spawnAngle) * spawnRadius;
-    const spawnZ = Math.sin(spawnAngle) * spawnRadius;
+    const spawn = sampleOceanSpawn(
+      () => this.rand(), this.params.worldRadius,
+      this.params.spawnCoreRadius, this.params.spawnCoreFraction
+    );
+    const spawnX = spawn.x;
+    const spawnZ = spawn.z;
     root.position.set(p ? p.x + this.range(-2, 2) : spawnX,
       submergedSpawnY,
       p ? p.z + this.range(-2, 2) : spawnZ);
