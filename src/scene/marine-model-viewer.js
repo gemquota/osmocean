@@ -7,9 +7,10 @@ const SPECIES = [
 ];
 
 export class MarineModelViewer {
-  constructor(THREE, scene, { baseUrl = './', mobile = false, seed = 0x51f15e } = {}) {
+  constructor(THREE, scene, { baseUrl = './', mobile = false, seed = 0x51f15e, heightAt = null } = {}) {
     this.THREE = THREE;
     this.scene = scene;
+    this.heightAt = typeof heightAt === 'function' ? heightAt : null;
     this.loader = new GLTFLoader();
     this.baseUrl = baseUrl.endsWith('/') ? baseUrl : baseUrl + '/';
     this.randomState = seed >>> 0;
@@ -140,11 +141,14 @@ export class MarineModelViewer {
       animal.root.rotation.set(0, animal.turn, -desiredPitch);
       animal.bank = THREE.MathUtils.damp(animal.bank, THREE.MathUtils.clamp(-deltaYaw * 2.2, -0.22, 0.22), 2.4, step);
       animal.visual.rotation.x = animal.bank;
-      animal.root.position.set(
-        animal.center.x + Math.cos(t) * animal.orbit,
-        animal.center.y + vertical,
-        animal.center.z + Math.sin(zPhase) * animal.orbit * 0.85
-      );
+      const localX = animal.center.x + Math.cos(t) * animal.orbit;
+      const localZ = animal.center.z + Math.sin(zPhase) * animal.orbit * 0.85;
+      let localY = animal.center.y + vertical;
+      if (this.heightAt) {
+        const floor = this.heightAt(this.group.position.x + localX, this.group.position.z + localZ);
+        if (Number.isFinite(floor)) localY = Math.max(localY, floor + 2.2 - this.group.position.y);
+      }
+      animal.root.position.set(localX, localY, localZ);
       if (animal.mixer) animal.mixer.update(step);
       else for (const bone of animal.proceduralBones) {
         const angle = Math.sin(elapsed * animal.speed * (bone.amplitude > 0.2 ? 5.2 : 2.4) + bone.phase) * bone.amplitude;
