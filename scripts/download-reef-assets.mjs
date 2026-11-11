@@ -2,7 +2,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 
 const destination=path.resolve(process.argv[2]||'_upstream/ultra-water/public/models/osmocean/reef');
-const assets=['rock_moss_set_01','rock_moss_set_02','boulder_01'];
+const assets=['rock_moss_set_01','rock_moss_set_02'];
 const headers={'User-Agent':'Osmocean-Reef-Asset-Pipeline/1.0 (+https://github.com/gemquota/osmocean)'};
 async function json(url){const r=await fetch(url,{headers});if(!r.ok)throw new Error('Poly Haven API '+r.status+' '+url);return r.json();}
 async function save(url,file){const r=await fetch(url,{headers});if(!r.ok)throw new Error('Poly Haven asset download '+r.status+' '+url);await fs.mkdir(path.dirname(file),{recursive:true});await fs.writeFile(file,Buffer.from(await r.arrayBuffer()));}
