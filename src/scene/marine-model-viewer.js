@@ -87,6 +87,12 @@ export class MarineModelViewer {
     visual.position.sub(scaledBounds.getCenter(new THREE.Vector3()));
     root.add(visual);
 
+    const proceduralBones = [];
+    visual.traverse(node => {
+      if (node.isBone && /(tail|fin|spine|caudal|body)/i.test(node.name)) {
+        proceduralBones.push({ node, base: node.quaternion.clone(), phase: this.range(0, Math.PI * 2), amplitude: /tail|caudal/i.test(node.name) ? 0.24 : 0.1 });
+      }
+    });
     const mixer = model.animations.length ? new THREE.AnimationMixer(visual) : null;
     if (mixer) {
       const clip = model.animations.find(item => /swim|idle|move/i.test(item.name)) ?? model.animations[0];
@@ -106,7 +112,7 @@ export class MarineModelViewer {
     const initialTurn = Math.atan2(-Math.cos(phase * 0.83 + verticalPhase * 0.2) * 0.705, -Math.sin(phase));
     root.position.set(center.x + Math.cos(phase) * orbit, center.y + Math.sin(phase * 0.47 + verticalPhase) * 2.8, center.z + Math.sin(phase * 0.83 + verticalPhase * 0.2) * orbit * 0.85);
     this.group.add(root);
-    this.animals.push({ root, visual, mixer, center, orbit, speed, phase, verticalPhase,
+    this.animals.push({ root, visual, mixer, proceduralBones, center, orbit, speed, phase, verticalPhase,
       turn: initialTurn, bank: 0, model: model.id });
   }
 
@@ -140,6 +146,10 @@ export class MarineModelViewer {
         animal.center.z + Math.sin(zPhase) * animal.orbit * 0.85
       );
       if (animal.mixer) animal.mixer.update(step);
+      else for (const bone of animal.proceduralBones) {
+        const angle = Math.sin(elapsed * animal.speed * (bone.amplitude > 0.2 ? 5.2 : 2.4) + bone.phase) * bone.amplitude;
+        bone.node.quaternion.copy(bone.base).multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), angle));
+      }
     }
   }
 
