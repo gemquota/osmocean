@@ -54,13 +54,13 @@ export function calculateAquaticAcceleration({
   });
 }
 
-export function constrainFishDepth(position, velocity, surfaceY, minDepth, maxDepth) {
-  if (!position || !velocity || ![position.y, velocity.y, surfaceY, minDepth, maxDepth].every(Number.isFinite)) {
+export function constrainFishDepth(position, velocity, surfaceY, minDepth, maxDepth, surfaceClearance = 0) {
+  if (!position || !velocity || ![position.y, velocity.y, surfaceY, minDepth, maxDepth, surfaceClearance].every(Number.isFinite)) {
     throw new TypeError('depth constraint requires finite position, velocity and bounds');
   }
-  if (!(minDepth >= 0 && maxDepth > minDepth)) throw new RangeError('invalid fish depth interval');
-  const shallow = surfaceY - minDepth;
-  const deep = surfaceY - maxDepth;
+  if (!(minDepth >= 0 && maxDepth > minDepth && surfaceClearance >= 0 && maxDepth - minDepth > 2 * surfaceClearance)) throw new RangeError('invalid fish depth interval or surface clearance');
+  const shallow = surfaceY - minDepth - surfaceClearance;
+  const deep = surfaceY - maxDepth + surfaceClearance;
   if (position.y > shallow) {
     position.y = shallow;
     if (velocity.y > 0) velocity.y *= -0.12;
