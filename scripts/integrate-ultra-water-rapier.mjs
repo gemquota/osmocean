@@ -420,7 +420,7 @@ viewerMain = viewerMain.replace(
 );
 viewerMain = viewerMain.replace(
   /let floaters;\ntry \{ floaters =[\s\S]*?let osmoceanUnified = null;\nwindow\.__osmoceanBootStatus =[\s\S]*?;\n/,
-  "const floaters = { params: {}, collectPoints: () => [], step: () => {} };\nconst marineViewer = new MarineModelViewer(THREE, scene, { baseUrl: import.meta.env.BASE_URL, mobile });\nawait marineViewer.ready;\nwindow.__osmoceanBootStatus = 'marine-models-ready';\n"
+  "const floaters = { params: {}, collectPoints: () => [], step: () => {} };\nconst marineViewer = new MarineModelViewer(THREE, scene, { baseUrl: import.meta.env.BASE_URL, mobile, heightAt: islandHeight });\nawait marineViewer.ready;\nwindow.__osmoceanBootStatus = 'marine-models-ready';\n"
 );
 viewerMain = viewerMain.replace('osmoceanUnified?.step(dt, elapsed, ocean.params);\n  ', '');
 viewerMain = viewerMain.replace(/const query = new WaterQuery\([\s\S]*?\n/, '');
