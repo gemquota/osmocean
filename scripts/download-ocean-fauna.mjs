@@ -30,7 +30,7 @@ for (const asset of assets) {
     if (bytes.length < 1024) throw new Error('Downloaded model is unexpectedly small: ' + asset.title);
     fs.writeFileSync(target, bytes);
   }
-  const title = asset.title.replace(/ \\(Ocean Animals: Whales, Sharks and Fish\\)$/i, '');
+  const title = asset.title.replace(/ \(Ocean Animals: Whales, Sharks and Fish\)$/i, '');
   const normalized = title.toLowerCase();
   const dims = asset.stats?.sizeMeters ?? [2.3, 1, 1];
   const longest = Math.max(...dims);
@@ -39,7 +39,7 @@ for (const asset of assets) {
   const weight = megafauna ? 0.025 : predator ? 0.11 : 0.32;
   species.push({
     id: 'pelagic-' + asset.id,
-    name: title.replace(/\\b\\w/g, letter => letter.toUpperCase()),
+    name: title.replace(/\b\w/g, letter => letter.toUpperCase()),
     file,
     scale: Math.max(0.45, longest / 2.3),
     weight,
@@ -58,6 +58,6 @@ fs.writeFileSync(path.join(output, 'catalog.json'), JSON.stringify({
   license: 'CC0 1.0 Universal',
   licenseUrl: 'https://creativecommons.org/publicdomain/zero/1.0/',
   species
-}, null, 2) + '\\n');
+}, null, 2) + '\n');
 console.log('Downloaded ' + species.length + ' CC0 marine animal models (' +
   species.reduce((sum, item) => sum + (item.triangles ?? 0), 0) + ' triangles).');
