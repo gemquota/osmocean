@@ -103,10 +103,11 @@ export class MarineModelViewer {
     const speed = this.range(0.055, 0.15) * (model.id.includes('shark') || model.id === 'tuna' ? 1.35 : 1);
     const phase = this.range(0, Math.PI * 2);
     const verticalPhase = this.range(0, Math.PI * 2);
+    const initialTurn = Math.atan2(-Math.cos(phase * 0.83 + verticalPhase * 0.2) * 0.705, -Math.sin(phase));
     root.position.set(center.x + Math.cos(phase) * orbit, center.y + Math.sin(phase * 0.47 + verticalPhase) * 2.8, center.z + Math.sin(phase * 0.83 + verticalPhase * 0.2) * orbit * 0.85);
     this.group.add(root);
     this.animals.push({ root, visual, mixer, center, orbit, speed, phase, verticalPhase,
-      turn: this.range(0, Math.PI * 2), bank: 0, model: model.id });
+      turn: initialTurn, bank: 0, model: model.id });
   }
 
   update(dt, elapsed = this.elapsed + dt) {
