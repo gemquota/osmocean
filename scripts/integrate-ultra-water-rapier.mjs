@@ -435,7 +435,7 @@ viewerMain = viewerMain.replace("timer.begin('query');\n", '');
 
 viewerMain = viewerMain.replace("if (mobile) gui.close();", "gui.hide();");
 viewerMain = viewerMain.replace(/\s*floaters\.spawn\(camera\.position, controls\.target\.clone\(\)\.sub\(camera\.position\)\);/g, '');
-viewerMain = viewerMain.replace(/\s*floaters\.ingest\(query, 1\);\n\s*floaters\.step\(dt\);\n\s*timer\.begin\('floatShadow'\);\n\s*floatShadow\.update\(renderer, floaters\.scene, floaters\.bodies, sky\.sunDir\);[\s\S]*?\n\s*ocean\.update\(dt, timer\);/, "\n  ocean.update(dt, timer);");
+viewerMain = viewerMain.replace(/\s*floaters\.ingest\(query, 1\);\n\s*floaters\.step\(dt, elapsed\);\n\s*timer\.begin\('floatShadow'\);\n\s*floatShadow\.update\(renderer, floaters\.scene, floaters\.bodies, sky\.sunDir\);[\s\S]*?\n\s*ocean\.update\(dt, timer\);/, "\n  ocean.update(dt, timer);");
 viewerMain = viewerMain.replace(/\s*spray\.update\(\);/, '');
 viewerMain = viewerMain.replace(/\s*const pts = floaters\.collectPoints\(\[camera\.position\], elapsed\);\n\s*query\.submit\(pts, floaters\.count, floaters\.layout, elapsed\);/, '');
 viewerMain = viewerMain.replace(/\s*snow\.update\(camera, hdrRT\.height, nearSurface\);/, '');
