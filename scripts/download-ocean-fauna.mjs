@@ -39,7 +39,7 @@ for (const asset of assets) {
   const deepwater = /angler|gulper|goblin|viper|lantern|fangtooth|deep/i.test(normalized);
   const minDepth = deepwater ? 140 : megafauna ? 18 : predator ? 24 : 4;
   const maxDepth = deepwater ? 390 : megafauna ? 260 : predator ? 300 : 180;
-  const weight = megafauna ? 0.025 : predator ? 0.11 : 0.32;
+  const weight = megafauna ? 0.2 : predator ? 0.55 : 0.7;
   species.push({
     id: 'pelagic-' + asset.id,
     name: title.replace(/\b\w/g, letter => letter.toUpperCase()),
