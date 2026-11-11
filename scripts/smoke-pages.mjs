@@ -72,12 +72,22 @@ try {
           dispatch('touchmove', [touch(1, 105, 315), touch(2, 285, 325)]);
           dispatch('touchend', []);
           const endDirection = camera.getWorldDirection(new (window.app.camera.position.constructor)());
+          const panStayedOnXZ = Math.abs(controls.target.y - startTarget.y) < 0.001;
+          const beforeVerticalDrag = camera.position.y;
+          dispatch('touchstart', [touch(1, 120, 300), touch(2, 180, 300), touch(3, 240, 300)]);
+          dispatch('touchmove', [touch(1, 120, 270), touch(2, 180, 270), touch(3, 240, 270)]);
+          const verticalDragMovedY = Math.abs(camera.position.y - beforeVerticalDrag) > 0.01;
+          const verticalDragMarker = Boolean(window.__osmoceanTouchGesture?.verticalDrag);
+          dispatch('touchend', []);
           gestures = {
             marker: Boolean(window.__osmoceanTouchGesture),
             panned: controls.target.distanceTo(startTarget) > 0.01,
+            panStayedOnXZ,
             zoomed: camera.position.distanceTo(controls.target) !== startPosition.distanceTo(startTarget),
             rotated: endDirection.distanceTo(startDirection) > 0.001,
             pivotYaw: Boolean(window.__osmoceanTouchGesture?.yawPivot),
+            verticalDragMovedY,
+            verticalDragMarker,
             noRoll: camera.up.distanceTo(startUp) < 0.001
           };
         }
@@ -85,7 +95,7 @@ try {
       return { sampled: before.length, moved, gestures, updateCount: window.__osmoceanEcology?.updateCount ?? 0, updatesDuringWait, firstFishPosition: current[0]?.root.position.toArray() ?? null, firstFishVelocity: current[0]?.velocity.length() ?? null, tickCount: window.__osmoceanTickCount ?? 0, fallbackTicks: window.__osmoceanFallbackTicks ?? 0, lastFrameError: window.__osmoceanLastFrameError ?? null, bootError: document.querySelector('#osmocean-boot-error')?.textContent ?? null, visibility: document.visibilityState, lastUpdateDt: window.__osmoceanEcology?.lastUpdateDt ?? 0, lastUpdateElapsed: window.__osmoceanEcology?.lastUpdateElapsed ?? 0 };
     });
     if (motion.sampled < 1 || motion.updateCount < 1 || motion.updatesDuringWait < 1 || motion.moved < 1) throw new Error(`Fish simulation did not advance: ${JSON.stringify({ motion, errors })}`);
-    if (motion.gestures && (!motion.gestures.marker || !motion.gestures.panned || !motion.gestures.zoomed || !motion.gestures.rotated || !motion.gestures.pivotYaw || !motion.gestures.noRoll)) {
+    if (motion.gestures && (!motion.gestures.marker || !motion.gestures.panned || !motion.gestures.panStayedOnXZ || !motion.gestures.zoomed || !motion.gestures.rotated || !motion.gestures.pivotYaw || !motion.gestures.verticalDragMovedY || !motion.gestures.verticalDragMarker || !motion.gestures.noRoll)) {
       throw new Error(`Two-finger camera gesture incomplete: ${JSON.stringify(motion.gestures)}`);
     }
     const ecology = await page.evaluate(() => {
