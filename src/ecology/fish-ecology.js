@@ -56,6 +56,7 @@ export class FishEcology {
     const modelTemplate=modelEntry?.detail===false?this.modelTemplate:(modelEntry?.scene??this.modelTemplate);
     const modelAnimations=modelEntry?.detail===false?this.modelAnimations:(modelEntry?.animations?.length?modelEntry.animations:this.modelAnimations);
     const useModel=Boolean(modelTemplate&&this.modelInstances<this.modelBudget);
+    let surfaceClearance = 1.35 * g.size;
     if(useModel){
       this.modelInstances++;
       const visual=cloneSkeleton(modelTemplate);
@@ -72,7 +73,7 @@ export class FishEcology {
       visual.updateMatrixWorld(true);
       const visualBounds = new T.Box3().setFromObject(visual);
       const visualSize = visualBounds.getSize(new T.Vector3());
-      const surfaceClearance = visualSize.length() * 0.5;
+      surfaceClearance = visualSize.length() * 0.5;
       visual.position.sub(visualBounds.getCenter(new T.Vector3()));
       root.add(visual);
       if(modelAnimations.length){
@@ -81,7 +82,6 @@ export class FishEcology {
         mixer.clipAction(swimClip).play();
       }else swimData=applySwimMaterial(visual,'fish');
     }else{
-      const surfaceClearance = 1.35 * g.size;
       const body=new T.Mesh(this.bodyGeo,mat);const morph=[1,.82,1.22,.92,1.08,.72][species];body.scale.set(1.15*g.size*morph,.48*g.size*(species===2?1.25:1),.34*g.size*(species===4?1.35:1));root.add(body);
       tail=new T.Mesh(this.tailGeo,mat);tail.rotation.z=Math.PI/2;tail.position.x=-1.02*g.size*morph;tail.scale.set(.72*g.size,.62*g.size,.28*g.size);root.add(tail);
       const dorsal=new T.Mesh(this.finGeo,mat);dorsal.position.set(-.05*g.size,.43*g.size,0);dorsal.rotation.z=Math.PI/2;dorsal.scale.set(.8*g.size,.8*g.size,.55*g.size);root.add(dorsal);
