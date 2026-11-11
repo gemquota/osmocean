@@ -90,7 +90,7 @@ export class MarineModelViewer {
     const proceduralBones = [];
     visual.traverse(node => {
       if (node.isBone && /(tail|fin|spine|caudal|body)/i.test(node.name)) {
-        proceduralBones.push({ node, base: node.quaternion.clone(), phase: this.range(0, Math.PI * 2), amplitude: /tail|caudal/i.test(node.name) ? 0.24 : 0.1 });
+        proceduralBones.push({ node, base: node.quaternion.clone(), phase: this.range(0, Math.PI * 2), amplitude: /tail|caudal/i.test(node.name) ? 0.24 : 0.1, axis: new THREE.Vector3(0, 1, 0), offset: new THREE.Quaternion() });
       }
     });
     const mixer = model.animations.length ? new THREE.AnimationMixer(visual) : null;
@@ -148,7 +148,8 @@ export class MarineModelViewer {
       if (animal.mixer) animal.mixer.update(step);
       else for (const bone of animal.proceduralBones) {
         const angle = Math.sin(elapsed * animal.speed * (bone.amplitude > 0.2 ? 5.2 : 2.4) + bone.phase) * bone.amplitude;
-        bone.node.quaternion.copy(bone.base).multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), angle));
+        bone.offset.setFromAxisAngle(bone.axis, angle);
+        bone.node.quaternion.copy(bone.base).multiply(bone.offset);
       }
     }
   }
