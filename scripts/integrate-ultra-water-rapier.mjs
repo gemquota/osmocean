@@ -170,7 +170,7 @@ for (const line of [
 ]) main = replaceExactly(main, line, '', 'legacy custom-integrator control');
 main = replaceExactly(main,
   'window.app = {\n  camera, controls, sky, post, surface, ocean, terrain, timer, views, quality, renderer, floaters, query, underwater, spray, snow, caustics, floatShadow,',
-  "window.__osmoceanBootStatus = 'scene-initialized';\nwindow.app = {\n  camera, controls, sky, post, surface, ocean, terrain, timer, views, quality, renderer, floaters, query, underwater, spray, snow, caustics, floatShadow, physicsEngine: 'Rapier 3D 0.21.0', displayMode: 'UNDERWATER REEF', reef, fishModelLoaded: ecology.modelLoaded,",
+  "window.__osmoceanBootStatus = 'scene-initialized';\nwindow.app = {\n  camera, controls, sky, post, surface, ocean, terrain, timer, views, quality, renderer, floaters, query, underwater, spray, snow, caustics, floatShadow, physicsEngine: 'Rapier 3D 0.21.0', displayMode: 'UNDERWATER REEF', reef, reefRockAssetCount: reef.rockAssetCount, fishModelLoaded: ecology.modelLoaded,",
   'runtime diagnostics export');
 const upstreamHtmlPath = path.join(upstream, 'index.html');
 let upstreamHtml = read(upstreamHtmlPath);
@@ -212,7 +212,7 @@ main = replaceExactly(main,
 try { floaters = window.__osmoceanRapierReady ? new RapierFloaters({ RAPIER, scene, heightAt: islandHeight, patchMaterial: terrain.patchProp, query }) : new Floaters({ scene, heightAt: islandHeight, patchMaterial: terrain.patchProp }); } catch (error) { reportBootError(error); floaters = new Floaters({ scene, heightAt: islandHeight, patchMaterial: terrain.patchProp }); }
 let fishGltf = null;\ntry { fishGltf = await new GLTFLoader().loadAsync(import.meta.env.BASE_URL + 'models/osmocean/fish_rigged.glb'); } catch (error) { console.warn('[Osmocean] Rigged fish model unavailable; using procedural fallback', error); }\nconst reefRockTemplates = [];
 const assetLoader = new GLTFLoader();
-for (const assetId of ['rock_moss_set_01','rock_moss_set_02','boulder_01']) {
+for (const assetId of ['rock_moss_set_01','rock_moss_set_02']) {
   try { const rockGltf = await assetLoader.loadAsync(import.meta.env.BASE_URL + 'models/osmocean/reef/' + assetId + '.gltf'); reefRockTemplates.push(rockGltf.scene); }
   catch (error) { console.warn('[Osmocean] Optional CC0 rock asset unavailable:', assetId, error); }
 }
