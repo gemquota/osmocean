@@ -36,7 +36,8 @@ for (const asset of assets) {
   const longest = Math.max(...dims);
   const predator = /shark|barracuda|marlin|swordfish|tuna|angler|orca|dolphin|seal|squid/i.test(normalized);
   const megafauna = /whale|orca|dolphin|seal|manta|ray/i.test(normalized);
-  const deepwater = /angler|gulper|goblin|viper|lantern|fangtooth|deep/i.test(normalized);\n  const minDepth = deepwater ? 140 : megafauna ? 18 : predator ? 24 : 4;\n  const maxDepth = deepwater ? 390 : megafauna ? 260 : predator ? 300 : 180;\n  const weight = megafauna ? 0.025 : predator ? 0.11 : 0.32;
+  const deepwater = /angler|gulper|goblin|viper|lantern|fangtooth|deep/i.test(normalized);
+  const minDepth = deepwater ? 140 : megafauna ? 18 : predator ? 24 : 4;\n  const maxDepth = deepwater ? 390 : megafauna ? 260 : predator ? 300 : 180;\n  const weight = megafauna ? 0.025 : predator ? 0.11 : 0.32;
   species.push({
     id: 'pelagic-' + asset.id,
     name: title.replace(/\b\w/g, letter => letter.toUpperCase()),
