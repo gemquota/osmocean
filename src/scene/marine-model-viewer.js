@@ -103,7 +103,7 @@ export class MarineModelViewer {
     const speed = this.range(0.055, 0.15) * (model.id.includes('shark') || model.id === 'tuna' ? 1.35 : 1);
     const phase = this.range(0, Math.PI * 2);
     const verticalPhase = this.range(0, Math.PI * 2);
-    root.position.set(center.x + Math.cos(phase) * orbit, center.y, center.z + Math.sin(phase) * orbit);
+    root.position.set(center.x + Math.cos(phase) * orbit, center.y + Math.sin(phase * 0.47 + verticalPhase) * 2.8, center.z + Math.sin(phase * 0.83 + verticalPhase * 0.2) * orbit * 0.85);
     this.group.add(root);
     this.animals.push({ root, visual, mixer, center, orbit, speed, phase, verticalPhase,
       turn: this.range(0, Math.PI * 2), bank: 0, model: model.id });
@@ -116,10 +116,13 @@ export class MarineModelViewer {
     const step = Math.min(dt, 0.05);
     for (const animal of this.animals) {
       const t = elapsed * animal.speed + animal.phase;
-      const vertical = Math.sin(t * 0.43 + animal.verticalPhase) * 2.8;
-      const verticalVelocity = Math.cos(t * 0.43 + animal.verticalPhase) * 2.8 * animal.speed * 0.43;
+      const zPhase = t * 0.83 + animal.verticalPhase * 0.2;
+      const yPhase = t * 0.47 + animal.verticalPhase;
+      const vertical = Math.sin(yPhase) * 2.8;
       const direction = new THREE.Vector3(
-        -Math.sin(t), verticalVelocity / Math.max(0.5, animal.orbit * animal.speed), Math.cos(t)
+        -Math.sin(t),
+        Math.cos(yPhase) * 2.8 * 0.47 / Math.max(0.5, animal.orbit),
+        Math.cos(zPhase) * 0.83 * 0.85
       ).normalize();
       const desiredYaw = Math.atan2(-direction.z, direction.x);
       let deltaYaw = Math.atan2(Math.sin(desiredYaw - animal.turn), Math.cos(desiredYaw - animal.turn));
@@ -133,7 +136,7 @@ export class MarineModelViewer {
       animal.root.position.set(
         animal.center.x + Math.cos(t) * animal.orbit,
         animal.center.y + vertical,
-        animal.center.z + Math.sin(t) * animal.orbit
+        animal.center.z + Math.sin(zPhase) * animal.orbit * 0.85
       );
       if (animal.mixer) animal.mixer.update(step);
     }
