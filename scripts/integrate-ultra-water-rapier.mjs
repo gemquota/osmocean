@@ -396,6 +396,11 @@ copy(path.join(repoRoot, 'src/scene/marine-model-viewer.js'),
   path.join(upstream, 'src/scene/marine-model-viewer.js'));
 let viewerMain = read(mainPath);
 viewerMain = viewerMain.replace(/^import \{ Floaters \} from '\.\/scene\/floaters\.js';\n?/m, '');
+viewerMain = viewerMain.replace(/^import \{ Spray \} from '\.\/water\/Spray\.js';\n?/m, '');
+viewerMain = viewerMain.replace(/^import \{ MarineSnow \} from '\.\/water\/MarineSnow\.js';\n?/m, '');
+viewerMain = viewerMain.replace(/^import \{ WaterQuery \} from '\.\/water\/WaterQuery\.js';\n?/m, '');
+viewerMain = viewerMain.replace(/^import \{ FLOATER_KINDS \} from '\.\/scene\/floaterMeshes\.js';\n?/m, '');
+
 for (const line of [
   "import { RapierFloaters } from './scene/rapierFloaters.js';",
   "import * as RAPIER from '@dimforge/rapier3d-compat';",
@@ -418,6 +423,24 @@ viewerMain = viewerMain.replace(
   "const floaters = { params: {}, collectPoints: () => [], step: () => {} };\nconst marineViewer = new MarineModelViewer(THREE, scene, { baseUrl: import.meta.env.BASE_URL, mobile });\nawait marineViewer.ready;\nwindow.__osmoceanBootStatus = 'marine-models-ready';\n"
 );
 viewerMain = viewerMain.replace('osmoceanUnified?.step(dt, elapsed, ocean.params);\n  ', '');
+viewerMain = viewerMain.replace(/const query = new WaterQuery\([\s\S]*?\n/, '');
+viewerMain = viewerMain.replace(/const spray = new Spray\([\s\S]*?\n/, '');
+viewerMain = viewerMain.replace(/const snow = new MarineSnow\([\s\S]*?\n/, '');
+viewerMain = viewerMain.replace('waterScene.add(surface.mesh, spray.mesh, spray.splash, spray.rockSplash, snow.mesh);', 'waterScene.add(surface.mesh);');
+viewerMain = viewerMain.replace(/fShore\.add\(spray\.params,[^\n]*\n/g, '');
+viewerMain = viewerMain.replace(/const fFloat = gui\.addFolder\('Floaters & underwater'\);[\s\S]*?\nconst fPost = gui\.addFolder\('Post'\);/, "const fPost = gui.addFolder('Post');");
+viewerMain = viewerMain.replace("if (mobile) gui.close();", "gui.hide();");
+viewerMain = viewerMain.replace(/\s*floaters\.spawn\(camera\.position, controls\.target\.clone\(\)\.sub\(camera\.position\)\);/g, '');
+viewerMain = viewerMain.replace(/\s*floaters\.ingest\(query, 1\);\n\s*floaters\.step\(dt\);\n\s*timer\.begin\('floatShadow'\);\n\s*floatShadow\.update\(renderer, floaters\.scene, floaters\.bodies, sky\.sunDir\);[\s\S]*?\n\s*ocean\.update\(dt, timer\);/, "\n  ocean.update(dt, timer);");
+viewerMain = viewerMain.replace(/\s*spray\.update\(\);/, '');
+viewerMain = viewerMain.replace(/\s*const pts = floaters\.collectPoints\(\[camera\.position\], elapsed\);\n\s*query\.submit\(pts, floaters\.count, floaters\.layout, elapsed\);/, '');
+viewerMain = viewerMain.replace(/\s*snow\.update\(camera, hdrRT\.height, nearSurface\);/, '');
+viewerMain = viewerMain.replace(/\s*floaters, query,/, ' ');
+viewerMain = viewerMain.replace(/\s*spray, snow,/, ' ');
+viewerMain = viewerMain.replace(/\s*if \(window\.__osmoceanRapierReady && floaters instanceof RapierFloaters\)[^\n]*/g, '');
+viewerMain = viewerMain.replace(/const floaters = \{ params: \{\}, collectPoints: \(\) => \[\], step: \(\) => \{\} \};\n/, '');
+viewerMain = viewerMain.replace('controls.target.y = mobile ? -8 : -10; controls.update(); camera.updateMatrixWorld(true);', "controls.target.y = mobile ? -8 : -10; controls.update(); camera.updateMatrixWorld(true);\nconst marineHeading = camera.getWorldDirection(new THREE.Vector3());\nmarineViewer.group.position.set(camera.position.x + marineHeading.x * (mobile ? 4.5 : 10), 0, camera.position.z + marineHeading.z * (mobile ? 4.5 : 10));");
+
 viewerMain = viewerMain.replace(/\nif \(window\.__osmoceanRapierReady && floaters instanceof RapierFloaters\) \{[^\n]*\}/, '');
 viewerMain = viewerMain.replace(/\s*const reefHeading = camera\.getWorldDirection\(new THREE\.Vector3\(\)\);[\s\S]*?reef\.group\.position\.y = -7\.5;\n/, '\n');
 viewerMain = viewerMain.replace(
