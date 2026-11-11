@@ -17,8 +17,6 @@ function replaceExactly(source, before, after, label) {
 
 const packagePath = path.join(upstream, 'package.json');
 const manifest = JSON.parse(read(packagePath));
-manifest.dependencies ||= {};
-manifest.dependencies['@dimforge/rapier3d-compat'] = '0.21.0';
 write(packagePath, JSON.stringify(manifest, null, 2) + '\n');
 
 const osmoceanDir = path.join(upstream, 'src/osmocean');
@@ -28,18 +26,12 @@ copy(path.join(repoRoot, 'src/core/heightfield-grid.js'), path.join(osmoceanDir,
 let adapter = read(path.join(osmoceanDir, 'rapier-ultra-water.js'));
 adapter = replaceExactly(adapter, '"../core/vector3.js"', '"./vector3.js"', 'adapter vector import');
 write(path.join(osmoceanDir, 'rapier-ultra-water.js'), adapter);
-copy(path.join(repoRoot, 'scripts/upstream/rapierFloaters.js'), path.join(upstream, 'src/scene/rapierFloaters.js'));
 
 
 // Import the pinned SPH implementation into the Ultra-Water application so all
 // three engines share the same Three.js scene and animation lifecycle.
 const fluidRoot = path.resolve(process.argv[3] || '_upstream/fluid');
-const polyfishRoot = path.resolve(process.argv[4] || '_upstream/polyfish');
-const fishAssetsRoot = path.resolve(process.argv[5] || '_upstream/fish-assets');
-const fishModelSource = path.join(polyfishRoot, 'assets/models/fish_rigged.glb');
-if (!fs.existsSync(fishModelSource)) throw new Error('Pinned PolyFish model missing: ' + fishModelSource);
-copy(fishModelSource, path.join(upstream, 'public/models/osmocean/fish_rigged.glb'));
-copy(path.join(polyfishRoot, 'LICENSE'), path.join(upstream, 'public/models/osmocean/POLYFISH-LICENSE.txt'));
+const fishAssetsRoot = path.resolve(process.argv[4] || '_upstream/fish-assets');
 const detailedFish = [
   'anglerfish','black_lion_fish','coral_grouper','goblin_shark','humphead','lionfish',
   'parrot_fish','puffer','shark','sunfish','swordfish','tuna'
@@ -52,17 +44,6 @@ for (const species of detailedFish) {
 }
 copy(path.join(fishAssetsRoot, 'assets/quaternius/animated-fish-bundle/License.txt'),
   path.join(upstream, 'public/models/osmocean/species/QUATERNIUS-CC0-LICENSE.txt'));
-const pelagicSourceDir = path.join(repoRoot, '_downloaded/ocean-fauna');
-const pelagicCatalogPath = path.join(pelagicSourceDir, 'catalog.json');
-if (!fs.existsSync(pelagicCatalogPath)) throw new Error('Downloaded CC0 ocean fauna catalog missing; run scripts/download-ocean-fauna.mjs first');
-const pelagicCatalog = JSON.parse(read(pelagicCatalogPath));
-const pelagicModelDir = path.join(upstream, 'public/models/osmocean/pelagic');
-for (const species of pelagicCatalog.species) {
-  const source = path.join(pelagicSourceDir, species.file);
-  if (!fs.existsSync(source)) throw new Error('Downloaded pelagic model missing: ' + source);
-  copy(source, path.join(pelagicModelDir, species.file));
-}
-copy(pelagicCatalogPath, path.join(pelagicModelDir, 'catalog.json'));
 for (const file of [
   'config.ts', 'kernels.ts', 'physics.ts', 'spatial.ts', 'spawn.ts', 'types.ts'
 ]) copy(path.join(fluidRoot, 'src/sph/2d/common', file), path.join(osmoceanDir, 'sph/common', file));
@@ -242,8 +223,8 @@ main = replaceExactly(main,
   'batched query capacity');
 main = replaceExactly(main,
   "const gui = new GUI({ title: 'Gelatin Water' });",
-  "const gui = new GUI({ title: 'Ultra-Water · Rapier 3D' });",
-  'Rapier scene GUI title');
+  "const gui = new GUI({ title: 'Osmocean · Marine Viewer' });\ngui.hide();",
+  'hide simulation controls in model-viewer mode');
 for (const line of [
   "fFloat.add(floaters.params, 'drag', 0, 6, 0.01);\n",
   "fFloat.add(floaters.params, 'angularDrag', 0, 4, 0.01);\n",
@@ -255,7 +236,7 @@ main = replaceExactly(main,
   'runtime diagnostics export');
 const upstreamHtmlPath = path.join(upstream, 'index.html');
 let upstreamHtml = read(upstreamHtmlPath);
-upstreamHtml = replaceExactly(upstreamHtml, '<title>Gelatin Water</title>', '<title>Ultra-Water + Rapier | Osmocean</title>', 'upstream page title');
+upstreamHtml = replaceExactly(upstreamHtml, '<title>Gelatin Water</title>', '<title>Osmocean | Underwater Model Viewer</title>', 'upstream page title');
 write(upstreamHtmlPath, upstreamHtml);
 write(mainPath, main);
 main = replaceExactly(main, '  ocean.update(dt, timer);', `
@@ -284,10 +265,6 @@ main = replaceExactly(main,
 main = replaceExactly(main, 'views[ui.view]();', 'views[ui.view]();\ncontrols.target.y = mobile ? -8 : -10; controls.update(); camera.updateMatrixWorld(true);\nconst reefHeading = camera.getWorldDirection(new THREE.Vector3());\necology.group.position.set(camera.position.x + reefHeading.x * (mobile ? 4.5 : 10), 0, camera.position.z + reefHeading.z * (mobile ? 4.5 : 10));\nreef.group.position.y = -7.5;\ncontrols.enabled = false; controls.enableRotate = false; controls.enablePan = false; controls.enableZoom = false;\nunderwater.params.scattering = 0.055; underwater.params.shafts = 2.1; underwater.params.shaftRange = 72;\nwindow.__osmoceanDisplayMode = \'UNDERWATER REEF\';\nif (window.__osmoceanRapierReady && floaters instanceof RapierFloaters) { try { osmoceanUnified = createUnifiedCoupling({ THREE, scene, RAPIER, floaters, controls }); } catch (error) { reportBootError(error); } }', 'initialize locked underwater reef scene');
 
 // Add fish ecology after the Rapier integration has transformed the upstream entry point.
-copy(path.join(repoRoot, 'src/ecology/fish-ecology.js'), path.join(upstream, 'src/ecology/fish-ecology.js'));
-copy(path.join(repoRoot, 'src/ecology/aquatic-physics.js'), path.join(upstream, 'src/ecology/aquatic-physics.js'));
-copy(path.join(repoRoot, 'src/ecology/reef-environment.js'), path.join(upstream, 'src/ecology/reef-environment.js'));
-copy(path.join(repoRoot, 'src/ecology/polyfish-swim-material.js'), path.join(upstream, 'src/ecology/polyfish-swim-material.js'));
 main = replaceExactly(main,
   "let floaters;\ntry { floaters = window.__osmoceanRapierReady ? new RapierFloaters({ RAPIER, scene, heightAt: islandHeight, patchMaterial: terrain.patchProp, query }) : new Floaters({ scene, heightAt: islandHeight, patchMaterial: terrain.patchProp }); } catch (error) { reportBootError(error); floaters = new Floaters({ scene, heightAt: islandHeight, patchMaterial: terrain.patchProp }); }\nlet osmoceanUnified = null;\nwindow.__osmoceanBootStatus = window.__osmoceanRapierReady ? 'rapier-world-ready' : 'fallback-world-ready';",
   `let floaters;
@@ -411,4 +388,88 @@ main = replaceExactly(main,
   'expose ecology diagnostics');
 write(mainPath, main);
 
-console.log('Integrated Ultra-Water, pinned SPH and Rapier into one Three.js scene and render lifecycle.');
+
+// Final presentation pass: this build is a marine model viewer, not an ecology simulator.
+// Keep the shared ocean renderer and camera, but do not instantiate floaters, particles,
+// populations, resources, spawning, predation, reef clutter, or simulation dashboards.
+copy(path.join(repoRoot, 'src/scene/marine-model-viewer.js'),
+  path.join(upstream, 'src/scene/marine-model-viewer.js'));
+let viewerMain = read(mainPath);
+viewerMain = viewerMain.replace(/^import \{ Floaters \} from '\.\/scene\/floaters\.js';\n?/m, '');
+viewerMain = viewerMain.replace(/^import \{ Spray \} from '\.\/water\/Spray\.js';\n?/m, '');
+viewerMain = viewerMain.replace(/^import \{ MarineSnow \} from '\.\/water\/MarineSnow\.js';\n?/m, '');
+viewerMain = viewerMain.replace(/^import \{ WaterQuery \} from '\.\/water\/WaterQuery\.js';\n?/m, '');
+viewerMain = viewerMain.replace(/^import \{ FLOATER_KINDS \} from '\.\/scene\/floaterMeshes\.js';\n?/m, '');
+
+for (const line of [
+  "import { RapierFloaters } from './scene/rapierFloaters.js';",
+  "import * as RAPIER from '@dimforge/rapier3d-compat';",
+  "import { createUnifiedCoupling } from './osmocean/UnifiedCoupling.js';",
+  "import { FishEcology } from './ecology/fish-ecology.js';",
+  "import { createReef } from './ecology/reef-environment.js';",
+  "import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';"
+]) viewerMain = viewerMain.replace(line + '\n', '');
+if (!viewerMain.includes("import { MarineModelViewer } from './scene/marine-model-viewer.js';")) {
+  const threeImport = "import * as THREE from 'three';";
+  if (!viewerMain.includes(threeImport)) throw new Error('Could not find Three.js import for the marine model viewer');
+  viewerMain = viewerMain.replace(threeImport, threeImport + "\nimport { MarineModelViewer } from './scene/marine-model-viewer.js';");
+}
+viewerMain = viewerMain.replace(
+  /const bootError = document\.createElement\('pre'\);[\s\S]*?const REFLECT_LAYER = 1;/,
+  "function reportBootError(error) { window.__osmoceanLastFrameError = error?.stack || error?.message || String(error); console.error('[Osmocean]', error); }\nconst REFLECT_LAYER = 1;"
+);
+viewerMain = viewerMain.replace(
+  /let floaters;\ntry \{ floaters =[\s\S]*?let osmoceanUnified = null;\nwindow\.__osmoceanBootStatus =[\s\S]*?;\n/,
+  "const floaters = { params: {}, collectPoints: () => [], step: () => {} };\nconst marineViewer = new MarineModelViewer(THREE, scene, { baseUrl: import.meta.env.BASE_URL, mobile, heightAt: islandHeight });\nawait marineViewer.ready;\nwindow.__osmoceanBootStatus = 'marine-models-ready';\n"
+);
+viewerMain = viewerMain.replace('osmoceanUnified?.step(dt, elapsed, ocean.params);\n  ', '');
+viewerMain = viewerMain.replace(/const query = new WaterQuery\([\s\S]*?\n/, '');
+viewerMain = viewerMain.replace(/const spray = new Spray\([\s\S]*?\n/, '');
+viewerMain = viewerMain.replace(/const snow = new MarineSnow\([\s\S]*?\n/, '');
+viewerMain = viewerMain.replace('waterScene.add(surface.mesh, spray.mesh, spray.splash, spray.rockSplash, snow.mesh);', 'waterScene.add(surface.mesh);');
+viewerMain = viewerMain.replace(/fShore\.add\(spray\.params,[^\n]*\n/g, '');
+viewerMain = viewerMain.replace(/const fFloat = gui\.addFolder\('Floaters & underwater'\);[\s\S]*?\nconst fPost = gui\.addFolder\('Post'\);/, "const fPost = gui.addFolder('Post');");
+viewerMain = viewerMain.replace('[fWave, fShore, fWater, fFloat, fPost].forEach((f) => f.close());', '[fWave, fShore, fWater, fPost].forEach((f) => f.close());');
+viewerMain = viewerMain.replace(/if \(query\.resultCount > 0\) camWater = query\.result\[0\];\n/, '');
+viewerMain = viewerMain.replace("timer.begin('query');\n", '');
+
+viewerMain = viewerMain.replace("if (mobile) gui.close();", "gui.hide();");
+viewerMain = viewerMain.replace(/\s*floaters\.spawn\(camera\.position, controls\.target\.clone\(\)\.sub\(camera\.position\)\);/g, '');
+viewerMain = viewerMain.replace(/\s*floaters\.ingest\(query, 1\);\n\s*floaters\.step\(dt\);\n\s*timer\.begin\('floatShadow'\);\n\s*floatShadow\.update\(renderer, floaters\.scene, floaters\.bodies, sky\.sunDir\);[\s\S]*?\n\s*ocean\.update\(dt, timer\);/, "\n  ocean.update(dt, timer);");
+viewerMain = viewerMain.replace(/\s*spray\.update\(\);/, '');
+viewerMain = viewerMain.replace(/\s*const pts = floaters\.collectPoints\(\[camera\.position\], elapsed\);\n\s*query\.submit\(pts, floaters\.count, floaters\.layout, elapsed\);/, '');
+viewerMain = viewerMain.replace(/\s*snow\.update\(camera, hdrRT\.height, nearSurface\);/, '');
+viewerMain = viewerMain.replace(/\s*floaters, query,/, ' ');
+viewerMain = viewerMain.replace(/\s*spray, snow,/, ' ');
+viewerMain = viewerMain.replace(/\s*if \(window\.__osmoceanRapierReady && floaters instanceof RapierFloaters\)[^\n]*/g, '');
+viewerMain = viewerMain.replace(/const floaters = \{ params: \{\}, collectPoints: \(\) => \[\], step: \(\) => \{\} \};\n/, '');
+viewerMain = viewerMain.replace('controls.target.y = mobile ? -8 : -10; controls.update(); camera.updateMatrixWorld(true);', "controls.target.y = mobile ? -8 : -10; controls.update(); camera.updateMatrixWorld(true);\nconst marineHeading = camera.getWorldDirection(new THREE.Vector3());\nmarineViewer.group.position.set(camera.position.x + marineHeading.x * (mobile ? 4.5 : 10), 0, camera.position.z + marineHeading.z * (mobile ? 4.5 : 10));");
+
+viewerMain = viewerMain.replace(/\nif \(window\.__osmoceanRapierReady && floaters instanceof RapierFloaters\) \{[^\n]*\}/, '');
+viewerMain = viewerMain.replace(/\s*const reefHeading = camera\.getWorldDirection\(new THREE\.Vector3\(\)\);[\s\S]*?reef\.group\.position\.y = -7\.5;\n/, '\n');
+viewerMain = viewerMain.replace(
+  'controls.enabled = false; controls.enableRotate = false; controls.enablePan = false; controls.enableZoom = false;',
+  'controls.enabled = true; controls.enableRotate = true; controls.enablePan = true; controls.enableZoom = true; controls.enableDamping = true; controls.rotateSpeed = 0.28; controls.panSpeed = 1.6; controls.zoomSpeed = 0.9; controls.minDistance = 4; controls.maxDistance = 900;'
+);
+viewerMain = viewerMain.replace(/const fEcology = gui\.addFolder\('Ecology'\);[\s\S]*?if \(mobile\) gui\.close\(\);/, 'if (mobile) gui.close();');
+viewerMain = viewerMain.replace('window.__osmoceanEcology = ecology;\n', '');
+viewerMain = viewerMain.replace(/const ecologyPanel = document\.createElement\('section'\);[\s\S]*?window\.__osmoceanEcologyPanel = ecologyPanel;/, '');
+viewerMain = viewerMain.replace(/\n\s*ecology\.update\(dt, elapsed, camWater\);/, '');
+viewerMain = viewerMain.replace(/\n\s*if \(window\.__osmoceanEcologyPanel &&[\s\S]*?\n/, '\n');
+viewerMain = viewerMain.replace(/\s*ecology, physicsEngine: 'Rapier 3D 0\.21\.0', displayMode: 'UNDERWATER REEF', reef, reefRockAssetCount: reef\.rockAssetCount, fishModelLoaded: ecology\.modelLoaded, fishSpeciesModelCount: ecology\.modelCatalog\.filter\(item => item\.scene\)\.length, fishSpeciesNames: ecology\.modelCatalog\.map\(item => item\.name\),/, " displayMode: 'UNDERWATER MODEL VIEWER', marineModelCount: marineViewer.models.length, marineAnimalCount: marineViewer.animals.length, animatedAnimalCount: marineViewer.animals.filter(animal => animal.mixer).length,");
+viewerMain = viewerMain.replace("window.__osmoceanDisplayMode = 'UNDERWATER REEF';", "window.__osmoceanDisplayMode = 'UNDERWATER MODEL VIEWER';");
+viewerMain = viewerMain.replace("window.__osmoceanBootStatus = 'scene-initialized';", "window.__osmoceanBootStatus = 'marine-model-viewer-ready';");
+viewerMain = viewerMain.replace(/copy\(path\.join\(repoRoot, 'src\/ecology\/[^']+'\), path\.join\(upstream, 'src\/ecology\/[^']+'\)\);\n/g, '');
+viewerMain = viewerMain.replace(/copy\(path\.join\(repoRoot, 'scripts\/upstream\/rapierFloaters\.js'\), path\.join\(upstream, 'src\/scene\/rapierFloaters\.js'\)\);\n/g, '');
+viewerMain = viewerMain.replace(/  elapsed \+= dt;\n/, '  elapsed += dt;\n  marineViewer.update(dt, elapsed);\n');
+const forbiddenRuntime = /FishEcology|ecology\.|__osmoceanEcology|RapierFloaters|RAPIER|createUnifiedCoupling|new Floaters|floaters\.|query\.|spray\.|snow\.|FLOATER_KINDS|WaterQuery|MarineSnow|new Spray|fFloat/;
+if (forbiddenRuntime.test(viewerMain)) {
+  throw new Error('Ecology, debris, or physics-object runtime code remains in the generated viewer entry point');
+}
+if (!viewerMain.includes('marineViewer.update(dt, elapsed)') ||
+    !viewerMain.includes('controls.enablePan = true') ||
+    !viewerMain.includes('marineViewer.group.position.set')) {
+  throw new Error('Marine model animation or camera controls were not installed in the generated viewer entry point');
+}
+write(mainPath, viewerMain);
+console.log('Built a clean underwater model viewer with animated marine species and camera controls.');
