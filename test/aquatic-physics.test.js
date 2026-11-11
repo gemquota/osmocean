@@ -37,3 +37,17 @@ test('fish are constrained to the submerged depth band without bouncing violentl
   assert.equal(deepPosition.y, -26);
   assert.ok(deepVelocity.y > 0 && Math.abs(deepVelocity.y) < 1);
 });
+
+test('fish body clearance keeps the entire model below the water surface', () => {
+  const position = { x: 0, y: 2, z: 0 }, velocity = { x: 0, y: 3, z: 0 };
+  constrainFishDepth(position, velocity, 0, 3, 26, 1.4);
+  assert.equal(position.y, -4.4);
+  assert.ok(position.y + 1.4 <= -3);
+});
+
+test('fish body clearance preserves the deep boundary', () => {
+  const position = { x: 0, y: -40, z: 0 }, velocity = { x: 0, y: -4, z: 0 };
+  constrainFishDepth(position, velocity, 0, 3, 26, 1.4);
+  assert.equal(position.y, -24.6);
+  assert.ok(position.y - 1.4 >= -26);
+});
