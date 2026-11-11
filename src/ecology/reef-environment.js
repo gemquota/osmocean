@@ -31,11 +31,11 @@ export function createReef(THREE, parent, seed = 0x71ef, density = 1, options = 
   const terrainGeo=new THREE.BufferGeometry();terrainGeo.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));terrainGeo.setAttribute('color',new THREE.Float32BufferAttribute(colors,3));terrainGeo.setIndex(indices);terrainGeo.computeVertexNormals();
   const terrain=new THREE.Mesh(terrainGeo,sandMat);terrain.name='sculpted seabed: ridges, shelf and trench';terrain.receiveShadow=true;floor.add(terrain);
   const rockTemplates=(options.rockTemplates??[]).filter(Boolean);
-  const rockClusters=Math.round((rockTemplates.length?18:34)*density);
+  const rockClusters=Math.round((rockTemplates.length?16:34)*density);
   for(let i=0;i<rockClusters;i++){
     const a=rand()*Math.PI*2,band=i%3===0?12+rand()*8:i%3===1?22+rand()*12:5+rand()*10,x=Math.cos(a)*band,z=Math.sin(a)*band;
     const cluster=new THREE.Group();cluster.name='boulder formation';cluster.position.set(x,seabedHeight(x,z),z);cluster.rotation.y=rand()*Math.PI*2;floor.add(cluster);
-    const count=rockTemplates.length?2+Math.floor(rand()*3):2+Math.floor(rand()*4);
+    const count=rockTemplates.length?1:2+Math.floor(rand()*4);
     for(let j=0;j<count;j++){
       const s=2.8+rand()*5.5,px=(rand()-.5)*s*1.5,pz=(rand()-.5)*s*1.5;
       if(rockTemplates.length){
