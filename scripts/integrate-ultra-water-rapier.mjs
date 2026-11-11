@@ -35,10 +35,23 @@ copy(path.join(repoRoot, 'scripts/upstream/rapierFloaters.js'), path.join(upstre
 // three engines share the same Three.js scene and animation lifecycle.
 const fluidRoot = path.resolve(process.argv[3] || '_upstream/fluid');
 const polyfishRoot = path.resolve(process.argv[4] || '_upstream/polyfish');
+const fishAssetsRoot = path.resolve(process.argv[5] || '_upstream/fish-assets');
 const fishModelSource = path.join(polyfishRoot, 'assets/models/fish_rigged.glb');
 if (!fs.existsSync(fishModelSource)) throw new Error('Pinned PolyFish model missing: ' + fishModelSource);
 copy(fishModelSource, path.join(upstream, 'public/models/osmocean/fish_rigged.glb'));
 copy(path.join(polyfishRoot, 'LICENSE'), path.join(upstream, 'public/models/osmocean/POLYFISH-LICENSE.txt'));
+const detailedFish = [
+  'anglerfish','black_lion_fish','coral_grouper','goblin_shark','humphead','lionfish',
+  'parrot_fish','puffer','shark','sunfish','swordfish','tuna'
+];
+const fishModelDir = path.join(upstream, 'public/models/osmocean/species');
+for (const species of detailedFish) {
+  const source = path.join(fishAssetsRoot, 'assets/quaternius/animated-fish-bundle/Models', species + '.glb');
+  if (!fs.existsSync(source)) throw new Error('Pinned CC0 fish species model missing: ' + source);
+  copy(source, path.join(fishModelDir, species + '.glb'));
+}
+copy(path.join(fishAssetsRoot, 'assets/quaternius/animated-fish-bundle/License.txt'),
+  path.join(upstream, 'public/models/osmocean/species/QUATERNIUS-CC0-LICENSE.txt'));
 for (const file of [
   'config.ts', 'kernels.ts', 'physics.ts', 'spatial.ts', 'spawn.ts', 'types.ts'
 ]) copy(path.join(fluidRoot, 'src/sph/2d/common', file), path.join(osmoceanDir, 'sph/common', file));
@@ -67,6 +80,8 @@ if (mobile) {
     angle: Math.atan2(p[1].y - p[0].y, p[1].x - p[0].x)
   });
   const wrapAngle = value => Math.atan2(Math.sin(value), Math.cos(value));
+  const worldUp = new THREE.Vector3(0, 1, 0);
+  const raycaster = new THREE.Raycaster();
   surface.addEventListener('touchstart', event => {
     if (event.touches.length !== 2) { gesture = null; return; }
     event.preventDefault();
@@ -84,19 +99,39 @@ if (mobile) {
       .addScaledVector(up, (p.y - gesture.y) * viewScale);
     camera.position.add(pan);
     controls.target.add(pan);
-    const forward = controls.target.clone().sub(camera.position).normalize();
+
+    // Twist yaws the camera around the world-space point beneath the two-finger
+    // midpoint. The view plane is perpendicular to the camera direction and
+    // passes through the orbit target, giving a stable pivot even in open water.
     const twist = wrapAngle(p.angle - gesture.angle);
-    if (Math.abs(twist) > 0.0001) camera.up.applyQuaternion(
-      new THREE.Quaternion().setFromAxisAngle(forward, twist)
-    ).normalize();
+    let yawPivotApplied = false;
+    if (Math.abs(twist) > 0.0001) {
+      const rect = surface.getBoundingClientRect();
+      const midpoint = new THREE.Vector2(
+        ((p.x - rect.left) / Math.max(1, rect.width)) * 2 - 1,
+        -((p.y - rect.top) / Math.max(1, rect.height)) * 2 + 1
+      );
+      raycaster.setFromCamera(midpoint, camera);
+      const viewNormal = camera.getWorldDirection(new THREE.Vector3());
+      const pivotPlane = new THREE.Plane().setFromNormalAndCoplanarPoint(viewNormal, controls.target);
+      const pivot = raycaster.ray.intersectPlane(pivotPlane, new THREE.Vector3()) || controls.target.clone();
+      const yaw = new THREE.Quaternion().setFromAxisAngle(worldUp, twist);
+      camera.position.sub(pivot).applyQuaternion(yaw).add(pivot);
+      controls.target.sub(pivot).applyQuaternion(yaw).add(pivot);
+      camera.up.copy(worldUp);
+      camera.quaternion.premultiply(yaw);
+      yawPivotApplied = true;
+    }
+
     const zoomFactor = gesture.distance / Math.max(p.distance, 1);
     const offset = camera.position.clone().sub(controls.target);
     offset.multiplyScalar(THREE.MathUtils.clamp(zoomFactor, 0.85, 1.18));
     offset.setLength(THREE.MathUtils.clamp(offset.length(), 4, 900));
     camera.position.copy(controls.target).add(offset);
     controls.update();
+    camera.up.copy(worldUp);
     gesture = { ...p, height: gesture.height };
-    window.__osmoceanTouchGesture = { pan: true, rotate: true, zoom: true };
+    window.__osmoceanTouchGesture = { pan: true, rotate: true, zoom: true, yawPivot: yawPivotApplied, noRoll: camera.up.distanceTo(worldUp) < 1e-6 };
   }, { passive: false });
   const endGesture = event => {
     if (event.touches.length < 2) gesture = null;
@@ -170,7 +205,7 @@ for (const line of [
 ]) main = replaceExactly(main, line, '', 'legacy custom-integrator control');
 main = replaceExactly(main,
   'window.app = {\n  camera, controls, sky, post, surface, ocean, terrain, timer, views, quality, renderer, floaters, query, underwater, spray, snow, caustics, floatShadow,',
-  "window.__osmoceanBootStatus = 'scene-initialized';\nwindow.app = {\n  camera, controls, sky, post, surface, ocean, terrain, timer, views, quality, renderer, floaters, query, underwater, spray, snow, caustics, floatShadow, physicsEngine: 'Rapier 3D 0.21.0', displayMode: 'UNDERWATER REEF', reef, reefRockAssetCount: reef.rockAssetCount, fishModelLoaded: ecology.modelLoaded,",
+  "window.__osmoceanBootStatus = 'scene-initialized';\nwindow.app = {\n  camera, controls, sky, post, surface, ocean, terrain, timer, views, quality, renderer, floaters, query, underwater, spray, snow, caustics, floatShadow, physicsEngine: 'Rapier 3D 0.21.0', displayMode: 'UNDERWATER REEF', reef, reefRockAssetCount: reef.rockAssetCount, fishModelLoaded: ecology.modelLoaded, fishSpeciesModelCount: ecology.modelCatalog.filter(item => item.scene).length, fishSpeciesNames: ecology.modelCatalog.map(item => item.name),",
   'runtime diagnostics export');
 const upstreamHtmlPath = path.join(upstream, 'index.html');
 let upstreamHtml = read(upstreamHtmlPath);
@@ -204,20 +239,53 @@ main = replaceExactly(main, 'views[ui.view]();', 'views[ui.view]();\ncontrols.ta
 
 // Add fish ecology after the Rapier integration has transformed the upstream entry point.
 copy(path.join(repoRoot, 'src/ecology/fish-ecology.js'), path.join(upstream, 'src/ecology/fish-ecology.js'));
+copy(path.join(repoRoot, 'src/ecology/aquatic-physics.js'), path.join(upstream, 'src/ecology/aquatic-physics.js'));
 copy(path.join(repoRoot, 'src/ecology/reef-environment.js'), path.join(upstream, 'src/ecology/reef-environment.js'));
 copy(path.join(repoRoot, 'src/ecology/polyfish-swim-material.js'), path.join(upstream, 'src/ecology/polyfish-swim-material.js'));
 main = replaceExactly(main,
   "let floaters;\ntry { floaters = window.__osmoceanRapierReady ? new RapierFloaters({ RAPIER, scene, heightAt: islandHeight, patchMaterial: terrain.patchProp, query }) : new Floaters({ scene, heightAt: islandHeight, patchMaterial: terrain.patchProp }); } catch (error) { reportBootError(error); floaters = new Floaters({ scene, heightAt: islandHeight, patchMaterial: terrain.patchProp }); }\nlet osmoceanUnified = null;\nwindow.__osmoceanBootStatus = window.__osmoceanRapierReady ? 'rapier-world-ready' : 'fallback-world-ready';",
   `let floaters;
 try { floaters = window.__osmoceanRapierReady ? new RapierFloaters({ RAPIER, scene, heightAt: islandHeight, patchMaterial: terrain.patchProp, query }) : new Floaters({ scene, heightAt: islandHeight, patchMaterial: terrain.patchProp }); } catch (error) { reportBootError(error); floaters = new Floaters({ scene, heightAt: islandHeight, patchMaterial: terrain.patchProp }); }
-let fishGltf = null;\ntry { fishGltf = await new GLTFLoader().loadAsync(import.meta.env.BASE_URL + 'models/osmocean/fish_rigged.glb'); } catch (error) { console.warn('[Osmocean] Rigged fish model unavailable; using procedural fallback', error); }\nconst reefRockTemplates = [];
-const assetLoader = new GLTFLoader();
+let fishGltf = null;\ntry { fishGltf = await new GLTFLoader().loadAsync(import.meta.env.BASE_URL + 'models/osmocean/fish_rigged.glb'); } catch (error) { console.warn('[Osmocean] Rigged shoal fish fallback unavailable:', error); }\nconst assetLoader = new GLTFLoader();
+const speciesDefinitions = [
+  {id:'clownfish',name:'Clownfish',weight:5.5,scale:0.9,sizeClass:'shoal',detail:false},
+  {id:'blue_tang',name:'Blue tang',weight:5.2,scale:1.0,sizeClass:'shoal',detail:false},
+  {id:'cardinal_fish',name:'Cardinal fish',weight:4.8,scale:0.8,sizeClass:'shoal',detail:false},
+  {id:'butterfly_fish',name:'Butterflyfish',weight:4.5,scale:1.0,sizeClass:'shoal',detail:false},
+  {id:'tetra',name:'Tetra',weight:4.8,scale:0.8,sizeClass:'shoal',detail:false},
+  {id:'mandarin_fish',name:'Mandarinfish',weight:3.6,scale:0.75,sizeClass:'shoal',detail:false},
+  {id:'moorish_idol',name:'Moorish idol',weight:3.5,scale:1.1,sizeClass:'shoal',detail:false},
+  {id:'royal_gramma',name:'Royal gramma',weight:3.2,scale:0.85,sizeClass:'shoal',detail:false},
+  {id:'parrot_fish',name:'Parrotfish',weight:2.2,scale:1.35,sizeClass:'reef'},
+  {id:'lionfish',name:'Lionfish',weight:1.6,scale:1.35,sizeClass:'reef',role:'predator'},
+  {id:'black_lion_fish',name:'Black lionfish',weight:1.1,scale:1.45,sizeClass:'reef',role:'predator'},
+  {id:'puffer',name:'Pufferfish',weight:1.7,scale:1.25,sizeClass:'reef'},
+  {id:'coral_grouper',name:'Coral grouper',weight:1.3,scale:1.8,sizeClass:'large',role:'predator'},
+  {id:'humphead',name:'Humphead wrasse',weight:0.9,scale:2.0,sizeClass:'large'},
+  {id:'sunfish',name:'Ocean sunfish',weight:0.55,scale:2.25,sizeClass:'large'},
+  {id:'tuna',name:'Tuna',weight:0.65,scale:2.2,sizeClass:'large',role:'predator'},
+  {id:'swordfish',name:'Swordfish',weight:0.35,scale:2.5,sizeClass:'large',role:'predator'},
+  {id:'shark',name:'Reef shark',weight:0.45,scale:2.65,sizeClass:'large',role:'predator'},
+  {id:'goblin_shark',name:'Goblin shark',weight:0.18,scale:2.7,sizeClass:'large',role:'predator'},
+  {id:'anglerfish',name:'Anglerfish',weight:0.22,scale:1.8,sizeClass:'large',role:'predator'}
+];
+const modelCatalog = (await Promise.all(speciesDefinitions.map(async definition => {
+  try {
+    if (!definition.detail) return {...definition,scene:null,animations:[]};
+    const gltf = await assetLoader.loadAsync(import.meta.env.BASE_URL + 'models/osmocean/species/' + definition.id + '.glb');
+    return {...definition,scene:gltf.scene,animations:gltf.animations??[]};
+  } catch (error) {
+    console.warn('[Osmocean] Optional CC0 species model unavailable:',definition.id,error);
+    return null;
+  }
+}))).filter(Boolean);
+const reefRockTemplates = [];
 for (const assetId of ['rock_moss_set_01','rock_moss_set_02']) {
   try { const rockGltf = await assetLoader.loadAsync(import.meta.env.BASE_URL + 'models/osmocean/reef/' + assetId + '.gltf'); reefRockTemplates.push(rockGltf.scene); }
   catch (error) { console.warn('[Osmocean] Optional CC0 rock asset unavailable:', assetId, error); }
 }
-const ecology = new FishEcology(THREE, scene, { population: mobile ? 28 : 40, modelBudget: mobile ? 5 : 8, worldRadius: 42, minDepth: 3, maxDepth: 26, resourceCount: mobile ? 70 : 100, seed: 0x51f15e, modelTemplate: fishGltf?.scene ?? null, modelAnimations: fishGltf?.animations ?? [] });
-const reef = createReef(THREE, ecology.group, 0x71ef, mobile ? 0.35 : 0.5, { rockTemplates: reefRockTemplates });
+const ecology = new FishEcology(THREE, scene, { population: mobile ? 64 : 110, worldRadius: 42, minDepth: 3, maxDepth: 26, resourceCount: mobile ? 140 : 220, seed: 0x51f15e, modelTemplate: fishGltf?.scene ?? null, modelAnimations: fishGltf?.animations ?? [], modelCatalog });
+const reef = createReef(THREE, ecology.group, 0x71ef, mobile ? 0.6 : 1, { rockTemplates: reefRockTemplates });
 let osmoceanUnified = null;
 window.__osmoceanBootStatus = window.__osmoceanRapierReady ? 'rapier-world-ready' : 'fallback-world-ready';`,
   `let floaters;

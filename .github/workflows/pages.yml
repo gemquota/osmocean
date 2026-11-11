@@ -50,6 +50,17 @@ jobs:
             LICENSE
           sparse-checkout-cone-mode: false
           persist-credentials: false
+      - name: Checkout pinned Quaternius CC0 fish models
+        uses: actions/checkout@v4
+        with:
+          repository: Vitexus/ishtaria-client
+          ref: f42095c120c29a892c0c221bdc8357ac982ccfca
+          path: _upstream/fish-assets
+          sparse-checkout: |
+            assets/quaternius/animated-fish-bundle/Models
+            assets/quaternius/animated-fish-bundle/License.txt
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
@@ -60,7 +71,7 @@ jobs:
         run: node scripts/download-reef-assets.mjs _upstream/ultra-water/public/models/osmocean/reef
       - name: Apply Osmocean Rapier integration
         run: |
-          node scripts/integrate-ultra-water-rapier.mjs _upstream/ultra-water _upstream/fluid _upstream/polyfish
+          node scripts/integrate-ultra-water-rapier.mjs _upstream/ultra-water _upstream/fluid _upstream/polyfish _upstream/fish-assets
       - name: Install and build Ultra-Water
         working-directory: _upstream/ultra-water
         run: |
