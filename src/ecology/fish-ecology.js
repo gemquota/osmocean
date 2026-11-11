@@ -93,9 +93,13 @@ export class FishEcology {
     const spawnY = p ? p.y + this.range(-1, 1) : -preferredDepth;
     const submergedSpawnY = this.clamp(spawnY, -this.params.maxDepth + surfaceClearance,
       -this.params.minDepth - surfaceClearance);
-    root.position.set(p?p.x+this.range(-2,2):this.range(-this.params.worldRadius*.7,this.params.worldRadius*.7),
+    const spawnRadius = Math.sqrt(this.rand()) * this.params.worldRadius;
+    const spawnAngle = this.range(0, Math.PI * 2);
+    const spawnX = Math.cos(spawnAngle) * spawnRadius;
+    const spawnZ = Math.sin(spawnAngle) * spawnRadius;
+    root.position.set(p ? p.x + this.range(-2, 2) : spawnX,
       submergedSpawnY,
-      p?p.z+this.range(-2,2):this.range(-this.params.worldRadius*.7,this.params.worldRadius*.7));
+      p ? p.z + this.range(-2, 2) : spawnZ);
     this.group.add(root);const heading=new T.Vector3(this.rand()-.5,this.range(-.15,.15),this.rand()-.5).normalize();
     const role=g.leadership>.72&&g.sociality>.55?'leader':g.curiosity>.72?'scout':g.affiliation>.72?'shoaler':g.aggression>.72&&g.boldness>.55?'hunter':g.feedingSpecialisation>.72?'forager':g.boldness<.25?'shy':'generalist';
     return{id:this.nextId++,surfaceClearance:surfaceClearance??1.35*g.size,parentId:parent?.id??null,species,speciesName:modelEntry?.name??`shoal-fish-${species}`,sizeClass:modelEntry?.sizeClass??'shoal',ecologicalRole:modelEntry?.role??'generalist',root,tail,mixer,swimData,swimPhase:this.range(0,Math.PI*2),role,genes:g,brain,heading,memory:{foodPosition:new T.Vector3(),foodTtl:0,threatPosition:new T.Vector3(),threatTtl:0},
