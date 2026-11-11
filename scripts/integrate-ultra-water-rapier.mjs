@@ -35,10 +35,25 @@ copy(path.join(repoRoot, 'scripts/upstream/rapierFloaters.js'), path.join(upstre
 // three engines share the same Three.js scene and animation lifecycle.
 const fluidRoot = path.resolve(process.argv[3] || '_upstream/fluid');
 const polyfishRoot = path.resolve(process.argv[4] || '_upstream/polyfish');
+const fishAssetsRoot = path.resolve(process.argv[5] || '_upstream/fish-assets');
 const fishModelSource = path.join(polyfishRoot, 'assets/models/fish_rigged.glb');
 if (!fs.existsSync(fishModelSource)) throw new Error('Pinned PolyFish model missing: ' + fishModelSource);
 copy(fishModelSource, path.join(upstream, 'public/models/osmocean/fish_rigged.glb'));
 copy(path.join(polyfishRoot, 'LICENSE'), path.join(upstream, 'public/models/osmocean/POLYFISH-LICENSE.txt'));
+const detailedFish = [
+  'anglerfish','black_lion_fish','blue_tang','butterfly_fish','cardinal_fish',
+  'clownfish','coral_grouper','goblin_shark','humphead','lionfish','mandarin_fish',
+  'moorish_idol','parrot_fish','puffer','royal_gramma','shark','sunfish','swordfish',
+  'tetra','tuna'
+];
+const fishModelDir = path.join(upstream, 'public/models/osmocean/species');
+for (const species of detailedFish) {
+  const source = path.join(fishAssetsRoot, 'assets/quaternius/animated-fish-bundle/Models', species + '.glb');
+  if (!fs.existsSync(source)) throw new Error('Pinned CC0 fish species model missing: ' + source);
+  copy(source, path.join(fishModelDir, species + '.glb'));
+}
+copy(path.join(fishAssetsRoot, 'assets/quaternius/animated-fish-bundle/License.txt'),
+  path.join(upstream, 'public/models/osmocean/species/QUATERNIUS-CC0-LICENSE.txt'));
 for (const file of [
   'config.ts', 'kernels.ts', 'physics.ts', 'spatial.ts', 'spawn.ts', 'types.ts'
 ]) copy(path.join(fluidRoot, 'src/sph/2d/common', file), path.join(osmoceanDir, 'sph/common', file));
