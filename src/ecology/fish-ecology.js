@@ -10,7 +10,7 @@ import { calculateAquaticAcceleration, constrainFishDepth } from './aquatic-phys
 export class FishEcology {
   constructor(THREE, scene, options = {}) {
     this.T=THREE; this.scene=scene; this.rng=options.seed??0x51f15e;
-    this.modelTemplate=options.modelTemplate??null; this.modelAnimations=options.modelAnimations??[]; this.modelCatalog=options.modelCatalog??[];
+    this.modelTemplate=options.modelTemplate??null; this.modelAnimations=options.modelAnimations??[]; this.modelCatalog=options.modelCatalog??[]; this.modelBudget=options.modelBudget??14; this.modelInstances=0;
     this.modelLoaded=Boolean(this.modelCatalog.some(item=>item.scene)||this.modelTemplate);
     this.params={population:110,worldRadius:42,minDepth:3,maxDepth:26,neighbourRadius:16,
       separationRadius:5,maxAcceleration:5,resourceCount:180,resourceRegrowth:.035,
@@ -55,7 +55,9 @@ export class FishEcology {
     const root=new T.Group(),mat=this.mats[species%this.mats.length];let tail=null,mixer=null,swimData=null;
     const modelTemplate=modelEntry?.detail===false?this.modelTemplate:(modelEntry?.scene??this.modelTemplate);
     const modelAnimations=modelEntry?.detail===false?this.modelAnimations:(modelEntry?.animations?.length?modelEntry.animations:this.modelAnimations);
-    if(modelTemplate){
+    const useModel=Boolean(modelTemplate&&this.modelInstances<this.modelBudget);
+    if(useModel){
+      this.modelInstances++;
       const visual=cloneSkeleton(modelTemplate);
       visual.traverse(child=>{if((child.isMesh||child.isSkinnedMesh)&&child.material){child.material=Array.isArray(child.material)?child.material.map(m=>m.clone()):child.material.clone();}});
       visual.updateMatrixWorld(true);
@@ -90,9 +92,9 @@ export class FishEcology {
     const role=g.leadership>.72&&g.sociality>.55?'leader':g.curiosity>.72?'scout':g.affiliation>.72?'shoaler':g.aggression>.72&&g.boldness>.55?'hunter':g.feedingSpecialisation>.72?'forager':g.boldness<.25?'shy':'generalist';
     return{id:this.nextId++,parentId:parent?.id??null,species,speciesName:modelEntry?.name??`shoal-fish-${species}`,sizeClass:modelEntry?.sizeClass??'shoal',ecologicalRole:modelEntry?.role??'generalist',root,tail,mixer,swimData,swimPhase:this.range(0,Math.PI*2),role,genes:g,brain,heading,memory:{foodPosition:new T.Vector3(),foodTtl:0,threatPosition:new T.Vector3(),threatTtl:0},
       velocity:heading.clone().multiplyScalar(g.speed*.5),preferredDepth,energy:parent?parent.energy*.45:this.range(.7,1),
-      age:0,cooldown:0,phase:this.rand()*Math.PI*2,generation:parent?parent.generation+1:0,offspring:0,eaten:0};
+      age:0,cooldown:0,phase:this.rand()*Math.PI*2,generation:parent?parent.generation+1:0,offspring:0,eaten:0,modelled:useModel};
   }
-  populate(n){n=this.clamp(Math.round(n),0,500);while(this.fish.length<n)this.fish.push(this.makeFish());while(this.fish.length>n)this.group.remove(this.fish.pop().root);this.params.population=n;}
+  populate(n){n=this.clamp(Math.round(n),0,500);while(this.fish.length<n)this.fish.push(this.makeFish());while(this.fish.length>n){const f=this.fish.pop();this.group.remove(f.root);if(f.modelled)this.modelInstances=Math.max(0,this.modelInstances-1);}this.params.population=n;}
   seedResources(n){n=this.clamp(Math.round(n),0,1200);while(this.resources.length<n){const mesh=new this.T.Mesh(this.foodGeo,this.foodMat);mesh.position.set(this.range(-this.params.worldRadius,this.params.worldRadius),-this.range(this.params.minDepth,this.params.maxDepth),this.range(-this.params.worldRadius,this.params.worldRadius));this.group.add(mesh);this.resources.push({mesh,biomass:1,respawn:0});}while(this.resources.length>n)this.group.remove(this.resources.pop().mesh);this.params.resourceCount=n;}
   environmentAt(p,surfaceY=0){
     const depth=Math.max(0,surfaceY-p.y),light=Math.exp(-depth/22);
@@ -165,7 +167,7 @@ export class FishEcology {
       if(f.mixer)f.mixer.update(step);
       if(f.swimData){f.swimPhase+=step*(4+f.genes.speed*.4);updateSwimUniforms(f.swimData,f.swimPhase,.8,f.energy<.3);}
     }
-    for(const f of deaths)this.group.remove(f.root);this.fish=this.fish.filter(f=>!deaths.has(f)).concat(births);
+    for(const f of deaths){this.group.remove(f.root);if(f.modelled)this.modelInstances=Math.max(0,this.modelInstances-1);}this.fish=this.fish.filter(f=>!deaths.has(f)).concat(births);
     for(const r of this.resources){if(r.biomass<=.02){r.respawn-=step;if(r.respawn<=0){r.biomass=1;r.mesh.scale.setScalar(1);}}else{const e=this.environmentAt(r.mesh.position,localSurface);r.biomass=Math.min(1,r.biomass+this.params.resourceRegrowth*e.nutrient*e.light*(.5+e.oxygen*.5)*step);}}
     if(elapsed-(this.history.at(-1)?.time??-this.params.historyInterval)>=this.params.historyInterval)this.recordHistory(elapsed);
   }
