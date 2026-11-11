@@ -9,7 +9,7 @@ import { applySwimMaterial, updateSwimUniforms } from './polyfish-swim-material.
 export class FishEcology {
   constructor(THREE, scene, options = {}) {
     this.T=THREE; this.scene=scene; this.rng=options.seed??0x51f15e;
-    this.modelTemplate=options.modelTemplate??null; this.modelAnimations=options.modelAnimations??[];
+    this.modelTemplate=options.modelTemplate??null; this.modelAnimations=options.modelAnimations??[]; this.modelBudget=options.modelBudget??12; this.modelInstances=0;
     this.modelLoaded=Boolean(this.modelTemplate);
     this.params={population:110,worldRadius:42,minDepth:3,maxDepth:26,neighbourRadius:16,
       separationRadius:5,maxAcceleration:5,resourceCount:180,resourceRegrowth:.035,
@@ -44,7 +44,7 @@ export class FishEcology {
       return this.clamp(v+(parent&&this.rand()<this.params.mutationRate?this.range(-.35,.35):0),-2,2);
     });
     const root=new T.Group(),mat=this.mats[species];let tail=null,mixer=null,swimData=null;
-    if(this.modelTemplate){
+    if(this.modelTemplate&&this.modelInstances<this.modelBudget){
       const visual=cloneSkeleton(this.modelTemplate);
       visual.traverse(child=>{if((child.isMesh||child.isSkinnedMesh)&&child.material){child.material=Array.isArray(child.material)?child.material.map(m=>m.clone()):child.material.clone();}});
       visual.updateMatrixWorld(true);
@@ -57,7 +57,7 @@ export class FishEcology {
       visual.scale.setScalar((2.3*g.size)/Math.max(extent.x,extent.y,extent.z,1e-6));
       visual.updateMatrixWorld(true);
       visual.position.sub(new T.Box3().setFromObject(visual).getCenter(new T.Vector3()));
-      swimData=applySwimMaterial(visual,'fish');
+      swimData=applySwimMaterial(visual,'fish');this.modelInstances++;
       root.add(visual);
       if(this.modelAnimations.length){
         mixer=new T.AnimationMixer(visual);
@@ -78,7 +78,7 @@ export class FishEcology {
     const role=g.leadership>.72&&g.sociality>.55?'leader':g.curiosity>.72?'scout':g.affiliation>.72?'shoaler':g.aggression>.72&&g.boldness>.55?'hunter':g.feedingSpecialisation>.72?'forager':g.boldness<.25?'shy':'generalist';
     return{id:this.nextId++,parentId:parent?.id??null,species,root,tail,mixer,swimData,swimPhase:this.range(0,Math.PI*2),role,genes:g,brain,heading,memory:{foodPosition:new T.Vector3(),foodTtl:0,threatPosition:new T.Vector3(),threatTtl:0},
       velocity:heading.clone().multiplyScalar(g.speed*.5),energy:parent?parent.energy*.45:this.range(.7,1),
-      age:0,cooldown:0,phase:this.rand()*Math.PI*2,generation:parent?parent.generation+1:0,offspring:0,eaten:0};
+      age:0,cooldown:0,phase:this.rand()*Math.PI*2,generation:parent?parent.generation+1:0,offspring:0,eaten:0,modelled:Boolean(swimData)};
   }
   populate(n){n=this.clamp(Math.round(n),0,500);while(this.fish.length<n)this.fish.push(this.makeFish());while(this.fish.length>n)this.group.remove(this.fish.pop().root);this.params.population=n;}
   seedResources(n){n=this.clamp(Math.round(n),0,1200);while(this.resources.length<n){const mesh=new this.T.Mesh(this.foodGeo,this.foodMat);mesh.position.set(this.range(-this.params.worldRadius,this.params.worldRadius),-this.range(this.params.minDepth,this.params.maxDepth),this.range(-this.params.worldRadius,this.params.worldRadius));this.group.add(mesh);this.resources.push({mesh,biomass:1,respawn:0});}while(this.resources.length>n)this.group.remove(this.resources.pop().mesh);this.params.resourceCount=n;}
@@ -148,7 +148,7 @@ export class FishEcology {
       if(f.mixer)f.mixer.update(step);
       if(f.swimData){f.swimPhase+=step*(4+f.genes.speed*.4);updateSwimUniforms(f.swimData,f.swimPhase,.8,f.energy<.3);}
     }
-    for(const f of deaths)this.group.remove(f.root);this.fish=this.fish.filter(f=>!deaths.has(f)).concat(births);
+    for(const f of deaths){this.group.remove(f.root);if(f.modelled)this.modelInstances=Math.max(0,this.modelInstances-1);}this.fish=this.fish.filter(f=>!deaths.has(f)).concat(births);
     for(const r of this.resources){if(r.biomass<=.02){r.respawn-=step;if(r.respawn<=0){r.biomass=1;r.mesh.scale.setScalar(1);}}else{const e=this.environmentAt(r.mesh.position);r.biomass=Math.min(1,r.biomass+this.params.resourceRegrowth*e.nutrient*e.light*(.5+e.oxygen*.5)*step);}}
     if(elapsed-(this.history.at(-1)?.time??-this.params.historyInterval)>=this.params.historyInterval)this.recordHistory(elapsed);
   }
