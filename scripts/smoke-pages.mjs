@@ -82,7 +82,7 @@ try {
           };
         }
       }
-      return { sampled: before.length, moved, gestures, updateCount: window.__osmoceanEcology?.updateCount ?? 0, updatesDuringWait, firstFishPosition: current[0]?.root.position.toArray() ?? null, firstFishVelocity: current[0]?.velocity.length() ?? null, tickCount: window.__osmoceanTickCount ?? 0, lastFrameError: window.__osmoceanLastFrameError ?? null, bootError: document.querySelector('#osmocean-boot-error')?.textContent ?? null, visibility: document.visibilityState, lastUpdateDt: window.__osmoceanEcology?.lastUpdateDt ?? 0, lastUpdateElapsed: window.__osmoceanEcology?.lastUpdateElapsed ?? 0 };
+      return { sampled: before.length, moved, gestures, updateCount: window.__osmoceanEcology?.updateCount ?? 0, updatesDuringWait, firstFishPosition: current[0]?.root.position.toArray() ?? null, firstFishVelocity: current[0]?.velocity.length() ?? null, tickCount: window.__osmoceanTickCount ?? 0, fallbackTicks: window.__osmoceanFallbackTicks ?? 0, lastFrameError: window.__osmoceanLastFrameError ?? null, bootError: document.querySelector('#osmocean-boot-error')?.textContent ?? null, visibility: document.visibilityState, lastUpdateDt: window.__osmoceanEcology?.lastUpdateDt ?? 0, lastUpdateElapsed: window.__osmoceanEcology?.lastUpdateElapsed ?? 0 };
     });
     if (motion.sampled < 1 || motion.updateCount < 1 || motion.updatesDuringWait < 1 || motion.moved < 1) throw new Error(`Fish simulation did not advance: ${JSON.stringify({ motion, errors })}`);
     if (motion.gestures && (!motion.gestures.marker || !motion.gestures.panned || !motion.gestures.zoomed || !motion.gestures.rotated || !motion.gestures.pivotYaw || !motion.gestures.noRoll)) {
