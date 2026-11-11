@@ -12,6 +12,19 @@ Osmocean's Ultra-Water build downloads the rigged fish model from [unclemattmake
 
 The binary is deliberately fetched during the Pages build rather than duplicated in this repository. The pin makes the input reproducible and the upstream licence remains available at the source checkout.
 
+## Expanded pelagic and megafauna library
+
+The Pages and CI builds fetch the [Ocean Animals: Whales, Sharks and Fish collection](https://3dassets.dev/packs/open-ocean-and-deep-sea-life) from its published JSON manifest. The downloader verifies the pack and every selected model as CC0 1.0, downloads the individual GLBs, and writes a local catalogue with species name, model dimensions, scale, broad ecological role and a conservative depth band.
+
+- 44 published marine animal models are supplied by the collection (the starter-scene file is not used as a species).
+- Assets are copied into the generated site's `public/models/osmocean/pelagic/` directory; runtime loading is local to GitHub Pages, not dependent on a third-party CDN.
+- The collection's models are static posed meshes. They are not falsely described as rigged or clip-animated. The existing procedural fish-swim material supplies gentle body motion where compatible; the existing Quaternius animated models remain available for species with baked swim cycles.
+- Model scale is derived from the collection's metre dimensions. Large whales and other megafauna retain their relative size instead of being normalized to the size of a reef fish.
+- Reef, pelagic, megafauna and deep-water species receive different initial depth ranges. The ecology still owns their movement, buoyancy, water-relative drag, energy and behaviour.
+- The pack is CC0 1.0 Universal with no attribution requirement. Its source and licence are recorded in the generated `pelagic/catalog.json`.
+
+The population now starts across the full configured ocean radius using area-uniform radial sampling. A minority nursery fraction remains near the initial reef so the starting camera view is populated; the majority is distributed throughout the wider water column. Offspring inherit their parents' local region and species, allowing populations to spread through movement and reproduction rather than teleporting each frame.
+
 ## Species model tiers and water mechanics
 
 The generated reef scene now uses two visual tiers rather than pretending one small fish mesh can represent the entire marine food web:
