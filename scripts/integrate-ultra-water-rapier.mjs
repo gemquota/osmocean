@@ -122,14 +122,19 @@ if (mobile) {
     forward.y = 0;
     if (forward.lengthSq() < 1e-8) forward.set(0, 0, -1);
     forward.normalize();
-    const pan = right.multiplyScalar(-(p.x - gesture.x) * viewScale)
-      .addScaledVector(forward, (p.y - gesture.y) * viewScale);
+    // Give two-finger translation a stronger response so panning feels deliberate
+    // without requiring large finger travel on a phone screen.
+    const panSensitivity = 1.8;
+    const pan = right.multiplyScalar(-(p.x - gesture.x) * viewScale * panSensitivity)
+      .addScaledVector(forward, (p.y - gesture.y) * viewScale * panSensitivity);
     moveRig(pan);
 
-    // Twist yaws around the world-space point beneath the two-finger midpoint.
-    const twist = wrapAngle(p.angle - gesture.angle);
+    // Twisting is intentionally damped: small accidental finger rotations should
+    // not swing the camera while the user is trying to pan or pinch.
+    const rotationSensitivity = 0.35;
+    const twist = wrapAngle(p.angle - gesture.angle) * rotationSensitivity;
     let yawPivotApplied = false;
-    if (Math.abs(twist) > 0.0001) {
+    if (Math.abs(twist) > 0.0015) {
       const rect = surface.getBoundingClientRect();
       const midpoint = new THREE.Vector2(
         ((p.x - rect.left) / Math.max(1, rect.width)) * 2 - 1,
