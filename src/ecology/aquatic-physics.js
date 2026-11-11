@@ -70,3 +70,15 @@ export function constrainFishDepth(position, velocity, surfaceY, minDepth, maxDe
   }
   return position;
 }
+
+export function sampleOceanSpawn(random, worldRadius, coreRadius = 140, coreFraction = 0.35) {
+  if (typeof random !== 'function' || ![worldRadius, coreRadius, coreFraction].every(Number.isFinite) ||
+      worldRadius <= 0 || coreRadius < 0 || coreFraction < 0 || coreFraction > 1) {
+    throw new TypeError('ocean spawn sampling requires a random function and valid radius/fraction');
+  }
+  const range = random() < coreFraction ? Math.min(coreRadius, worldRadius) : worldRadius;
+  const radius = Math.sqrt(random()) * range;
+  const angle = random() * Math.PI * 2;
+  return Object.freeze({ x: Math.cos(angle) * radius, z: Math.sin(angle) * radius, radius, range });
+}
+
