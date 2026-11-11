@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { sampleOceanSpawn } from '../src/ecology/fish-ecology.js';
+import { sampleOceanSpawn } from '../src/ecology/aquatic-physics.js';
 
 function sequence(values) {
   let index = 0;
