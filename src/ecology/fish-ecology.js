@@ -98,6 +98,7 @@ export class FishEcology {
   update(dt,elapsed=0,waterHeight=0){
     if(!Number.isFinite(dt)||dt<=0)return;const T=this.T,step=Math.min(dt,1/20);this.elapsed=elapsed;const localSurface=waterHeight-this.group.position.y;this.updateCount++;this.lastUpdateDt=step;this.lastUpdateElapsed=elapsed;
     const{bins,cell}=this.spatial(),r2=this.params.neighbourRadius**2,s2=this.params.separationRadius**2;
+    this.lastSurfaceY=localSurface;
     const births=[],deaths=new Set();
     for(const f of this.fish){
       const p=f.root.position,cx=Math.floor(p.x/cell),cy=Math.floor(p.y/cell),cz=Math.floor(p.z/cell);
