@@ -288,8 +288,8 @@ for (const assetId of ['rock_moss_set_01','rock_moss_set_02']) {
   try { const rockGltf = await assetLoader.loadAsync(import.meta.env.BASE_URL + 'models/osmocean/reef/' + assetId + '.gltf'); reefRockTemplates.push(rockGltf.scene); }
   catch (error) { console.warn('[Osmocean] Optional CC0 rock asset unavailable:', assetId, error); }
 }
-const ecology = new FishEcology(THREE, scene, { population: mobile ? 64 : 110, worldRadius: 42, minDepth: 3, maxDepth: 26, resourceCount: mobile ? 140 : 220, seed: 0x51f15e, modelTemplate: fishGltf?.scene ?? null, modelAnimations: fishGltf?.animations ?? [], modelCatalog });
-const reef = createReef(THREE, ecology.group, 0x71ef, mobile ? 0.6 : 1, { rockTemplates: reefRockTemplates });
+const ecology = new FishEcology(THREE, scene, { population: mobile ? 32 : 48, modelBudget: mobile ? 8 : 14, worldRadius: 42, minDepth: 3, maxDepth: 26, resourceCount: mobile ? 80 : 120, seed: 0x51f15e, modelTemplate: fishGltf?.scene ?? null, modelAnimations: fishGltf?.animations ?? [], modelCatalog });
+const reef = createReef(THREE, ecology.group, 0x71ef, mobile ? 0.35 : 0.5, { rockTemplates: reefRockTemplates });
 let osmoceanUnified = null;
 window.__osmoceanBootStatus = window.__osmoceanRapierReady ? 'rapier-world-ready' : 'fallback-world-ready';`,
   `let floaters;
