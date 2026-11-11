@@ -37,7 +37,9 @@ for (const asset of assets) {
   const predator = /shark|barracuda|marlin|swordfish|tuna|angler|orca|dolphin|seal|squid/i.test(normalized);
   const megafauna = /whale|orca|dolphin|seal|manta|ray/i.test(normalized);
   const deepwater = /angler|gulper|goblin|viper|lantern|fangtooth|deep/i.test(normalized);
-  const minDepth = deepwater ? 140 : megafauna ? 18 : predator ? 24 : 4;\n  const maxDepth = deepwater ? 390 : megafauna ? 260 : predator ? 300 : 180;\n  const weight = megafauna ? 0.025 : predator ? 0.11 : 0.32;
+  const minDepth = deepwater ? 140 : megafauna ? 18 : predator ? 24 : 4;
+  const maxDepth = deepwater ? 390 : megafauna ? 260 : predator ? 300 : 180;
+  const weight = megafauna ? 0.025 : predator ? 0.11 : 0.32;
   species.push({
     id: 'pelagic-' + asset.id,
     name: title.replace(/\b\w/g, letter => letter.toUpperCase()),
@@ -47,6 +49,8 @@ for (const asset of assets) {
     role: predator ? 'predator' : 'generalist',
     sizeClass: megafauna ? 'megafauna' : predator ? 'large' : 'pelagic',
     sizeMeters: dims,
+    minDepth,
+    maxDepth,
     triangles: asset.stats?.triangles ?? null,
     source: '3DAssets.dev',
     license: 'CC0-1.0',
