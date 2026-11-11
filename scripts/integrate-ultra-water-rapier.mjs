@@ -242,8 +242,8 @@ main = replaceExactly(main,
   'batched query capacity');
 main = replaceExactly(main,
   "const gui = new GUI({ title: 'Gelatin Water' });",
-  "const gui = new GUI({ title: 'Ultra-Water · Rapier 3D' });",
-  'Rapier scene GUI title');
+  "const gui = new GUI({ title: 'Osmocean · Marine Viewer' });\ngui.hide();",
+  'hide simulation controls in model-viewer mode');
 for (const line of [
   "fFloat.add(floaters.params, 'drag', 0, 6, 0.01);\n",
   "fFloat.add(floaters.params, 'angularDrag', 0, 4, 0.01);\n",
@@ -434,7 +434,7 @@ if (!viewerMain.includes("import { MarineModelViewer } from './scene/marine-mode
 }
 viewerMain = viewerMain.replace(
   /const bootError = document\.createElement\('pre'\);[\s\S]*?const REFLECT_LAYER = 1;/,
-  'const REFLECT_LAYER = 1;'
+  "function reportBootError(error) { window.__osmoceanLastFrameError = error?.stack || error?.message || String(error); console.error('[Osmocean]', error); }\nconst REFLECT_LAYER = 1;"
 );
 viewerMain = viewerMain.replace(
   /let floaters;\ntry \{ floaters =[\s\S]*?let osmoceanUnified = null;\nwindow\.__osmoceanBootStatus =[\s\S]*?;\n/,
