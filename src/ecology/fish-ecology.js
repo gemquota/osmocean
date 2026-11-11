@@ -90,8 +90,11 @@ export class FishEcology {
     }
     const p=parent?.root.position;
     const preferredDepth=parent?this.clamp(parent.preferredDepth+this.range(-1.5,1.5),this.params.minDepth+1,this.params.maxDepth-1):this.range(this.params.minDepth+1,this.params.maxDepth-1);
+    const spawnY = p ? p.y + this.range(-1, 1) : -preferredDepth;
+    const submergedSpawnY = this.clamp(spawnY, -this.params.maxDepth + surfaceClearance,
+      -this.params.minDepth - surfaceClearance);
     root.position.set(p?p.x+this.range(-2,2):this.range(-this.params.worldRadius*.7,this.params.worldRadius*.7),
-      p?p.y+this.range(-1,1):-preferredDepth-(surfaceClearance??0),
+      submergedSpawnY,
       p?p.z+this.range(-2,2):this.range(-this.params.worldRadius*.7,this.params.worldRadius*.7));
     this.group.add(root);const heading=new T.Vector3(this.rand()-.5,this.range(-.15,.15),this.rand()-.5).normalize();
     const role=g.leadership>.72&&g.sociality>.55?'leader':g.curiosity>.72?'scout':g.affiliation>.72?'shoaler':g.aggression>.72&&g.boldness>.55?'hunter':g.feedingSpecialisation>.72?'forager':g.boldness<.25?'shy':'generalist';
