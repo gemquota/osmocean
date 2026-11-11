@@ -69,6 +69,8 @@ jobs:
           cache-dependency-path: _upstream/ultra-water/package-lock.json
       - name: Download CC0 reef rock formations from Poly Haven
         run: node scripts/download-reef-assets.mjs _upstream/ultra-water/public/models/osmocean/reef
+      - name: Download verified CC0 ocean fauna models
+        run: node scripts/download-ocean-fauna.mjs _downloaded/ocean-fauna
       - name: Apply Osmocean Rapier integration
         run: |
           node scripts/integrate-ultra-water-rapier.mjs _upstream/ultra-water _upstream/fluid _upstream/polyfish _upstream/fish-assets
