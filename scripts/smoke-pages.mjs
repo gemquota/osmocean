@@ -75,9 +75,9 @@ try {
           };
         }
       }
-      return { sampled: before.length, moved, gestures };
+      return { sampled: before.length, moved, gestures, updateCount: window.__osmoceanEcology?.updateCount ?? 0, lastUpdateDt: window.__osmoceanEcology?.lastUpdateDt ?? 0, lastUpdateElapsed: window.__osmoceanEcology?.lastUpdateElapsed ?? 0 };
     });
-    if (motion.sampled < 1 || motion.moved < 1) throw new Error(`Fish motion not observable: ${JSON.stringify(motion)}`);
+    if (motion.sampled < 1 || motion.updateCount < 1 || motion.moved < 1) throw new Error(`Fish simulation did not advance: ${JSON.stringify({ motion, errors })}`);
     if (motion.gestures && (!motion.gestures.marker || !motion.gestures.panned || !motion.gestures.zoomed || !motion.gestures.rotated)) {
       throw new Error(`Two-finger camera gesture incomplete: ${JSON.stringify(motion.gestures)}`);
     }
