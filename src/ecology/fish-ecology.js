@@ -10,8 +10,8 @@ import { calculateAquaticAcceleration, constrainFishDepth } from './aquatic-phys
 export class FishEcology {
   constructor(THREE, scene, options = {}) {
     this.T=THREE; this.scene=scene; this.rng=options.seed??0x51f15e;
-    this.modelTemplate=options.modelTemplate??null; this.modelAnimations=options.modelAnimations??[];
-    this.modelLoaded=Boolean(this.modelTemplate);
+    this.modelTemplate=options.modelTemplate??null; this.modelAnimations=options.modelAnimations??[]; this.modelCatalog=options.modelCatalog??[];
+    this.modelLoaded=Boolean(this.modelCatalog.length||this.modelTemplate);
     this.params={population:110,worldRadius:42,minDepth:3,maxDepth:26,neighbourRadius:16,
       separationRadius:5,maxAcceleration:5,resourceCount:180,resourceRegrowth:.035,
       feedingRate:.22,reproductionEnergy:.82,reproductionCooldown:28,mutationRate:.08,
@@ -28,6 +28,13 @@ export class FishEcology {
   rand(){let x=this.rng|0;x^=x<<13;x^=x>>>17;x^=x<<5;this.rng=x|0;return(x>>>0)/4294967296;}
   range(a,b){return a+this.rand()*(b-a);}
   clamp(v,a,b){return Math.max(a,Math.min(b,v));}
+  chooseSpecies(){
+    if(!this.modelCatalog.length)return Math.floor(this.rand()*this.mats.length);
+    const total=this.modelCatalog.reduce((sum,item)=>sum+Math.max(0,item.weight??1),0);
+    let pick=this.rand()*Math.max(total,1e-9);
+    for(let i=0;i<this.modelCatalog.length;i++){pick-=Math.max(0,this.modelCatalog[i].weight??1);if(pick<=0)return i;}
+    return this.modelCatalog.length-1;
+  }
   genes(parent,mate=null){
     const ranges={speed:[1.2,7,3.4],size:[.45,1.8,1],metabolism:[.35,1.5,.8],sensoryRange:[7,34,18],
       cohesion:[0,1.8,.7],alignment:[0,1.8,.8],separation:[.2,2.2,1.1],aggression:[0,1,.25],
@@ -40,13 +47,16 @@ export class FishEcology {
     }return g;
   }
   makeFish(parent=null,mate=null){
-    const T=this.T,g=this.genes(parent,mate),species=parent?.species??Math.floor(this.rand()*this.mats.length),brain=Array.from({length:12},(_,i)=>{
+    const T=this.T,species=parent?.species??this.chooseSpecies(),modelEntry=this.modelCatalog[species]??null,g=this.genes(parent,mate),brain=Array.from({length:12},(_,i)=>{
       const v=parent?(mate?(parent.brain[i]+mate.brain[i])*.5:parent.brain[i]):this.range(-1,1);
       return this.clamp(v+(parent&&this.rand()<this.params.mutationRate?this.range(-.35,.35):0),-2,2);
     });
-    const root=new T.Group(),mat=this.mats[species];let tail=null,mixer=null,swimData=null;
-    if(this.modelTemplate){
-      const visual=cloneSkeleton(this.modelTemplate);
+    if(!parent&&modelEntry?.role==='predator'){g.aggression=Math.max(g.aggression,.78);g.size=Math.max(g.size,1.25);}
+    const root=new T.Group(),mat=this.mats[species%this.mats.length];let tail=null,mixer=null,swimData=null;
+    const modelTemplate=modelEntry?.scene??this.modelTemplate;
+    const modelAnimations=modelEntry?.animations?.length?modelEntry.animations:this.modelAnimations;
+    if(modelTemplate){
+      const visual=cloneSkeleton(modelTemplate);
       visual.traverse(child=>{if((child.isMesh||child.isSkinnedMesh)&&child.material){child.material=Array.isArray(child.material)?child.material.map(m=>m.clone()):child.material.clone();}});
       visual.updateMatrixWorld(true);
       const rawSize=new T.Box3().setFromObject(visual).getSize(new T.Vector3());
@@ -55,15 +65,15 @@ export class FishEcology {
       else if(longest==='y')visual.rotation.z=-Math.PI/2;
       visual.updateMatrixWorld(true);
       const bounds=new T.Box3().setFromObject(visual),extent=bounds.getSize(new T.Vector3());
-      visual.scale.setScalar((2.3*g.size)/Math.max(extent.x,extent.y,extent.z,1e-6));
+      visual.scale.setScalar((2.3*g.size*(modelEntry?.scale??1))/Math.max(extent.x,extent.y,extent.z,1e-6));
       visual.updateMatrixWorld(true);
       visual.position.sub(new T.Box3().setFromObject(visual).getCenter(new T.Vector3()));
-      swimData=applySwimMaterial(visual,'fish');
       root.add(visual);
-      if(this.modelAnimations.length){
+      if(modelAnimations.length){
         mixer=new T.AnimationMixer(visual);
-        for(const clip of this.modelAnimations)mixer.clipAction(clip).play();
-      }
+        const swimClip=modelAnimations.find(clip=>/swim|idle/i.test(clip.name))??modelAnimations[0];
+        mixer.clipAction(swimClip).play();
+      }else swimData=applySwimMaterial(visual,'fish');
     }else{
       const body=new T.Mesh(this.bodyGeo,mat);const morph=[1,.82,1.22,.92,1.08,.72][species];body.scale.set(1.15*g.size*morph,.48*g.size*(species===2?1.25:1),.34*g.size*(species===4?1.35:1));root.add(body);
       tail=new T.Mesh(this.tailGeo,mat);tail.rotation.z=Math.PI/2;tail.position.x=-1.02*g.size*morph;tail.scale.set(.72*g.size,.62*g.size,.28*g.size);root.add(tail);
@@ -78,7 +88,7 @@ export class FishEcology {
       p?p.z+this.range(-2,2):this.range(-this.params.worldRadius*.7,this.params.worldRadius*.7));
     this.group.add(root);const heading=new T.Vector3(this.rand()-.5,this.range(-.15,.15),this.rand()-.5).normalize();
     const role=g.leadership>.72&&g.sociality>.55?'leader':g.curiosity>.72?'scout':g.affiliation>.72?'shoaler':g.aggression>.72&&g.boldness>.55?'hunter':g.feedingSpecialisation>.72?'forager':g.boldness<.25?'shy':'generalist';
-    return{id:this.nextId++,parentId:parent?.id??null,species,root,tail,mixer,swimData,swimPhase:this.range(0,Math.PI*2),role,genes:g,brain,heading,memory:{foodPosition:new T.Vector3(),foodTtl:0,threatPosition:new T.Vector3(),threatTtl:0},
+    return{id:this.nextId++,parentId:parent?.id??null,species,speciesName:modelEntry?.name??`shoal-fish-${species}`,sizeClass:modelEntry?.sizeClass??'shoal',ecologicalRole:modelEntry?.role??'generalist',root,tail,mixer,swimData,swimPhase:this.range(0,Math.PI*2),role,genes:g,brain,heading,memory:{foodPosition:new T.Vector3(),foodTtl:0,threatPosition:new T.Vector3(),threatTtl:0},
       velocity:heading.clone().multiplyScalar(g.speed*.5),preferredDepth,energy:parent?parent.energy*.45:this.range(.7,1),
       age:0,cooldown:0,phase:this.rand()*Math.PI*2,generation:parent?parent.generation+1:0,offspring:0,eaten:0};
   }
@@ -160,6 +170,6 @@ export class FishEcology {
     if(elapsed-(this.history.at(-1)?.time??-this.params.historyInterval)>=this.params.historyInterval)this.recordHistory(elapsed);
   }
   recordHistory(time){const n=this.fish.length,avg=k=>n?this.fish.reduce((s,f)=>s+(f.genes[k]??f[k]??0),0)/n:0;this.history.push({time,population:n,resources:this.resources.reduce((s,r)=>s+r.biomass,0),meanSize:avg('size'),meanSpeed:avg('speed'),meanAggression:avg('aggression'),meanMetabolism:avg('metabolism'),meanEnergy:avg('energy'),meanGeneration:avg('generation')});if(this.history.length>1800)this.history.shift();}
-  getStats(){const n=this.fish.length,avg=k=>n?this.fish.reduce((s,f)=>s+(f.genes[k]??f[k]??0),0)/n:0,roles={};for(const f of this.fish)roles[f.role]=(roles[f.role]??0)+1;return{population:n,resources:this.resources.reduce((s,r)=>s+r.biomass,0),meanSpeed:avg('speed'),meanSize:avg('size'),meanAggression:avg('aggression'),meanMetabolism:avg('metabolism'),meanEnergy:avg('energy'),meanGeneration:avg('generation'),roles,modelLoaded:this.modelLoaded,history:this.history};}
+  getStats(){const n=this.fish.length,avg=k=>n?this.fish.reduce((s,f)=>s+(f.genes[k]??f[k]??0),0)/n:0,roles={},species={};for(const f of this.fish){roles[f.role]=(roles[f.role]??0)+1;species[f.speciesName]=(species[f.speciesName]??0)+1;}return{population:n,species,speciesModelCount:this.modelCatalog.length,resources:this.resources.reduce((s,r)=>s+r.biomass,0),meanSpeed:avg('speed'),meanSize:avg('size'),meanAggression:avg('aggression'),meanMetabolism:avg('metabolism'),meanEnergy:avg('energy'),meanGeneration:avg('generation'),roles,modelLoaded:this.modelLoaded,history:this.history};}
   dispose(){this.scene.remove(this.group);for(const m of this.mats)m.dispose();this.foodMat.dispose();this.bodyGeo.dispose();this.tailGeo.dispose();this.eyeGeo.dispose();this.foodGeo.dispose();}
 }
