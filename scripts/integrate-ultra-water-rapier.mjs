@@ -239,7 +239,7 @@ main = replaceExactly(main,
   "const ui = { view: 'Lagoon', benchmark: () => benchButton.click(), exposure: 1 };\ngui.add(ui, 'view', Object.keys(views)).name('camera').onChange((v) => views[v]());",
   "const ui = { view: 'Underwater', benchmark: () => benchButton.click(), exposure: 1 };",
   'lock initial camera preset to underwater');
-main = replaceExactly(main, 'views[ui.view]();', 'views[ui.view]();\ncontrols.target.y = -10; controls.update();\nconst reefHeading = camera.getWorldDirection(new THREE.Vector3());\necology.group.position.set(camera.position.x + reefHeading.x * 10, 0, camera.position.z + reefHeading.z * 10);\nreef.group.position.y = -7.5;\ncontrols.enabled = false; controls.enableRotate = false; controls.enablePan = false; controls.enableZoom = false;\nunderwater.params.scattering = 0.055; underwater.params.shafts = 2.1; underwater.params.shaftRange = 72;\nwindow.__osmoceanDisplayMode = \'UNDERWATER REEF\';\nif (window.__osmoceanRapierReady && floaters instanceof RapierFloaters) { try { osmoceanUnified = createUnifiedCoupling({ THREE, scene, RAPIER, floaters, controls }); } catch (error) { reportBootError(error); } }', 'initialize locked underwater reef scene');
+main = replaceExactly(main, 'views[ui.view]();', 'views[ui.view]();\ncontrols.target.y = -10; controls.update();\nconst reefHeading = camera.getWorldDirection(new THREE.Vector3());\necology.group.position.set(camera.position.x + reefHeading.x * (mobile ? 7 : 10), 0, camera.position.z + reefHeading.z * (mobile ? 7 : 10));\nreef.group.position.y = -7.5;\ncontrols.enabled = false; controls.enableRotate = false; controls.enablePan = false; controls.enableZoom = false;\nunderwater.params.scattering = 0.055; underwater.params.shafts = 2.1; underwater.params.shaftRange = 72;\nwindow.__osmoceanDisplayMode = \'UNDERWATER REEF\';\nif (window.__osmoceanRapierReady && floaters instanceof RapierFloaters) { try { osmoceanUnified = createUnifiedCoupling({ THREE, scene, RAPIER, floaters, controls }); } catch (error) { reportBootError(error); } }', 'initialize locked underwater reef scene');
 
 // Add fish ecology after the Rapier integration has transformed the upstream entry point.
 copy(path.join(repoRoot, 'src/ecology/fish-ecology.js'), path.join(upstream, 'src/ecology/fish-ecology.js'));
@@ -288,7 +288,7 @@ for (const assetId of ['rock_moss_set_01','rock_moss_set_02']) {
   try { const rockGltf = await assetLoader.loadAsync(import.meta.env.BASE_URL + 'models/osmocean/reef/' + assetId + '.gltf'); reefRockTemplates.push(rockGltf.scene); }
   catch (error) { console.warn('[Osmocean] Optional CC0 rock asset unavailable:', assetId, error); }
 }
-const ecology = new FishEcology(THREE, scene, { population: mobile ? 32 : 48, modelBudget: mobile ? 8 : 14, worldRadius: 28, minDepth: 3, maxDepth: 26, resourceCount: mobile ? 80 : 120, seed: 0x51f15e, modelTemplate: fishGltf?.scene ?? null, modelAnimations: fishGltf?.animations ?? [], modelCatalog });
+const ecology = new FishEcology(THREE, scene, { population: mobile ? 32 : 48, modelBudget: mobile ? 8 : 14, worldRadius: mobile ? 10 : 18, minDepth: 3, maxDepth: mobile ? 16 : 20, resourceCount: mobile ? 80 : 120, seed: 0x51f15e, modelTemplate: fishGltf?.scene ?? null, modelAnimations: fishGltf?.animations ?? [], modelCatalog });
 const reef = createReef(THREE, ecology.group, 0x71ef, mobile ? 0.35 : 0.5, { rockTemplates: reefRockTemplates });
 let osmoceanUnified = null;
 window.__osmoceanBootStatus = window.__osmoceanRapierReady ? 'rapier-world-ready' : 'fallback-world-ready';`,

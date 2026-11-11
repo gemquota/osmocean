@@ -59,7 +59,8 @@ export class FishEcology {
     if(useModel){
       this.modelInstances++;
       const visual=cloneSkeleton(modelTemplate);
-      visual.traverse(child=>{if((child.isMesh||child.isSkinnedMesh)&&child.material){child.material=Array.isArray(child.material)?child.material.map(m=>m.clone()):child.material.clone();}});
+      const fishTint=new T.Color().setHSL(((g.hue%360)+360)%360/360,.72,.52);
+      visual.traverse(child=>{if((child.isMesh||child.isSkinnedMesh)&&child.material){child.material=Array.isArray(child.material)?child.material.map(m=>m.clone()):child.material.clone();const mats=Array.isArray(child.material)?child.material:[child.material];for(const material of mats){if(material.color)material.color.multiplyScalar(1.18);if(material.emissive){material.emissive.copy(fishTint).multiplyScalar(.12);material.emissiveIntensity=.75;}}}});
       visual.updateMatrixWorld(true);
       const rawSize=new T.Box3().setFromObject(visual).getSize(new T.Vector3());
       const longest=rawSize.x>=rawSize.z&&rawSize.x>=rawSize.y?'x':rawSize.z>=rawSize.y?'z':'y';
