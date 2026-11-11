@@ -49,8 +49,11 @@ try {
     const motion = await page.evaluate(async () => {
       const fish = window.__osmoceanEcology?.fish ?? [];
       const before = fish.slice(0, Math.min(12, fish.length)).map(f => f.root.position.clone());
-      await new Promise(resolve => setTimeout(resolve, 900));
-      const moved = fish.slice(0, before.length).filter((f, i) => f.root.position.distanceTo(before[i]) > 0.01).length;
+      const updatesBefore = window.__osmoceanEcology?.updateCount ?? 0;
+      await new Promise(resolve => setTimeout(resolve, 2200));
+      const current = window.__osmoceanEcology?.fish ?? [];
+      const moved = current.slice(0, before.length).filter((f, i) => f.root.position.distanceTo(before[i]) > 0.01).length;
+      const updatesDuringWait = (window.__osmoceanEcology?.updateCount ?? 0) - updatesBefore;
       let gestures = null;
       if (matchMedia('(pointer: coarse)').matches || location.search.includes('mobile')) {
         const target = window.app?.renderer?.domElement;
@@ -75,9 +78,9 @@ try {
           };
         }
       }
-      return { sampled: before.length, moved, gestures, updateCount: window.__osmoceanEcology?.updateCount ?? 0, lastUpdateDt: window.__osmoceanEcology?.lastUpdateDt ?? 0, lastUpdateElapsed: window.__osmoceanEcology?.lastUpdateElapsed ?? 0 };
+      return { sampled: before.length, moved, gestures, updateCount: window.__osmoceanEcology?.updateCount ?? 0, updatesDuringWait, firstFishPosition: current[0]?.root.position.toArray() ?? null, firstFishVelocity: current[0]?.velocity.length() ?? null, lastUpdateDt: window.__osmoceanEcology?.lastUpdateDt ?? 0, lastUpdateElapsed: window.__osmoceanEcology?.lastUpdateElapsed ?? 0 };
     });
-    if (motion.sampled < 1 || motion.updateCount < 1 || motion.moved < 1) throw new Error(`Fish simulation did not advance: ${JSON.stringify({ motion, errors })}`);
+    if (motion.sampled < 1 || motion.updateCount < 1 || motion.updatesDuringWait < 1 || motion.moved < 1) throw new Error(`Fish simulation did not advance: ${JSON.stringify({ motion, errors })}`);
     if (motion.gestures && (!motion.gestures.marker || !motion.gestures.panned || !motion.gestures.zoomed || !motion.gestures.rotated)) {
       throw new Error(`Two-finger camera gesture incomplete: ${JSON.stringify(motion.gestures)}`);
     }
@@ -91,7 +94,7 @@ try {
       await page.evaluate(() => { const el = [...document.querySelectorAll('canvas')].find(x => { const r=x.getBoundingClientRect(); return r.width>100 && r.height>100; }); if (el) el.id='osmocean-renderer'; });
       await page.screenshot({ path: `smoke-${viewport.width}.png`, timeout: 12000, animations: 'disabled' });
     } catch (error) { console.warn(`Canvas screenshot unavailable at ${viewport.width}px: ${error.message}`); }
-    if (ecology.mode !== 'UNDERWATER REEF' || !(ecology.cameraY < 0) || ecology.fish < 50 || !ecology.fishModelLoaded || Object.keys(ecology.fishRoles).length < 2 || ecology.reefChildren < 100 || ecology.reefRockAssets < 2 || !ecology.reefVisible) throw new Error(`Underwater reef population missing: ${JSON.stringify(ecology)}`);
+    if (ecology.mode !== 'UNDERWATER REEF' || !(ecology.cameraY < 0) || ecology.fish < 24 || !ecology.fishModelLoaded || Object.keys(ecology.fishRoles).length < 2 || ecology.reefChildren < 100 || ecology.reefRockAssets < 2 || !ecology.reefVisible) throw new Error(`Underwater reef population missing: ${JSON.stringify(ecology)}`);
     if (structure.visibleCanvases !== 1 || structure.iframes !== 0) {
       throw new Error(`Expected one renderer and no embedded applications: ${JSON.stringify(structure)}`);
     }
