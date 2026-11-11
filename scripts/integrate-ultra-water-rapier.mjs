@@ -236,7 +236,7 @@ main = replaceExactly(main,
   'runtime diagnostics export');
 const upstreamHtmlPath = path.join(upstream, 'index.html');
 let upstreamHtml = read(upstreamHtmlPath);
-upstreamHtml = replaceExactly(upstreamHtml, '<title>Gelatin Water</title>', '<title>Ultra-Water + Rapier | Osmocean</title>', 'upstream page title');
+upstreamHtml = replaceExactly(upstreamHtml, '<title>Gelatin Water</title>', '<title>Osmocean | Underwater Model Viewer</title>', 'upstream page title');
 write(upstreamHtmlPath, upstreamHtml);
 write(mainPath, main);
 main = replaceExactly(main, '  ocean.update(dt, timer);', `
