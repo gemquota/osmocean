@@ -53,6 +53,60 @@ write(packagePath, JSON.stringify(manifest, null, 2) + '\n');
 const mainPath = path.join(upstream, 'src/main.js');
 let main = read(mainPath);
 main = replaceExactly(main,
+  "controls.maxDistance = 6000;",
+  `controls.maxDistance = 6000;
+if (mobile) {
+  const surface = renderer.domElement;
+  surface.style.touchAction = 'pan-y';
+  let gesture = null;
+  const points = event => [...event.touches].slice(0, 2).map(t => ({ x: t.clientX, y: t.clientY }));
+  const measure = p => ({
+    x: (p[0].x + p[1].x) * 0.5,
+    y: (p[0].y + p[1].y) * 0.5,
+    distance: Math.hypot(p[1].x - p[0].x, p[1].y - p[0].y),
+    angle: Math.atan2(p[1].y - p[0].y, p[1].x - p[0].x)
+  });
+  const wrapAngle = value => Math.atan2(Math.sin(value), Math.cos(value));
+  surface.addEventListener('touchstart', event => {
+    if (event.touches.length !== 2) { gesture = null; return; }
+    event.preventDefault();
+    gesture = { ...measure(points(event)), height: surface.clientHeight || innerHeight };
+  }, { passive: false });
+  surface.addEventListener('touchmove', event => {
+    if (!gesture || event.touches.length !== 2) return;
+    event.preventDefault();
+    const p = measure(points(event));
+    const viewScale = 2 * Math.tan(THREE.MathUtils.degToRad(camera.fov * 0.5)) *
+      camera.position.distanceTo(controls.target) / Math.max(1, gesture.height);
+    const right = new THREE.Vector3(1, 0, 0).applyQuaternion(camera.quaternion);
+    const up = new THREE.Vector3(0, 1, 0).applyQuaternion(camera.quaternion);
+    const pan = right.multiplyScalar(-(p.x - gesture.x) * viewScale)
+      .addScaledVector(up, (p.y - gesture.y) * viewScale);
+    camera.position.add(pan);
+    controls.target.add(pan);
+    const forward = controls.target.clone().sub(camera.position).normalize();
+    const twist = wrapAngle(p.angle - gesture.angle);
+    if (Math.abs(twist) > 0.0001) camera.up.applyQuaternion(
+      new THREE.Quaternion().setFromAxisAngle(forward, twist)
+    ).normalize();
+    const zoomFactor = gesture.distance / Math.max(p.distance, 1);
+    const offset = camera.position.clone().sub(controls.target);
+    offset.multiplyScalar(THREE.MathUtils.clamp(zoomFactor, 0.85, 1.18));
+    offset.setLength(THREE.MathUtils.clamp(offset.length(), 4, 900));
+    camera.position.copy(controls.target).add(offset);
+    controls.update();
+    gesture = { ...p, height: gesture.height };
+    window.__osmoceanTouchGesture = { pan: true, rotate: true, zoom: true };
+  }, { passive: false });
+  const endGesture = event => {
+    if (event.touches.length < 2) gesture = null;
+    else if (event.touches.length === 2) gesture = { ...measure(points(event)), height: surface.clientHeight || innerHeight };
+  };
+  surface.addEventListener('touchend', endGesture, { passive: true });
+  surface.addEventListener('touchcancel', endGesture, { passive: true });
+}`,
+  'two-finger pan, twist and pinch camera gestures');
+main = replaceExactly(main,
   "import { Floaters } from './scene/floaters.js';",
   "import { Floaters } from './scene/floaters.js';\nimport { RapierFloaters } from './scene/rapierFloaters.js';\nimport * as RAPIER from '@dimforge/rapier3d-compat';\nimport { createUnifiedCoupling } from './osmocean/UnifiedCoupling.js';\nimport { FishEcology } from './ecology/fish-ecology.js';\nimport { createReef } from './ecology/reef-environment.js';\nimport { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';",
   'floater import');
