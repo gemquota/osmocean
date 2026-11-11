@@ -247,6 +247,14 @@ document.body.appendChild(ecologyToggle);
 ecologyPanel.querySelector('#eco-hide').onclick = () => { ecologyPanel.style.display = 'none'; ecologyToggle.style.display = 'block'; };
 window.__osmoceanEcologyPanel = ecologyPanel;`,
   'mount ecology observatory panel');
+main = replaceExactly(main,
+  'function tick(now) {\n  const dt = Math.min((now - last) / 1000, 0.1);\n  last = now;',
+  'let osmoceanTickCount = 0;\nfunction tick(now) {\n  const dt = Math.min((now - last) / 1000, 0.1);\n  last = now;\n  osmoceanTickCount++;\n  window.__osmoceanTickCount = osmoceanTickCount;\n  window.__osmoceanLastTickAt = performance.now();',
+  'instrument the actual RAF tick');
+main = replaceExactly(main,
+  '    tick(now);',
+  '    try { tick(now); } catch (error) { window.__osmoceanLastFrameError = error?.stack || error?.message || String(error); reportBootError(error); }',
+  'keep RAF loop scheduled after recoverable frame errors');
 main = replaceExactly(main, '  elapsed += dt;', '  elapsed += dt;\n  ecology.update(dt, elapsed, camWater);', 'advance fish ecology before renderer subsystems');
 main = replaceExactly(main,
   '  floaters.step(dt, elapsed);',
