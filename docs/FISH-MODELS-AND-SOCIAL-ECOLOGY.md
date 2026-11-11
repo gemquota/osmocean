@@ -21,7 +21,7 @@ The Pages and CI builds fetch the [Ocean Animals: Whales, Sharks and Fish collec
 - The collection's models are static posed meshes. They are not falsely described as rigged or clip-animated. The existing procedural fish-swim material supplies gentle body motion where compatible; the existing Quaternius animated models remain available for species with baked swim cycles.
 - Model scale is derived from the collection's metre dimensions. Large whales and other megafauna retain their relative size instead of being normalized to the size of a reef fish.
 - Reef, pelagic, megafauna and deep-water species receive different initial depth ranges. The ecology still owns their movement, buoyancy, water-relative drag, energy and behaviour.
-- The pack is CC0 1.0 Universal with no attribution requirement. Its source and licence are recorded in the generated `pelagic/catalog.json`.
+- The pack is CC0 1.0 Universal with no attribution requirement. Its source and licence are recorded in the generated `pelagic/catalog.json`. The publisher's manifest identifies the collection as AI-generated; the models are static posed studies, not artist-authored rigged animation assets.
 
 The population now starts across the full configured ocean radius using area-uniform radial sampling. A minority nursery fraction remains near the initial reef so the starting camera view is populated; the majority is distributed throughout the wider water column. Offspring inherit their parents' local region and species, allowing populations to spread through movement and reproduction rather than teleporting each frame.
 
