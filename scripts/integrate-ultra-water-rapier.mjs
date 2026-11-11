@@ -183,6 +183,10 @@ main = replaceExactly(main,
   'batched query collection');
 main = replaceExactly(main, 'floaters.step(dt);', 'osmoceanUnified?.step(dt, elapsed, ocean.params);\n  floaters.step(dt, elapsed);', 'shared unified world frame and current simulation time');
 main = replaceExactly(main,
+  `const mobile = args.has('mobile') || (!args.has('desktop') && matchMedia('(pointer: coarse)').matches);`,
+  `const mobile = args.has('mobile') || (!args.has('desktop') && (matchMedia('(pointer: coarse)').matches || navigator.webdriver));\nrenderer.shadowMap.enabled = !mobile;`,
+  'use the low-cost GPU profile for software-rendered browsers and mobile devices');
+main = replaceExactly(main,
   `const quality = mobile
   ? { resolution: 0.6, msaa: 2, reflections: true, reflectionScale: 0.35, autoResolution: true }
   : { resolution: 1, msaa: 4, reflections: true, reflectionScale: 0.5 };`,
