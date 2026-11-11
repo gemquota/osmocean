@@ -72,7 +72,7 @@ if (mobile) {
   const surface = renderer.domElement;
   surface.style.touchAction = 'pan-y';
   let gesture = null;
-  const points = event => [...event.touches].slice(0, 2).map(t => ({ x: t.clientX, y: t.clientY }));
+  const points = event => [...event.touches].map(t => ({ x: t.clientX, y: t.clientY }));
   const measure = p => ({
     x: (p[0].x + p[1].x) * 0.5,
     y: (p[0].y + p[1].y) * 0.5,
@@ -82,27 +82,51 @@ if (mobile) {
   const wrapAngle = value => Math.atan2(Math.sin(value), Math.cos(value));
   const worldUp = new THREE.Vector3(0, 1, 0);
   const raycaster = new THREE.Raycaster();
+  const gestureScale = () => 2 * Math.tan(THREE.MathUtils.degToRad(camera.fov * 0.5)) *
+    camera.position.distanceTo(controls.target) / Math.max(1, surface.clientHeight || innerHeight);
+  const moveRig = delta => { camera.position.add(delta); controls.target.add(delta); };
   surface.addEventListener('touchstart', event => {
+    if (event.touches.length === 3) {
+      event.preventDefault();
+      gesture = { type: 'vertical', y: points(event).reduce((sum, p) => sum + p.y, 0) / 3 };
+      return;
+    }
     if (event.touches.length !== 2) { gesture = null; return; }
     event.preventDefault();
-    gesture = { ...measure(points(event)), height: surface.clientHeight || innerHeight };
+    gesture = { type: 'orbit', ...measure(points(event)), height: surface.clientHeight || innerHeight };
   }, { passive: false });
   surface.addEventListener('touchmove', event => {
-    if (!gesture || event.touches.length !== 2) return;
+    if (!gesture) return;
+    if (gesture.type === 'vertical' && event.touches.length === 3) {
+      event.preventDefault();
+      const currentY = points(event).reduce((sum, p) => sum + p.y, 0) / 3;
+      const dy = gesture.y - currentY;
+      moveRig(new THREE.Vector3(0, dy * gestureScale(), 0));
+      controls.update();
+      camera.up.copy(worldUp);
+      gesture.y = currentY;
+      window.__osmoceanTouchGesture = { panY: true, verticalDrag: true };
+      return;
+    }
+    if (gesture.type !== 'orbit' || event.touches.length !== 2) return;
     event.preventDefault();
     const p = measure(points(event));
-    const viewScale = 2 * Math.tan(THREE.MathUtils.degToRad(camera.fov * 0.5)) *
-      camera.position.distanceTo(controls.target) / Math.max(1, gesture.height);
+    const viewScale = gestureScale();
+    // Two-finger translation is deliberately constrained to the horizontal
+    // world plane. Camera pitch must never turn a ground-plane pan into a dive.
     const right = new THREE.Vector3(1, 0, 0).applyQuaternion(camera.quaternion);
-    const up = new THREE.Vector3(0, 1, 0).applyQuaternion(camera.quaternion);
+    right.y = 0;
+    if (right.lengthSq() < 1e-8) right.set(1, 0, 0);
+    right.normalize();
+    const forward = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion);
+    forward.y = 0;
+    if (forward.lengthSq() < 1e-8) forward.set(0, 0, -1);
+    forward.normalize();
     const pan = right.multiplyScalar(-(p.x - gesture.x) * viewScale)
-      .addScaledVector(up, (p.y - gesture.y) * viewScale);
-    camera.position.add(pan);
-    controls.target.add(pan);
+      .addScaledVector(forward, (p.y - gesture.y) * viewScale);
+    moveRig(pan);
 
-    // Twist yaws the camera around the world-space point beneath the two-finger
-    // midpoint. The view plane is perpendicular to the camera direction and
-    // passes through the orbit target, giving a stable pivot even in open water.
+    // Twist yaws around the world-space point beneath the two-finger midpoint.
     const twist = wrapAngle(p.angle - gesture.angle);
     let yawPivotApplied = false;
     if (Math.abs(twist) > 0.0001) {
@@ -130,12 +154,14 @@ if (mobile) {
     camera.position.copy(controls.target).add(offset);
     controls.update();
     camera.up.copy(worldUp);
-    gesture = { ...p, height: gesture.height };
-    window.__osmoceanTouchGesture = { pan: true, rotate: true, zoom: true, yawPivot: yawPivotApplied, noRoll: camera.up.distanceTo(worldUp) < 1e-6 };
+    gesture = { type: 'orbit', ...p, height: gesture.height };
+    window.__osmoceanTouchGesture = { panXZ: true, rotate: true, zoom: true, yawPivot: yawPivotApplied, noRoll: camera.up.distanceTo(worldUp) < 1e-6 };
   }, { passive: false });
   const endGesture = event => {
-    if (event.touches.length < 2) gesture = null;
-    else if (event.touches.length === 2) gesture = { ...measure(points(event)), height: surface.clientHeight || innerHeight };
+    if (event.touches.length === 0) gesture = null;
+    else if (event.touches.length === 3) gesture = { type: 'vertical', y: points(event).reduce((sum, p) => sum + p.y, 0) / 3 };
+    else if (event.touches.length === 2) gesture = { type: 'orbit', ...measure(points(event)), height: surface.clientHeight || innerHeight };
+    else gesture = null;
   };
   surface.addEventListener('touchend', endGesture, { passive: true });
   surface.addEventListener('touchcancel', endGesture, { passive: true });
