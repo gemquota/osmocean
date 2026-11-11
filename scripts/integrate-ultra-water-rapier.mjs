@@ -288,7 +288,7 @@ main = replaceExactly(main,
   `let floaters;
 try { floaters = window.__osmoceanRapierReady ? new RapierFloaters({ RAPIER, scene, heightAt: islandHeight, patchMaterial: terrain.patchProp, query }) : new Floaters({ scene, heightAt: islandHeight, patchMaterial: terrain.patchProp }); } catch (error) { reportBootError(error); floaters = new Floaters({ scene, heightAt: islandHeight, patchMaterial: terrain.patchProp }); }
 let fishGltf = null;\ntry { fishGltf = await new GLTFLoader().loadAsync(import.meta.env.BASE_URL + 'models/osmocean/fish_rigged.glb'); } catch (error) { console.warn('[Osmocean] Rigged shoal fish fallback unavailable:', error); }\nconst assetLoader = new GLTFLoader();
-const speciesDefinitions = [
+const pelagicCatalog = await fetch(import.meta.env.BASE_URL + 'models/osmocean/pelagic/catalog.json').then(response => { if (!response.ok) throw new Error('CC0 pelagic catalog unavailable: ' + response.status); return response.json(); });\nconst speciesDefinitions = [
   {id:'clownfish',name:'Clownfish',weight:5.5,scale:0.9,sizeClass:'shoal',detail:false},
   {id:'blue_tang',name:'Blue tang',weight:5.2,scale:1.0,sizeClass:'shoal',detail:false},
   {id:'cardinal_fish',name:'Cardinal fish',weight:4.8,scale:0.8,sizeClass:'shoal',detail:false},
