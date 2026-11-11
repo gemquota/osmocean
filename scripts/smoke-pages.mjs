@@ -49,11 +49,8 @@ try {
     const motion = await page.evaluate(async () => {
       const fish = window.__osmoceanEcology?.fish ?? [];
       const before = fish.slice(0, Math.min(12, fish.length)).map(f => f.root.position.clone());
-      const updatesBefore = window.__osmoceanEcology?.updateCount ?? 0;
-      await new Promise(resolve => setTimeout(resolve, 2200));
-      const current = window.__osmoceanEcology?.fish ?? [];
-      const moved = current.slice(0, before.length).filter((f, i) => f.root.position.distanceTo(before[i]) > 0.01).length;
-      const updatesDuringWait = (window.__osmoceanEcology?.updateCount ?? 0) - updatesBefore;
+      await new Promise(resolve => setTimeout(resolve, 900));
+      const moved = fish.slice(0, before.length).filter((f, i) => f.root.position.distanceTo(before[i]) > 0.01).length;
       let gestures = null;
       if (matchMedia('(pointer: coarse)').matches || location.search.includes('mobile')) {
         const target = window.app?.renderer?.domElement;
@@ -63,6 +60,7 @@ try {
           const startPosition = camera.position.clone();
           const startTarget = controls.target.clone();
           const startUp = camera.up.clone();
+          const startDirection = camera.getWorldDirection(new (window.app.camera.position.constructor)());
           const touch = (identifier, x, y) => new Touch({ identifier, target, clientX: x, clientY: y });
           const dispatch = (type, touches) => target.dispatchEvent(new TouchEvent(type, {
             touches, targetTouches: touches, changedTouches: touches, bubbles: true, cancelable: true
@@ -70,31 +68,36 @@ try {
           dispatch('touchstart', [touch(1, 120, 300), touch(2, 260, 300)]);
           dispatch('touchmove', [touch(1, 105, 315), touch(2, 285, 325)]);
           dispatch('touchend', []);
+          const endDirection = camera.getWorldDirection(new (window.app.camera.position.constructor)());
           gestures = {
             marker: Boolean(window.__osmoceanTouchGesture),
             panned: controls.target.distanceTo(startTarget) > 0.01,
             zoomed: camera.position.distanceTo(controls.target) !== startPosition.distanceTo(startTarget),
-            rotated: camera.up.distanceTo(startUp) > 0.001
+            rotated: endDirection.distanceTo(startDirection) > 0.001,
+            pivotYaw: Boolean(window.__osmoceanTouchGesture?.yawPivot),
+            noRoll: camera.up.distanceTo(startUp) < 0.001
           };
         }
       }
-      return { sampled: before.length, moved, gestures, updateCount: window.__osmoceanEcology?.updateCount ?? 0, updatesDuringWait, firstFishPosition: current[0]?.root.position.toArray() ?? null, firstFishVelocity: current[0]?.velocity.length() ?? null, lastUpdateDt: window.__osmoceanEcology?.lastUpdateDt ?? 0, lastUpdateElapsed: window.__osmoceanEcology?.lastUpdateElapsed ?? 0 };
+      return { sampled: before.length, moved, gestures, updateCount: window.__osmoceanEcology?.updateCount ?? 0, lastUpdateDt: window.__osmoceanEcology?.lastUpdateDt ?? 0, lastUpdateElapsed: window.__osmoceanEcology?.lastUpdateElapsed ?? 0 };
     });
-    if (motion.sampled < 1 || motion.updateCount < 1 || motion.updatesDuringWait < 1 || motion.moved < 1) throw new Error(`Fish simulation did not advance: ${JSON.stringify({ motion, errors })}`);
-    if (motion.gestures && (!motion.gestures.marker || !motion.gestures.panned || !motion.gestures.zoomed || !motion.gestures.rotated)) {
+    if (motion.sampled < 1 || motion.updateCount < 1 || motion.moved < 1) throw new Error(`Fish simulation did not advance: ${JSON.stringify({ motion, errors })}`);
+    if (motion.gestures && (!motion.gestures.marker || !motion.gestures.panned || !motion.gestures.zoomed || !motion.gestures.rotated || !motion.gestures.pivotYaw || !motion.gestures.noRoll)) {
       throw new Error(`Two-finger camera gesture incomplete: ${JSON.stringify(motion.gestures)}`);
     }
     const ecology = await page.evaluate(() => {
       const canvas = window.app?.renderer?.domElement || [...document.querySelectorAll('canvas')].find(el => { const r = el.getBoundingClientRect(); return r.width > 100 && r.height > 100; });
       const gl = canvas?.getContext('webgl2') || canvas?.getContext('webgl');
-      return { mode: window.__osmoceanDisplayMode, cameraY: window.app?.camera?.position?.y, fish: window.__osmoceanEcology?.fish?.length ?? 0, fishModelLoaded: window.app?.fishModelLoaded ?? window.__osmoceanEcology?.modelLoaded ?? false, fishRoles: window.__osmoceanEcology?.getStats?.().roles ?? {}, reefRockAssets: window.app?.reefRockAssetCount ?? 0, reefChildren: window.__osmoceanEcology?.group?.children?.length ?? 0, reefVisible: window.__osmoceanEcology?.group?.visible, rendererCalls: window.app?.renderer?.info?.render?.calls, rendererTriangles: window.app?.renderer?.info?.render?.triangles, canvas: canvas ? [canvas.width,canvas.height,canvas.getBoundingClientRect().width,canvas.getBoundingClientRect().height] : null, contextLost: gl?.isContextLost?.() ?? null, glError: gl?.getError?.() ?? null, bootStatus: window.__osmoceanBootStatus };
+      const ecology = window.__osmoceanEcology;
+      const depths = ecology?.fish?.map(f => ecology.lastSurfaceY - f.root.position.y) ?? [];
+      return { mode: window.__osmoceanDisplayMode, cameraY: window.app?.camera?.position?.y, fish: ecology?.fish?.length ?? 0, minFishDepth: depths.length ? Math.min(...depths) : null, maxFishDepth: depths.length ? Math.max(...depths) : null, minAllowedDepth: ecology?.params?.minDepth, maxAllowedDepth: ecology?.params?.maxDepth, fishModelLoaded: window.app?.fishModelLoaded ?? ecology?.modelLoaded ?? false, speciesModelCount: window.app?.fishSpeciesModelCount ?? 0, speciesPopulation: ecology?.getStats?.().species ?? {}, fishRoles: ecology?.getStats?.().roles ?? {}, reefRockAssets: window.app?.reefRockAssetCount ?? 0, reefChildren: ecology?.group?.children?.length ?? 0, reefVisible: ecology?.group?.visible, rendererCalls: window.app?.renderer?.info?.render?.calls, rendererTriangles: window.app?.renderer?.info?.render?.triangles, canvas: canvas ? [canvas.width,canvas.height,canvas.getBoundingClientRect().width,canvas.getBoundingClientRect().height] : null, contextLost: gl?.isContextLost?.() ?? null, glError: gl?.getError?.() ?? null, bootStatus: window.__osmoceanBootStatus };
     });
     console.log(`RENDER DIAGNOSTICS ${viewport.width}x${viewport.height}: ${JSON.stringify({ structure, ecology, errors })}`);
     try {
       await page.evaluate(() => { const el = [...document.querySelectorAll('canvas')].find(x => { const r=x.getBoundingClientRect(); return r.width>100 && r.height>100; }); if (el) el.id='osmocean-renderer'; });
       await page.screenshot({ path: `smoke-${viewport.width}.png`, timeout: 12000, animations: 'disabled' });
     } catch (error) { console.warn(`Canvas screenshot unavailable at ${viewport.width}px: ${error.message}`); }
-    if (ecology.mode !== 'UNDERWATER REEF' || !(ecology.cameraY < 0) || ecology.fish < 24 || !ecology.fishModelLoaded || Object.keys(ecology.fishRoles).length < 2 || ecology.reefChildren < 100 || ecology.reefRockAssets < 2 || !ecology.reefVisible) throw new Error(`Underwater reef population missing: ${JSON.stringify(ecology)}`);
+    if (ecology.mode !== 'UNDERWATER REEF' || !(ecology.cameraY < 0) || ecology.fish < 50 || !ecology.fishModelLoaded || ecology.speciesModelCount < 10 || Object.keys(ecology.speciesPopulation).length < 4 || Object.keys(ecology.fishRoles).length < 2 || ecology.reefChildren < 100 || ecology.reefRockAssets < 2 || !ecology.reefVisible || ecology.minFishDepth < ecology.minAllowedDepth - 0.05 || ecology.maxFishDepth > ecology.maxAllowedDepth + 0.05) throw new Error(`Underwater reef population missing: ${JSON.stringify(ecology)}`);
     if (structure.visibleCanvases !== 1 || structure.iframes !== 0) {
       throw new Error(`Expected one renderer and no embedded applications: ${JSON.stringify(structure)}`);
     }
