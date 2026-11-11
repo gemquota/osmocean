@@ -1,6 +1,6 @@
 import { clone as cloneSkeleton } from 'three/addons/utils/SkeletonUtils.js';
 import { applySwimMaterial, updateSwimUniforms } from './polyfish-swim-material.js';
-import { calculateAquaticAcceleration, constrainFishDepth } from './aquatic-physics.js';
+import { calculateAquaticAcceleration, constrainFishDepth, sampleOceanSpawn } from './aquatic-physics.js';
 
 /**
  * Native Ultra-Water ecosystem. Agent state is authoritative; meshes are views.
@@ -16,7 +16,7 @@ export class FishEcology {
       separationRadius:5,maxAcceleration:5,resourceCount:180,resourceRegrowth:.035,
       feedingRate:.22,reproductionEnergy:.82,reproductionCooldown:28,mutationRate:.08,
       mutationStrength:.12,predationRate:.7,predationThreshold:.7,currentStrength:.55,waterDensity:1025,dragCoefficient:.82,gravity:9.81,
-      temperatureGradient:.45,oxygenGradient:.3,historyInterval:2,...options,...options.params};
+      temperatureGradient:.45,oxygenGradient:.3,historyInterval:2,spawnCoreRadius:140,spawnCoreFraction:.35,...options,...options.params};
     this.fish=[];this.resources=[];this.history=[];this.elapsed=0;this.nextId=0;this.updateCount=0;this.lastUpdateDt=0;this.lastUpdateElapsed=0;
     this.group=new THREE.Group();this.group.name='Ultra-Water Ecology';scene.add(this.group);
     this.mats=[0x65c8c8,0xe7b75c,0x8b9ee8,0xb6d58b,0xe58c80,0x9aadd1].map(color=>new THREE.MeshStandardMaterial({color,roughness:.5}));
@@ -89,13 +89,23 @@ export class FishEcology {
       for(const side of [-1,1]){const eye=new T.Mesh(this.eyeGeo,new T.MeshBasicMaterial({color:0x07151b}));eye.position.set(.38*g.size,.12*g.size,side*.245*g.size);root.add(eye);}
     }
     const p=parent?.root.position;
-    const preferredDepth=parent?this.clamp(parent.preferredDepth+this.range(-1.5,1.5),this.params.minDepth+1,this.params.maxDepth-1):this.range(this.params.minDepth+1,this.params.maxDepth-1);
+    const habitatMin = this.clamp(modelEntry?.minDepth ?? this.params.minDepth + 1, this.params.minDepth + 1, this.params.maxDepth - 2);
+    const habitatMax = this.clamp(modelEntry?.maxDepth ?? this.params.maxDepth - 1, habitatMin + 1, this.params.maxDepth - 1);
+    const preferredDepth = parent
+      ? this.clamp(parent.preferredDepth + this.range(-1.5, 1.5), habitatMin, habitatMax)
+      : this.range(habitatMin, habitatMax);
     const spawnY = p ? p.y + this.range(-1, 1) : -preferredDepth;
     const submergedSpawnY = this.clamp(spawnY, -this.params.maxDepth + surfaceClearance,
       -this.params.minDepth - surfaceClearance);
-    root.position.set(p?p.x+this.range(-2,2):this.range(-this.params.worldRadius*.7,this.params.worldRadius*.7),
+    const spawn = sampleOceanSpawn(
+      () => this.rand(), this.params.worldRadius,
+      this.params.spawnCoreRadius, this.params.spawnCoreFraction
+    );
+    const spawnX = spawn.x;
+    const spawnZ = spawn.z;
+    root.position.set(p ? p.x + this.range(-2, 2) : spawnX,
       submergedSpawnY,
-      p?p.z+this.range(-2,2):this.range(-this.params.worldRadius*.7,this.params.worldRadius*.7));
+      p ? p.z + this.range(-2, 2) : spawnZ);
     this.group.add(root);const heading=new T.Vector3(this.rand()-.5,this.range(-.15,.15),this.rand()-.5).normalize();
     const role=g.leadership>.72&&g.sociality>.55?'leader':g.curiosity>.72?'scout':g.affiliation>.72?'shoaler':g.aggression>.72&&g.boldness>.55?'hunter':g.feedingSpecialisation>.72?'forager':g.boldness<.25?'shy':'generalist';
     return{id:this.nextId++,surfaceClearance:surfaceClearance??1.35*g.size,parentId:parent?.id??null,species,speciesName:modelEntry?.name??`shoal-fish-${species}`,sizeClass:modelEntry?.sizeClass??'shoal',ecologicalRole:modelEntry?.role??'generalist',root,tail,mixer,swimData,swimPhase:this.range(0,Math.PI*2),role,genes:g,brain,heading,memory:{foodPosition:new T.Vector3(),foodTtl:0,threatPosition:new T.Vector3(),threatTtl:0},

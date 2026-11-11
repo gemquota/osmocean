@@ -52,6 +52,17 @@ for (const species of detailedFish) {
 }
 copy(path.join(fishAssetsRoot, 'assets/quaternius/animated-fish-bundle/License.txt'),
   path.join(upstream, 'public/models/osmocean/species/QUATERNIUS-CC0-LICENSE.txt'));
+const pelagicSourceDir = path.join(repoRoot, '_downloaded/ocean-fauna');
+const pelagicCatalogPath = path.join(pelagicSourceDir, 'catalog.json');
+if (!fs.existsSync(pelagicCatalogPath)) throw new Error('Downloaded CC0 ocean fauna catalog missing; run scripts/download-ocean-fauna.mjs first');
+const pelagicCatalog = JSON.parse(read(pelagicCatalogPath));
+const pelagicModelDir = path.join(upstream, 'public/models/osmocean/pelagic');
+for (const species of pelagicCatalog.species) {
+  const source = path.join(pelagicSourceDir, species.file);
+  if (!fs.existsSync(source)) throw new Error('Downloaded pelagic model missing: ' + source);
+  copy(source, path.join(pelagicModelDir, species.file));
+}
+copy(pelagicCatalogPath, path.join(pelagicModelDir, 'catalog.json'));
 for (const file of [
   'config.ts', 'kernels.ts', 'physics.ts', 'spatial.ts', 'spawn.ts', 'types.ts'
 ]) copy(path.join(fluidRoot, 'src/sph/2d/common', file), path.join(osmoceanDir, 'sph/common', file));
@@ -282,7 +293,7 @@ main = replaceExactly(main,
   `let floaters;
 try { floaters = window.__osmoceanRapierReady ? new RapierFloaters({ RAPIER, scene, heightAt: islandHeight, patchMaterial: terrain.patchProp, query }) : new Floaters({ scene, heightAt: islandHeight, patchMaterial: terrain.patchProp }); } catch (error) { reportBootError(error); floaters = new Floaters({ scene, heightAt: islandHeight, patchMaterial: terrain.patchProp }); }
 let fishGltf = null;\ntry { fishGltf = await new GLTFLoader().loadAsync(import.meta.env.BASE_URL + 'models/osmocean/fish_rigged.glb'); } catch (error) { console.warn('[Osmocean] Rigged shoal fish fallback unavailable:', error); }\nconst assetLoader = new GLTFLoader();
-const speciesDefinitions = [
+const pelagicCatalog = await fetch(import.meta.env.BASE_URL + 'models/osmocean/pelagic/catalog.json').then(response => { if (!response.ok) throw new Error('CC0 pelagic catalog unavailable: ' + response.status); return response.json(); });\nconst speciesDefinitions = [
   {id:'clownfish',name:'Clownfish',weight:5.5,scale:0.9,sizeClass:'shoal',detail:false},
   {id:'blue_tang',name:'Blue tang',weight:5.2,scale:1.0,sizeClass:'shoal',detail:false},
   {id:'cardinal_fish',name:'Cardinal fish',weight:4.8,scale:0.8,sizeClass:'shoal',detail:false},
@@ -291,23 +302,29 @@ const speciesDefinitions = [
   {id:'mandarin_fish',name:'Mandarinfish',weight:3.6,scale:0.75,sizeClass:'shoal',detail:false},
   {id:'moorish_idol',name:'Moorish idol',weight:3.5,scale:1.1,sizeClass:'shoal',detail:false},
   {id:'royal_gramma',name:'Royal gramma',weight:3.2,scale:0.85,sizeClass:'shoal',detail:false},
-  {id:'parrot_fish',name:'Parrotfish',weight:2.2,scale:1.35,sizeClass:'reef'},
-  {id:'lionfish',name:'Lionfish',weight:1.6,scale:1.35,sizeClass:'reef',role:'predator'},
-  {id:'black_lion_fish',name:'Black lionfish',weight:1.1,scale:1.45,sizeClass:'reef',role:'predator'},
-  {id:'puffer',name:'Pufferfish',weight:1.7,scale:1.25,sizeClass:'reef'},
-  {id:'coral_grouper',name:'Coral grouper',weight:1.3,scale:1.8,sizeClass:'large',role:'predator'},
-  {id:'humphead',name:'Humphead wrasse',weight:0.9,scale:2.0,sizeClass:'large'},
-  {id:'sunfish',name:'Ocean sunfish',weight:0.55,scale:2.25,sizeClass:'large'},
-  {id:'tuna',name:'Tuna',weight:0.65,scale:2.2,sizeClass:'large',role:'predator'},
-  {id:'swordfish',name:'Swordfish',weight:0.35,scale:2.5,sizeClass:'large',role:'predator'},
-  {id:'shark',name:'Reef shark',weight:0.45,scale:2.65,sizeClass:'large',role:'predator'},
-  {id:'goblin_shark',name:'Goblin shark',weight:0.18,scale:2.7,sizeClass:'large',role:'predator'},
-  {id:'anglerfish',name:'Anglerfish',weight:0.22,scale:1.8,sizeClass:'large',role:'predator'}
+  {id:'parrot_fish',name:'Parrotfish',weight:2.2,scale:1.35,sizeClass:'reef',minDepth:5,maxDepth:80},
+  {id:'lionfish',name:'Lionfish',weight:1.6,scale:1.35,sizeClass:'reef',role:'predator',minDepth:5,maxDepth:80},
+  {id:'black_lion_fish',name:'Black lionfish',weight:1.1,scale:1.45,sizeClass:'reef',role:'predator',minDepth:5,maxDepth:80},
+  {id:'puffer',name:'Pufferfish',weight:1.7,scale:1.25,sizeClass:'reef',minDepth:5,maxDepth:80},
+  {id:'coral_grouper',name:'Coral grouper',weight:1.3,scale:1.8,sizeClass:'large',role:'predator',minDepth:5,maxDepth:120},
+  {id:'humphead',name:'Humphead wrasse',weight:0.9,scale:2.0,sizeClass:'large',minDepth:5,maxDepth:100},
+  {id:'sunfish',name:'Ocean sunfish',weight:0.55,scale:2.25,sizeClass:'large',minDepth:20,maxDepth:250},
+  {id:'tuna',name:'Tuna',weight:0.65,scale:2.2,sizeClass:'large',role:'predator',minDepth:20,maxDepth:250},
+  {id:'swordfish',name:'Swordfish',weight:0.35,scale:2.5,sizeClass:'large',role:'predator',minDepth:40,maxDepth:300},
+  {id:'shark',name:'Reef shark',weight:0.45,scale:2.65,sizeClass:'large',role:'predator',minDepth:10,maxDepth:160},
+  {id:'goblin_shark',name:'Goblin shark',weight:0.18,scale:2.7,sizeClass:'large',role:'predator',minDepth:150,maxDepth:390},
+  {id:'anglerfish',name:'Anglerfish',weight:0.22,scale:1.8,sizeClass:'large',role:'predator',minDepth:180,maxDepth:390}
 ];
+const pelagicSpecies = pelagicCatalog.species.map(item => ({
+  id: item.id, name: item.name, file: item.file, assetPath: 'pelagic/' + item.file,
+  weight: item.weight, scale: item.scale, sizeClass: item.sizeClass, role: item.role,\n  minDepth: item.minDepth, maxDepth: item.maxDepth,
+  detail: true
+}));
+speciesDefinitions.push(...pelagicSpecies);
 const modelCatalog = (await Promise.all(speciesDefinitions.map(async definition => {
   try {
     if (definition.detail === false) return {...definition,scene:null,animations:[]};
-    const gltf = await assetLoader.loadAsync(import.meta.env.BASE_URL + 'models/osmocean/species/' + definition.id + '.glb');
+    const gltf = await assetLoader.loadAsync(import.meta.env.BASE_URL + 'models/osmocean/' + (definition.assetPath ?? ('species/' + definition.id + '.glb')));
     return {...definition,scene:gltf.scene,animations:gltf.animations??[]};
   } catch (error) {
     console.warn('[Osmocean] Optional CC0 species model unavailable:',definition.id,error);
@@ -319,7 +336,19 @@ for (const assetId of ['rock_moss_set_01','rock_moss_set_02']) {
   try { const rockGltf = await assetLoader.loadAsync(import.meta.env.BASE_URL + 'models/osmocean/reef/' + assetId + '.gltf'); reefRockTemplates.push(rockGltf.scene); }
   catch (error) { console.warn('[Osmocean] Optional CC0 rock asset unavailable:', assetId, error); }
 }
-const ecology = new FishEcology(THREE, scene, { population: mobile ? 32 : 48, modelBudget: mobile ? 8 : 14, scaleMultiplier: mobile ? 3 : 2.3, worldRadius: mobile ? 4 : 18, minDepth: mobile ? 4.5 : 3, maxDepth: mobile ? 12 : 20, resourceCount: mobile ? 80 : 120, seed: 0x51f15e, modelTemplate: fishGltf?.scene ?? null, modelAnimations: fishGltf?.animations ?? [], modelCatalog });
+const ecology = new FishEcology(THREE, scene, {
+  population: mobile ? 96 : 280,
+  modelBudget: mobile ? 24 : 96,
+  scaleMultiplier: 2.3,
+  worldRadius: mobile ? 900 : 1800,
+  minDepth: 4,
+  maxDepth: 420,
+  resourceCount: mobile ? 260 : 720,
+  seed: 0x51f15e,
+  modelTemplate: fishGltf?.scene ?? null,
+  modelAnimations: fishGltf?.animations ?? [],
+  modelCatalog
+});
 const reef = createReef(THREE, ecology.group, 0x71ef, mobile ? 0.35 : 0.5, { rockTemplates: reefRockTemplates });
 let osmoceanUnified = null;
 window.__osmoceanBootStatus = window.__osmoceanRapierReady ? 'rapier-world-ready' : 'fallback-world-ready';`,
@@ -332,7 +361,7 @@ window.__osmoceanBootStatus = window.__osmoceanRapierReady ? 'rapier-world-ready
   'native fish ecology construction');
 main = replaceExactly(main,
   "if (mobile) gui.close();",
-  "const fEcology = gui.addFolder('Ecology');\nfEcology.add(ecology.params, 'population', 0, 300, 1).onChange((n) => ecology.populate(n));\nfEcology.add(ecology.params, 'worldRadius', 20, 300, 1);\nfEcology.add(ecology.params, 'neighbourRadius', 4, 40, 1);\nfEcology.add(ecology.params, 'maxDepth', 5, 60, 1);\nfEcology.close();\nconst fFood = gui.addFolder('Food web & energy');\nfFood.add(ecology.params, 'resourceCount', 0, 500, 1).onChange(n => ecology.seedResources(n));\nfFood.add(ecology.params, 'resourceRegrowth', 0, 0.2, 0.005);\nfFood.add(ecology.params, 'feedingRate', 0.02, 1, 0.01);\nfFood.close();\nconst fEvolution = gui.addFolder('Evolution & predation');\nfEvolution.add(ecology.params, 'mutationRate', 0, 0.5, 0.01);\nfEvolution.add(ecology.params, 'mutationStrength', 0.01, 0.5, 0.01);\nfEvolution.add(ecology.params, 'reproductionEnergy', 0.4, 1.4, 0.02);\nfEvolution.add(ecology.params, 'predationThreshold', 0, 1, 0.02);\nfEvolution.add(ecology.params, 'predationRate', 0, 2, 0.02);\nfEvolution.close();\nconst fEnvironment = gui.addFolder('Environment');\nfEnvironment.add(ecology.params, 'currentStrength', 0, 2, 0.02);\nfEnvironment.add(ecology.params, 'temperatureGradient', 0, 1, 0.02);\nfEnvironment.add(ecology.params, 'oxygenGradient', 0, 1, 0.02);\nfEnvironment.close();\nwindow.__osmoceanEcology = ecology;\nif (mobile) gui.close();",
+  "const fEcology = gui.addFolder('Ecology');\nfEcology.add(ecology.params, 'population', 0, 500, 1).onChange((n) => ecology.populate(n));\nfEcology.add(ecology.params, 'worldRadius', 20, 2400, 10);\nfEcology.add(ecology.params, 'neighbourRadius', 4, 40, 1);\nfEcology.add(ecology.params, 'maxDepth', 5, 420, 5);\nfEcology.close();\nconst fFood = gui.addFolder('Food web & energy');\nfFood.add(ecology.params, 'resourceCount', 0, 500, 1).onChange(n => ecology.seedResources(n));\nfFood.add(ecology.params, 'resourceRegrowth', 0, 0.2, 0.005);\nfFood.add(ecology.params, 'feedingRate', 0.02, 1, 0.01);\nfFood.close();\nconst fEvolution = gui.addFolder('Evolution & predation');\nfEvolution.add(ecology.params, 'mutationRate', 0, 0.5, 0.01);\nfEvolution.add(ecology.params, 'mutationStrength', 0.01, 0.5, 0.01);\nfEvolution.add(ecology.params, 'reproductionEnergy', 0.4, 1.4, 0.02);\nfEvolution.add(ecology.params, 'predationThreshold', 0, 1, 0.02);\nfEvolution.add(ecology.params, 'predationRate', 0, 2, 0.02);\nfEvolution.close();\nconst fEnvironment = gui.addFolder('Environment');\nfEnvironment.add(ecology.params, 'currentStrength', 0, 2, 0.02);\nfEnvironment.add(ecology.params, 'temperatureGradient', 0, 1, 0.02);\nfEnvironment.add(ecology.params, 'oxygenGradient', 0, 1, 0.02);\nfEnvironment.close();\nwindow.__osmoceanEcology = ecology;\nif (mobile) gui.close();",
   'live ecology controls');
 main = replaceExactly(main, 'window.__osmoceanEcology = ecology;',
   `window.__osmoceanEcology = ecology;
