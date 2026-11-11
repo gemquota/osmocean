@@ -183,6 +183,7 @@ export function createUnifiedCoupling({ THREE, scene, RAPIER, floaters, controls
     paused = !paused;
     floaters.paused = paused;
     event.currentTarget.textContent = paused ? 'RESUME' : 'PAUSE';
+    updateVisuals();
   });
   hud.querySelector('#osmocean-unified-reset').addEventListener('click', reset);
 
