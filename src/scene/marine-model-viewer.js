@@ -17,8 +17,8 @@ export class MarineModelViewer {
     this.animals = [];
     this.elapsed = 0;
     this.count = mobile ? 18 : 34;
-    this.radius = mobile ? 100 : 155;
-    this.depthRange = mobile ? [8, 48] : [8, 72];
+    this.radius = mobile ? 55 : 88;
+    this.depthRange = mobile ? [5, 25] : [5, 32];
     this.group = new THREE.Group();
     this.group.name = 'Marine model display';
     scene.add(this.group);
@@ -95,7 +95,7 @@ export class MarineModelViewer {
 
     const near = index < Math.ceil(this.count * 0.65);
     const angle = this.range(0, Math.PI * 2);
-    const radius = near ? this.range(18, 78) : this.range(85, this.radius);
+    const radius = near ? this.range(10, 34) : this.range(35, this.radius);
     const center = new THREE.Vector3(Math.cos(angle) * radius,
       -this.range(this.depthRange[0], this.depthRange[1]),
       Math.sin(angle) * radius);
