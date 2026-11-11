@@ -462,8 +462,14 @@ viewerMain = viewerMain.replace("window.__osmoceanBootStatus = 'scene-initialize
 viewerMain = viewerMain.replace(/copy\(path\.join\(repoRoot, 'src\/ecology\/[^']+'\), path\.join\(upstream, 'src\/ecology\/[^']+'\)\);\n/g, '');
 viewerMain = viewerMain.replace(/copy\(path\.join\(repoRoot, 'scripts\/upstream\/rapierFloaters\.js'\), path\.join\(upstream, 'src\/scene\/rapierFloaters\.js'\)\);\n/g, '');
 viewerMain = viewerMain.replace(/  elapsed \+= dt;\n/, '  elapsed += dt;\n  marineViewer.update(dt, elapsed);\n');
-if (/FishEcology|ecology\.update|__osmoceanEcologyPanel|new RapierFloaters|createUnifiedCoupling|new Floaters/.test(viewerMain)) {
-  throw new Error('Ecology or floating-object runtime code remains in the generated viewer entry point');
+const forbiddenRuntime = /FishEcology|ecology\.|__osmoceanEcology|RapierFloaters|RAPIER|createUnifiedCoupling|new Floaters|floaters\.|query\.|spray\.|snow\.|FLOATER_KINDS|WaterQuery|MarineSnow|new Spray|fFloat/;
+if (forbiddenRuntime.test(viewerMain)) {
+  throw new Error('Ecology, debris, or physics-object runtime code remains in the generated viewer entry point');
+}
+if (!viewerMain.includes('marineViewer.update(dt, elapsed)') ||
+    !viewerMain.includes('controls.enablePan = true') ||
+    !viewerMain.includes('marineViewer.group.position.set')) {
+  throw new Error('Marine model animation or camera controls were not installed in the generated viewer entry point');
 }
 write(mainPath, viewerMain);
 console.log('Built a clean underwater model viewer with animated marine species and camera controls.');
