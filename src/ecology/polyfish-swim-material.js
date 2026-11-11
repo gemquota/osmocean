@@ -38,7 +38,7 @@ export const SWIM_CONFIGS = {
     maskFloor: 0.15,      // head gets 15% of shoulder wave (eyes follow body)
     headPhase: 0.5,       // phase delay for head region (positive = eyes lag behind body)
     swimAxis: 0,
-    idleAmplitude: 0.014,   // wide lazy strokes when idle — visible even from afar
+    idleAmplitude: 0.055,   // stronger tail motion remains visible at reef camera distance
     thrustAmplitude: 0.0022, // tight fast strokes when thrusting
     coastAmplitude: 0.0,    // no animation when coasting after a burst
     idleSpeed: 5.34,        // 0.85 BPS
