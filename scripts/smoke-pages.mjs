@@ -73,6 +73,8 @@ try {
           dispatch('touchend', []);
           const endDirection = camera.getWorldDirection(new (window.app.camera.position.constructor)());
           const panStayedOnXZ = Math.abs(controls.target.y - startTarget.y) < 0.001;
+          const pivotYawApplied = Boolean(window.__osmoceanTouchGesture?.yawPivot);
+          const noRollAfterYaw = camera.up.distanceTo(startUp) < 0.001;
           const beforeVerticalDrag = camera.position.y;
           dispatch('touchstart', [touch(1, 120, 300), touch(2, 180, 300), touch(3, 240, 300)]);
           dispatch('touchmove', [touch(1, 120, 270), touch(2, 180, 270), touch(3, 240, 270)]);
@@ -85,10 +87,10 @@ try {
             panStayedOnXZ,
             zoomed: camera.position.distanceTo(controls.target) !== startPosition.distanceTo(startTarget),
             rotated: endDirection.distanceTo(startDirection) > 0.001,
-            pivotYaw: Boolean(window.__osmoceanTouchGesture?.yawPivot),
+            pivotYaw: pivotYawApplied,
             verticalDragMovedY,
             verticalDragMarker,
-            noRoll: camera.up.distanceTo(startUp) < 0.001
+            noRoll: noRollAfterYaw
           };
         }
       }
