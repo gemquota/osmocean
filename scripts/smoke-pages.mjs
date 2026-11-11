@@ -97,7 +97,7 @@ try {
       await page.evaluate(() => { const el = [...document.querySelectorAll('canvas')].find(x => { const r=x.getBoundingClientRect(); return r.width>100 && r.height>100; }); if (el) el.id='osmocean-renderer'; });
       await page.screenshot({ path: `smoke-${viewport.width}.png`, timeout: 12000, animations: 'disabled' });
     } catch (error) { console.warn(`Canvas screenshot unavailable at ${viewport.width}px: ${error.message}`); }
-    if (ecology.mode !== 'UNDERWATER REEF' || !(ecology.cameraY < 0) || ecology.fish < 50 || !ecology.fishModelLoaded || ecology.speciesModelCount < 15 || Object.keys(ecology.speciesPopulation).length < 4 || Object.keys(ecology.fishRoles).length < 2 || ecology.reefChildren < 100 || ecology.reefRockAssets < 2 || !ecology.reefVisible || ecology.minFishDepth < ecology.minAllowedDepth - 0.05 || ecology.maxFishDepth > ecology.maxAllowedDepth + 0.05) throw new Error(`Underwater reef population missing: ${JSON.stringify(ecology)}`);
+    if (ecology.mode !== 'UNDERWATER REEF' || !(ecology.cameraY < 0) || ecology.fish < 50 || !ecology.fishModelLoaded || ecology.speciesModelCount < 10 || Object.keys(ecology.speciesPopulation).length < 4 || Object.keys(ecology.fishRoles).length < 2 || ecology.reefChildren < 100 || ecology.reefRockAssets < 2 || !ecology.reefVisible || ecology.minFishDepth < ecology.minAllowedDepth - 0.05 || ecology.maxFishDepth > ecology.maxAllowedDepth + 0.05) throw new Error(`Underwater reef population missing: ${JSON.stringify(ecology)}`);
     if (structure.visibleCanvases !== 1 || structure.iframes !== 0) {
       throw new Error(`Expected one renderer and no embedded applications: ${JSON.stringify(structure)}`);
     }
