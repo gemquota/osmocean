@@ -52,6 +52,17 @@ for (const species of detailedFish) {
 }
 copy(path.join(fishAssetsRoot, 'assets/quaternius/animated-fish-bundle/License.txt'),
   path.join(upstream, 'public/models/osmocean/species/QUATERNIUS-CC0-LICENSE.txt'));
+const pelagicSourceDir = path.join(repoRoot, '_downloaded/ocean-fauna');
+const pelagicCatalogPath = path.join(pelagicSourceDir, 'catalog.json');
+if (!fs.existsSync(pelagicCatalogPath)) throw new Error('Downloaded CC0 ocean fauna catalog missing; run scripts/download-ocean-fauna.mjs first');
+const pelagicCatalog = JSON.parse(read(pelagicCatalogPath));
+const pelagicModelDir = path.join(upstream, 'public/models/osmocean/pelagic');
+for (const species of pelagicCatalog.species) {
+  const source = path.join(pelagicSourceDir, species.file);
+  if (!fs.existsSync(source)) throw new Error('Downloaded pelagic model missing: ' + source);
+  copy(source, path.join(pelagicModelDir, species.file));
+}
+copy(pelagicCatalogPath, path.join(pelagicModelDir, 'catalog.json'));
 for (const file of [
   'config.ts', 'kernels.ts', 'physics.ts', 'spatial.ts', 'spawn.ts', 'types.ts'
 ]) copy(path.join(fluidRoot, 'src/sph/2d/common', file), path.join(osmoceanDir, 'sph/common', file));
@@ -299,10 +310,16 @@ const speciesDefinitions = [
   {id:'goblin_shark',name:'Goblin shark',weight:0.18,scale:2.7,sizeClass:'large',role:'predator'},
   {id:'anglerfish',name:'Anglerfish',weight:0.22,scale:1.8,sizeClass:'large',role:'predator'}
 ];
+const pelagicSpecies = pelagicCatalog.species.map(item => ({
+  id: item.id, name: item.name, file: item.file, assetPath: 'pelagic/' + item.file,
+  weight: item.weight, scale: item.scale, sizeClass: item.sizeClass, role: item.role,
+  detail: true
+}));
+speciesDefinitions.push(...pelagicSpecies);
 const modelCatalog = (await Promise.all(speciesDefinitions.map(async definition => {
   try {
     if (definition.detail === false) return {...definition,scene:null,animations:[]};
-    const gltf = await assetLoader.loadAsync(import.meta.env.BASE_URL + 'models/osmocean/species/' + definition.id + '.glb');
+    const gltf = await assetLoader.loadAsync(import.meta.env.BASE_URL + 'models/osmocean/' + (definition.assetPath ?? ('species/' + definition.id + '.glb')));
     return {...definition,scene:gltf.scene,animations:gltf.animations??[]};
   } catch (error) {
     console.warn('[Osmocean] Optional CC0 species model unavailable:',definition.id,error);
@@ -314,7 +331,19 @@ for (const assetId of ['rock_moss_set_01','rock_moss_set_02']) {
   try { const rockGltf = await assetLoader.loadAsync(import.meta.env.BASE_URL + 'models/osmocean/reef/' + assetId + '.gltf'); reefRockTemplates.push(rockGltf.scene); }
   catch (error) { console.warn('[Osmocean] Optional CC0 rock asset unavailable:', assetId, error); }
 }
-const ecology = new FishEcology(THREE, scene, { population: mobile ? 32 : 48, modelBudget: mobile ? 8 : 14, scaleMultiplier: mobile ? 3 : 2.3, worldRadius: mobile ? 4 : 18, minDepth: mobile ? 4.5 : 3, maxDepth: mobile ? 12 : 20, resourceCount: mobile ? 80 : 120, seed: 0x51f15e, modelTemplate: fishGltf?.scene ?? null, modelAnimations: fishGltf?.animations ?? [], modelCatalog });
+const ecology = new FishEcology(THREE, scene, {
+  population: mobile ? 96 : 280,
+  modelBudget: mobile ? 24 : 96,
+  scaleMultiplier: 2.3,
+  worldRadius: mobile ? 900 : 1800,
+  minDepth: 4,
+  maxDepth: 420,
+  resourceCount: mobile ? 260 : 720,
+  seed: 0x51f15e,
+  modelTemplate: fishGltf?.scene ?? null,
+  modelAnimations: fishGltf?.animations ?? [],
+  modelCatalog
+});
 const reef = createReef(THREE, ecology.group, 0x71ef, mobile ? 0.35 : 0.5, { rockTemplates: reefRockTemplates });
 let osmoceanUnified = null;
 window.__osmoceanBootStatus = window.__osmoceanRapierReady ? 'rapier-world-ready' : 'fallback-world-ready';`,
