@@ -323,6 +323,19 @@ main = replaceExactly(main,
   '    tick(now);',
   '    try { tick(now); } catch (error) { window.__osmoceanLastFrameError = error?.stack || error?.message || String(error); reportBootError(error); }',
   'keep RAF loop scheduled after recoverable frame errors');
+main = replaceExactly(main,
+  `// uncapped: frames back-to-back off the display's clock (it still shows the latest one at`,
+  `const reefFrameWatchdog = setInterval(() => {
+  if (document.hidden || uncapped || benchmarking) return;
+  const now = performance.now();
+  const lastTick = window.__osmoceanLastTickAt ?? now;
+  if (now - lastTick < 250) return;
+  window.__osmoceanFallbackTicks = (window.__osmoceanFallbackTicks ?? 0) + 1;
+  try { tick(now); }
+  catch (error) { window.__osmoceanLastFrameError = error?.stack || error?.message || String(error); reportBootError(error); }
+}, 100);
+// uncapped: frames back-to-back off the display's clock (it still shows the latest one at`,
+  'recover the scene if the display RAF stalls');
 main = replaceExactly(main, '  elapsed += dt;', '  elapsed += dt;\n  ecology.update(dt, elapsed, camWater);', 'advance fish ecology before renderer subsystems');
 main = replaceExactly(main,
   '  floaters.step(dt, elapsed);',
