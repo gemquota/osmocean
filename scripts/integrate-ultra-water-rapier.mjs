@@ -41,10 +41,8 @@ if (!fs.existsSync(fishModelSource)) throw new Error('Pinned PolyFish model miss
 copy(fishModelSource, path.join(upstream, 'public/models/osmocean/fish_rigged.glb'));
 copy(path.join(polyfishRoot, 'LICENSE'), path.join(upstream, 'public/models/osmocean/POLYFISH-LICENSE.txt'));
 const detailedFish = [
-  'anglerfish','black_lion_fish','blue_tang','butterfly_fish','cardinal_fish',
-  'clownfish','coral_grouper','goblin_shark','humphead','lionfish','mandarin_fish',
-  'moorish_idol','parrot_fish','puffer','royal_gramma','shark','sunfish','swordfish',
-  'tetra','tuna'
+  'anglerfish','black_lion_fish','coral_grouper','goblin_shark','humphead','lionfish',
+  'parrot_fish','puffer','shark','sunfish','swordfish','tuna'
 ];
 const fishModelDir = path.join(upstream, 'public/models/osmocean/species');
 for (const species of detailedFish) {
@@ -207,7 +205,7 @@ for (const line of [
 ]) main = replaceExactly(main, line, '', 'legacy custom-integrator control');
 main = replaceExactly(main,
   'window.app = {\n  camera, controls, sky, post, surface, ocean, terrain, timer, views, quality, renderer, floaters, query, underwater, spray, snow, caustics, floatShadow,',
-  "window.__osmoceanBootStatus = 'scene-initialized';\nwindow.app = {\n  camera, controls, sky, post, surface, ocean, terrain, timer, views, quality, renderer, floaters, query, underwater, spray, snow, caustics, floatShadow, physicsEngine: 'Rapier 3D 0.21.0', displayMode: 'UNDERWATER REEF', reef, reefRockAssetCount: reef.rockAssetCount, fishModelLoaded: ecology.modelLoaded, fishSpeciesModelCount: ecology.modelCatalog.length, fishSpeciesNames: ecology.modelCatalog.map(item => item.name),",
+  "window.__osmoceanBootStatus = 'scene-initialized';\nwindow.app = {\n  camera, controls, sky, post, surface, ocean, terrain, timer, views, quality, renderer, floaters, query, underwater, spray, snow, caustics, floatShadow, physicsEngine: 'Rapier 3D 0.21.0', displayMode: 'UNDERWATER REEF', reef, reefRockAssetCount: reef.rockAssetCount, fishModelLoaded: ecology.modelLoaded, fishSpeciesModelCount: ecology.modelCatalog.filter(item => item.scene).length, fishSpeciesNames: ecology.modelCatalog.map(item => item.name),",
   'runtime diagnostics export');
 const upstreamHtmlPath = path.join(upstream, 'index.html');
 let upstreamHtml = read(upstreamHtmlPath);
@@ -249,14 +247,14 @@ main = replaceExactly(main,
 try { floaters = window.__osmoceanRapierReady ? new RapierFloaters({ RAPIER, scene, heightAt: islandHeight, patchMaterial: terrain.patchProp, query }) : new Floaters({ scene, heightAt: islandHeight, patchMaterial: terrain.patchProp }); } catch (error) { reportBootError(error); floaters = new Floaters({ scene, heightAt: islandHeight, patchMaterial: terrain.patchProp }); }
 let fishGltf = null;\ntry { fishGltf = await new GLTFLoader().loadAsync(import.meta.env.BASE_URL + 'models/osmocean/fish_rigged.glb'); } catch (error) { console.warn('[Osmocean] Rigged shoal fish fallback unavailable:', error); }\nconst assetLoader = new GLTFLoader();
 const speciesDefinitions = [
-  {id:'clownfish',name:'Clownfish',weight:5.5,scale:0.9,sizeClass:'shoal'},
-  {id:'blue_tang',name:'Blue tang',weight:5.2,scale:1.0,sizeClass:'shoal'},
-  {id:'cardinal_fish',name:'Cardinal fish',weight:4.8,scale:0.8,sizeClass:'shoal'},
-  {id:'butterfly_fish',name:'Butterflyfish',weight:4.5,scale:1.0,sizeClass:'shoal'},
-  {id:'tetra',name:'Tetra',weight:4.8,scale:0.8,sizeClass:'shoal'},
-  {id:'mandarin_fish',name:'Mandarinfish',weight:3.6,scale:0.75,sizeClass:'shoal'},
-  {id:'moorish_idol',name:'Moorish idol',weight:3.5,scale:1.1,sizeClass:'shoal'},
-  {id:'royal_gramma',name:'Royal gramma',weight:3.2,scale:0.85,sizeClass:'shoal'},
+  {id:'clownfish',name:'Clownfish',weight:5.5,scale:0.9,sizeClass:'shoal',detail:false},
+  {id:'blue_tang',name:'Blue tang',weight:5.2,scale:1.0,sizeClass:'shoal',detail:false},
+  {id:'cardinal_fish',name:'Cardinal fish',weight:4.8,scale:0.8,sizeClass:'shoal',detail:false},
+  {id:'butterfly_fish',name:'Butterflyfish',weight:4.5,scale:1.0,sizeClass:'shoal',detail:false},
+  {id:'tetra',name:'Tetra',weight:4.8,scale:0.8,sizeClass:'shoal',detail:false},
+  {id:'mandarin_fish',name:'Mandarinfish',weight:3.6,scale:0.75,sizeClass:'shoal',detail:false},
+  {id:'moorish_idol',name:'Moorish idol',weight:3.5,scale:1.1,sizeClass:'shoal',detail:false},
+  {id:'royal_gramma',name:'Royal gramma',weight:3.2,scale:0.85,sizeClass:'shoal',detail:false},
   {id:'parrot_fish',name:'Parrotfish',weight:2.2,scale:1.35,sizeClass:'reef'},
   {id:'lionfish',name:'Lionfish',weight:1.6,scale:1.35,sizeClass:'reef',role:'predator'},
   {id:'black_lion_fish',name:'Black lionfish',weight:1.1,scale:1.45,sizeClass:'reef',role:'predator'},
@@ -272,6 +270,7 @@ const speciesDefinitions = [
 ];
 const modelCatalog = (await Promise.all(speciesDefinitions.map(async definition => {
   try {
+    if (!definition.detail) return {...definition,scene:null,animations:[]};
     const gltf = await assetLoader.loadAsync(import.meta.env.BASE_URL + 'models/osmocean/species/' + definition.id + '.glb');
     return {...definition,scene:gltf.scene,animations:gltf.animations??[]};
   } catch (error) {
