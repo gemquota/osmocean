@@ -15,7 +15,7 @@ export class FishEcology {
     this.params={population:110,worldRadius:42,minDepth:3,maxDepth:26,neighbourRadius:16,
       separationRadius:5,maxAcceleration:5,resourceCount:180,resourceRegrowth:.035,
       feedingRate:.22,reproductionEnergy:.82,reproductionCooldown:28,mutationRate:.08,
-      mutationStrength:.12,predationRate:.7,predationThreshold:.7,currentStrength:.55,
+      mutationStrength:.12,predationRate:.7,predationThreshold:.7,currentStrength:.55,waterDensity:1025,dragCoefficient:.82,gravity:9.81,
       temperatureGradient:.45,oxygenGradient:.3,historyInterval:2,...options,...options.params};
     this.fish=[];this.resources=[];this.history=[];this.elapsed=0;this.nextId=0;this.updateCount=0;this.lastUpdateDt=0;this.lastUpdateElapsed=0;
     this.group=new THREE.Group();this.group.name='Ultra-Water Ecology';scene.add(this.group);
