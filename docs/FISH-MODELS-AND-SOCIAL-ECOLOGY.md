@@ -12,6 +12,26 @@ Osmocean's Ultra-Water build downloads the rigged fish model from [unclemattmake
 
 The binary is deliberately fetched during the Pages build rather than duplicated in this repository. The pin makes the input reproducible and the upstream licence remains available at the source checkout.
 
+## Species model tiers and water mechanics
+
+The generated reef scene now uses two visual tiers rather than pretending one small fish mesh can represent the entire marine food web:
+
+- **Shoaling tier:** the lightweight PolyFish rig remains the inexpensive visual for common small shoaling fish.
+- **Reef and large-fauna tier:** twelve animated Quaternius models are loaded for larger or more distinctive species: anglerfish, black lionfish, coral grouper, goblin shark, humphead wrasse, lionfish, parrotfish, pufferfish, reef shark, sunfish, swordfish and tuna. Species metadata controls relative frequency, size class and predator role. The model catalog also retains small-species identities while routing those individuals to the inexpensive shoal visual.
+
+The selected GLBs are checked out from [Vitexus/ishtaria-client](https://github.com/Vitexus/ishtaria-client) at pinned commit `f42095c120c29a892c0c221bdc8357ac982ccfca`. That repository records the source as Quaternius' [Animated Fish Bundle](https://poly.pizza/bundle/Animated-Fish-Bundle-44zhHN1UbT), under CC0 1.0. The original model-specific licence is copied into the generated site beside the species assets. The build checks out only the selected model folder and licence.
+
+### Water-relative movement
+
+The surface solver exposes a free-surface height, not a full volumetric underwater velocity field. Fish therefore use that sampled surface height as their reference and combine it with a depth-sheared subsurface current field. Their motion applies:
+
+- quadratic drag against water-relative velocity, not air-like velocity damping;
+- density-based buoyancy;
+- a damped preferred-depth controller;
+- hard shallow/deep limits so inertia cannot carry fish above the surface or outside the configured water column.
+
+This is a lightweight underwater hydrodynamic model coupled to the live surface height. It is not represented as a full Navier–Stokes solution or as direct sampling of underwater velocities from the surface solver.
+
 ## Behaviour and ecosystem integration
 
 Osmocean keeps its own simulation state and physics authority. PolyFish's MIT-licensed Three.js ecosystem was reviewed for its creature lifecycle, feeding, metabolism, reproduction, predator avoidance and hunting patterns. Those systems were not copied wholesale: PolyFish uses a different Jolt-based architecture, while Osmocean's fish are agents in the native Ultra-Water scene and must remain independent of the renderer and Rapier adapter.
