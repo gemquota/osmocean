@@ -1,23 +1,12 @@
 import { clone as cloneSkeleton } from 'three/addons/utils/SkeletonUtils.js';
 import { applySwimMaterial, updateSwimUniforms } from './polyfish-swim-material.js';
-import { calculateAquaticAcceleration, constrainFishDepth } from './aquatic-physics.js';
+import { calculateAquaticAcceleration, constrainFishDepth, sampleOceanSpawn } from './aquatic-physics.js';
 
 /**
  * Native Ultra-Water ecosystem. Agent state is authoritative; meshes are views.
  * Compact evolutionary/ecological model for interactive simulation, not a validated
  * marine-ecology research model.
  */
-export function sampleOceanSpawn(random, worldRadius, coreRadius = 140, coreFraction = 0.35) {
-  if (typeof random !== 'function' || ![worldRadius, coreRadius, coreFraction].every(Number.isFinite) ||
-      worldRadius <= 0 || coreRadius < 0 || coreFraction < 0 || coreFraction > 1) {
-    throw new TypeError('ocean spawn sampling requires a random function and valid radius/fraction');
-  }
-  const range = random() < coreFraction ? Math.min(coreRadius, worldRadius) : worldRadius;
-  const radius = Math.sqrt(random()) * range;
-  const angle = random() * Math.PI * 2;
-  return Object.freeze({ x: Math.cos(angle) * radius, z: Math.sin(angle) * radius, radius, range });
-}
-
 export class FishEcology {
   constructor(THREE, scene, options = {}) {
     this.T=THREE; this.scene=scene; this.rng=options.seed??0x51f15e;
