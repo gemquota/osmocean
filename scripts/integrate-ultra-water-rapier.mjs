@@ -441,13 +441,14 @@ viewerMain = viewerMain.replace(
   "const floaters = { params: {}, collectPoints: () => [], step: () => {} };\nconst marineViewer = new MarineModelViewer(THREE, scene, { baseUrl: import.meta.env.BASE_URL, mobile });\nawait marineViewer.ready;\nwindow.__osmoceanBootStatus = 'marine-models-ready';\n"
 );
 viewerMain = viewerMain.replace('osmoceanUnified?.step(dt, elapsed, ocean.params);\n  ', '');
-viewerMain = viewerMain.replace(/\s*if \(window\.__osmoceanRapierReady && floaters instanceof RapierFloaters\) \{[\s\S]*?\}\s*$/, '\n');
+viewerMain = viewerMain.replace(/\nif \(window\.__osmoceanRapierReady && floaters instanceof RapierFloaters\) \{[^\n]*\}/, '');
 viewerMain = viewerMain.replace(/\s*const reefHeading = camera\.getWorldDirection\(new THREE\.Vector3\(\)\);[\s\S]*?reef\.group\.position\.y = -7\.5;\n/, '\n');
 viewerMain = viewerMain.replace(
   'controls.enabled = false; controls.enableRotate = false; controls.enablePan = false; controls.enableZoom = false;',
   'controls.enabled = true; controls.enableRotate = true; controls.enablePan = true; controls.enableZoom = true; controls.enableDamping = true; controls.rotateSpeed = 0.28; controls.panSpeed = 1.6; controls.zoomSpeed = 0.9; controls.minDistance = 4; controls.maxDistance = 900;'
 );
 viewerMain = viewerMain.replace(/const fEcology = gui\.addFolder\('Ecology'\);[\s\S]*?if \(mobile\) gui\.close\(\);/, 'if (mobile) gui.close();');
+viewerMain = viewerMain.replace('window.__osmoceanEcology = ecology;\n', '');
 viewerMain = viewerMain.replace(/const ecologyPanel = document\.createElement\('section'\);[\s\S]*?window\.__osmoceanEcologyPanel = ecologyPanel;/, '');
 viewerMain = viewerMain.replace(/\n\s*ecology\.update\(dt, elapsed, camWater\);/, '');
 viewerMain = viewerMain.replace(/\n\s*if \(window\.__osmoceanEcologyPanel &&[\s\S]*?\n/, '\n');
