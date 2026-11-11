@@ -103,7 +103,7 @@ export class MarineModelViewer {
     const speed = this.range(0.055, 0.15) * (model.id.includes('shark') || model.id === 'tuna' ? 1.35 : 1);
     const phase = this.range(0, Math.PI * 2);
     const verticalPhase = this.range(0, Math.PI * 2);
-    root.position.copy(center);
+    root.position.set(center.x + Math.cos(phase) * orbit, center.y, center.z + Math.sin(phase) * orbit);
     this.group.add(root);
     this.animals.push({ root, visual, mixer, center, orbit, speed, phase, verticalPhase,
       turn: this.range(0, Math.PI * 2), bank: 0, model: model.id });
@@ -116,28 +116,25 @@ export class MarineModelViewer {
     const step = Math.min(dt, 0.05);
     for (const animal of this.animals) {
       const t = elapsed * animal.speed + animal.phase;
-      const target = new THREE.Vector3(
+      const vertical = Math.sin(t * 0.43 + animal.verticalPhase) * 2.8;
+      const verticalVelocity = Math.cos(t * 0.43 + animal.verticalPhase) * 2.8 * animal.speed * 0.43;
+      const direction = new THREE.Vector3(
+        -Math.sin(t), verticalVelocity / Math.max(0.5, animal.orbit * animal.speed), Math.cos(t)
+      ).normalize();
+      const desiredYaw = Math.atan2(-direction.z, direction.x);
+      let deltaYaw = Math.atan2(Math.sin(desiredYaw - animal.turn), Math.cos(desiredYaw - animal.turn));
+      deltaYaw = THREE.MathUtils.clamp(deltaYaw, -step * 0.9, step * 0.9);
+      animal.turn += deltaYaw;
+      const horizontalSpeed = Math.hypot(direction.x, direction.z);
+      const desiredPitch = Math.atan2(direction.y, Math.max(0.001, horizontalSpeed));
+      animal.root.rotation.set(0, animal.turn, -desiredPitch);
+      animal.bank = THREE.MathUtils.damp(animal.bank, THREE.MathUtils.clamp(-deltaYaw * 2.2, -0.22, 0.22), 2.4, step);
+      animal.visual.rotation.x = animal.bank;
+      animal.root.position.set(
         animal.center.x + Math.cos(t) * animal.orbit,
-        animal.center.y + Math.sin(t * 0.43 + animal.verticalPhase) * 2.8,
+        animal.center.y + vertical,
         animal.center.z + Math.sin(t) * animal.orbit
       );
-      const direction = target.sub(animal.root.position);
-      const distance = direction.length();
-      if (distance > 1e-5) {
-        direction.normalize();
-        const forward = new THREE.Vector3(Math.cos(animal.turn), 0, -Math.sin(animal.turn));
-        const desiredYaw = Math.atan2(-direction.z, direction.x);
-        let deltaYaw = Math.atan2(Math.sin(desiredYaw - animal.turn), Math.cos(desiredYaw - animal.turn));
-        deltaYaw = THREE.MathUtils.clamp(deltaYaw, -step * 0.7, step * 0.7);
-        animal.turn += deltaYaw;
-        const horizontalSpeed = Math.hypot(direction.x, direction.z);
-        const desiredPitch = Math.atan2(direction.y, Math.max(0.001, horizontalSpeed));
-        animal.root.rotation.set(0, animal.turn, -desiredPitch);
-        animal.bank = THREE.MathUtils.damp(animal.bank, THREE.MathUtils.clamp(-deltaYaw * 2.2, -0.22, 0.22), 2.4, step);
-        animal.visual.rotation.x = animal.bank;
-        const travel = Math.min(distance, step * (animal.model.includes('shark') ? 7.5 : 4.8));
-        animal.root.position.addScaledVector(direction, travel);
-      }
       if (animal.mixer) animal.mixer.update(step);
     }
   }
