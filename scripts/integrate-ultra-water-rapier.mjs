@@ -429,6 +429,10 @@ viewerMain = viewerMain.replace(/const snow = new MarineSnow\([\s\S]*?\n/, '');
 viewerMain = viewerMain.replace('waterScene.add(surface.mesh, spray.mesh, spray.splash, spray.rockSplash, snow.mesh);', 'waterScene.add(surface.mesh);');
 viewerMain = viewerMain.replace(/fShore\.add\(spray\.params,[^\n]*\n/g, '');
 viewerMain = viewerMain.replace(/const fFloat = gui\.addFolder\('Floaters & underwater'\);[\s\S]*?\nconst fPost = gui\.addFolder\('Post'\);/, "const fPost = gui.addFolder('Post');");
+viewerMain = viewerMain.replace('[fWave, fShore, fWater, fFloat, fPost].forEach((f) => f.close());', '[fWave, fShore, fWater, fPost].forEach((f) => f.close());');
+viewerMain = viewerMain.replace(/if \(query\.resultCount > 0\) camWater = query\.result\[0\];\n/, '');
+viewerMain = viewerMain.replace("timer.begin('query');\n", '');
+
 viewerMain = viewerMain.replace("if (mobile) gui.close();", "gui.hide();");
 viewerMain = viewerMain.replace(/\s*floaters\.spawn\(camera\.position, controls\.target\.clone\(\)\.sub\(camera\.position\)\);/g, '');
 viewerMain = viewerMain.replace(/\s*floaters\.ingest\(query, 1\);\n\s*floaters\.step\(dt\);\n\s*timer\.begin\('floatShadow'\);\n\s*floatShadow\.update\(renderer, floaters\.scene, floaters\.bodies, sky\.sunDir\);[\s\S]*?\n\s*ocean\.update\(dt, timer\);/, "\n  ocean.update(dt, timer);");
