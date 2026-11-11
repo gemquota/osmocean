@@ -239,6 +239,7 @@ main = replaceExactly(main, 'views[ui.view]();', 'views[ui.view]();\ncontrols.ta
 
 // Add fish ecology after the Rapier integration has transformed the upstream entry point.
 copy(path.join(repoRoot, 'src/ecology/fish-ecology.js'), path.join(upstream, 'src/ecology/fish-ecology.js'));
+copy(path.join(repoRoot, 'src/ecology/aquatic-physics.js'), path.join(upstream, 'src/ecology/aquatic-physics.js'));
 copy(path.join(repoRoot, 'src/ecology/reef-environment.js'), path.join(upstream, 'src/ecology/reef-environment.js'));
 copy(path.join(repoRoot, 'src/ecology/polyfish-swim-material.js'), path.join(upstream, 'src/ecology/polyfish-swim-material.js'));
 main = replaceExactly(main,
