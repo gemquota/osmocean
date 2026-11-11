@@ -312,7 +312,7 @@ const speciesDefinitions = [
 ];
 const pelagicSpecies = pelagicCatalog.species.map(item => ({
   id: item.id, name: item.name, file: item.file, assetPath: 'pelagic/' + item.file,
-  weight: item.weight, scale: item.scale, sizeClass: item.sizeClass, role: item.role,
+  weight: item.weight, scale: item.scale, sizeClass: item.sizeClass, role: item.role,\n  minDepth: item.minDepth, maxDepth: item.maxDepth,
   detail: true
 }));
 speciesDefinitions.push(...pelagicSpecies);
@@ -356,7 +356,7 @@ window.__osmoceanBootStatus = window.__osmoceanRapierReady ? 'rapier-world-ready
   'native fish ecology construction');
 main = replaceExactly(main,
   "if (mobile) gui.close();",
-  "const fEcology = gui.addFolder('Ecology');\nfEcology.add(ecology.params, 'population', 0, 300, 1).onChange((n) => ecology.populate(n));\nfEcology.add(ecology.params, 'worldRadius', 20, 300, 1);\nfEcology.add(ecology.params, 'neighbourRadius', 4, 40, 1);\nfEcology.add(ecology.params, 'maxDepth', 5, 60, 1);\nfEcology.close();\nconst fFood = gui.addFolder('Food web & energy');\nfFood.add(ecology.params, 'resourceCount', 0, 500, 1).onChange(n => ecology.seedResources(n));\nfFood.add(ecology.params, 'resourceRegrowth', 0, 0.2, 0.005);\nfFood.add(ecology.params, 'feedingRate', 0.02, 1, 0.01);\nfFood.close();\nconst fEvolution = gui.addFolder('Evolution & predation');\nfEvolution.add(ecology.params, 'mutationRate', 0, 0.5, 0.01);\nfEvolution.add(ecology.params, 'mutationStrength', 0.01, 0.5, 0.01);\nfEvolution.add(ecology.params, 'reproductionEnergy', 0.4, 1.4, 0.02);\nfEvolution.add(ecology.params, 'predationThreshold', 0, 1, 0.02);\nfEvolution.add(ecology.params, 'predationRate', 0, 2, 0.02);\nfEvolution.close();\nconst fEnvironment = gui.addFolder('Environment');\nfEnvironment.add(ecology.params, 'currentStrength', 0, 2, 0.02);\nfEnvironment.add(ecology.params, 'temperatureGradient', 0, 1, 0.02);\nfEnvironment.add(ecology.params, 'oxygenGradient', 0, 1, 0.02);\nfEnvironment.close();\nwindow.__osmoceanEcology = ecology;\nif (mobile) gui.close();",
+  "const fEcology = gui.addFolder('Ecology');\nfEcology.add(ecology.params, 'population', 0, 500, 1).onChange((n) => ecology.populate(n));\nfEcology.add(ecology.params, 'worldRadius', 20, 2400, 10);\nfEcology.add(ecology.params, 'neighbourRadius', 4, 40, 1);\nfEcology.add(ecology.params, 'maxDepth', 5, 420, 5);\nfEcology.close();\nconst fFood = gui.addFolder('Food web & energy');\nfFood.add(ecology.params, 'resourceCount', 0, 500, 1).onChange(n => ecology.seedResources(n));\nfFood.add(ecology.params, 'resourceRegrowth', 0, 0.2, 0.005);\nfFood.add(ecology.params, 'feedingRate', 0.02, 1, 0.01);\nfFood.close();\nconst fEvolution = gui.addFolder('Evolution & predation');\nfEvolution.add(ecology.params, 'mutationRate', 0, 0.5, 0.01);\nfEvolution.add(ecology.params, 'mutationStrength', 0.01, 0.5, 0.01);\nfEvolution.add(ecology.params, 'reproductionEnergy', 0.4, 1.4, 0.02);\nfEvolution.add(ecology.params, 'predationThreshold', 0, 1, 0.02);\nfEvolution.add(ecology.params, 'predationRate', 0, 2, 0.02);\nfEvolution.close();\nconst fEnvironment = gui.addFolder('Environment');\nfEnvironment.add(ecology.params, 'currentStrength', 0, 2, 0.02);\nfEnvironment.add(ecology.params, 'temperatureGradient', 0, 1, 0.02);\nfEnvironment.add(ecology.params, 'oxygenGradient', 0, 1, 0.02);\nfEnvironment.close();\nwindow.__osmoceanEcology = ecology;\nif (mobile) gui.close();",
   'live ecology controls');
 main = replaceExactly(main, 'window.__osmoceanEcology = ecology;',
   `window.__osmoceanEcology = ecology;
