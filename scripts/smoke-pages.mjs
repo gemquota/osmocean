@@ -75,23 +75,23 @@ try {
           };
         }
       }
-      return { sampled: before.length, moved, gestures };
+      return { sampled: before.length, moved, gestures, updateCount: window.__osmoceanEcology?.updateCount ?? 0, lastUpdateDt: window.__osmoceanEcology?.lastUpdateDt ?? 0, lastUpdateElapsed: window.__osmoceanEcology?.lastUpdateElapsed ?? 0 };
     });
-    if (motion.sampled < 1 || motion.moved < 1) throw new Error(`Fish motion not observable: ${JSON.stringify(motion)}`);
+    if (motion.sampled < 1 || motion.updateCount < 1 || motion.moved < 1) throw new Error(`Fish simulation did not advance: ${JSON.stringify({ motion, errors })}`);
     if (motion.gestures && (!motion.gestures.marker || !motion.gestures.panned || !motion.gestures.zoomed || !motion.gestures.rotated)) {
       throw new Error(`Two-finger camera gesture incomplete: ${JSON.stringify(motion.gestures)}`);
     }
     const ecology = await page.evaluate(() => {
       const canvas = window.app?.renderer?.domElement || [...document.querySelectorAll('canvas')].find(el => { const r = el.getBoundingClientRect(); return r.width > 100 && r.height > 100; });
       const gl = canvas?.getContext('webgl2') || canvas?.getContext('webgl');
-      return { mode: window.__osmoceanDisplayMode, cameraY: window.app?.camera?.position?.y, fish: window.__osmoceanEcology?.fish?.length ?? 0, fishModelLoaded: window.app?.fishModelLoaded ?? window.__osmoceanEcology?.modelLoaded ?? false, fishRoles: window.__osmoceanEcology?.getStats?.().roles ?? {}, reefChildren: window.__osmoceanEcology?.group?.children?.length ?? 0, reefVisible: window.__osmoceanEcology?.group?.visible, rendererCalls: window.app?.renderer?.info?.render?.calls, rendererTriangles: window.app?.renderer?.info?.render?.triangles, canvas: canvas ? [canvas.width,canvas.height,canvas.getBoundingClientRect().width,canvas.getBoundingClientRect().height] : null, contextLost: gl?.isContextLost?.() ?? null, glError: gl?.getError?.() ?? null, bootStatus: window.__osmoceanBootStatus };
+      return { mode: window.__osmoceanDisplayMode, cameraY: window.app?.camera?.position?.y, fish: window.__osmoceanEcology?.fish?.length ?? 0, fishModelLoaded: window.app?.fishModelLoaded ?? window.__osmoceanEcology?.modelLoaded ?? false, fishRoles: window.__osmoceanEcology?.getStats?.().roles ?? {}, reefRockAssets: window.app?.reefRockAssetCount ?? 0, reefChildren: window.__osmoceanEcology?.group?.children?.length ?? 0, reefVisible: window.__osmoceanEcology?.group?.visible, rendererCalls: window.app?.renderer?.info?.render?.calls, rendererTriangles: window.app?.renderer?.info?.render?.triangles, canvas: canvas ? [canvas.width,canvas.height,canvas.getBoundingClientRect().width,canvas.getBoundingClientRect().height] : null, contextLost: gl?.isContextLost?.() ?? null, glError: gl?.getError?.() ?? null, bootStatus: window.__osmoceanBootStatus };
     });
     console.log(`RENDER DIAGNOSTICS ${viewport.width}x${viewport.height}: ${JSON.stringify({ structure, ecology, errors })}`);
     try {
       await page.evaluate(() => { const el = [...document.querySelectorAll('canvas')].find(x => { const r=x.getBoundingClientRect(); return r.width>100 && r.height>100; }); if (el) el.id='osmocean-renderer'; });
       await page.screenshot({ path: `smoke-${viewport.width}.png`, timeout: 12000, animations: 'disabled' });
     } catch (error) { console.warn(`Canvas screenshot unavailable at ${viewport.width}px: ${error.message}`); }
-    if (ecology.mode !== 'UNDERWATER REEF' || !(ecology.cameraY < 0) || ecology.fish < 50 || !ecology.fishModelLoaded || Object.keys(ecology.fishRoles).length < 2 || ecology.reefChildren < 100 || !ecology.reefVisible) throw new Error(`Underwater reef population missing: ${JSON.stringify(ecology)}`);
+    if (ecology.mode !== 'UNDERWATER REEF' || !(ecology.cameraY < 0) || ecology.fish < 50 || !ecology.fishModelLoaded || Object.keys(ecology.fishRoles).length < 2 || ecology.reefChildren < 100 || ecology.reefRockAssets < 2 || !ecology.reefVisible) throw new Error(`Underwater reef population missing: ${JSON.stringify(ecology)}`);
     if (structure.visibleCanvases !== 1 || structure.iframes !== 0) {
       throw new Error(`Expected one renderer and no embedded applications: ${JSON.stringify(structure)}`);
     }

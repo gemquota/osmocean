@@ -16,7 +16,7 @@ export class FishEcology {
       feedingRate:.22,reproductionEnergy:.82,reproductionCooldown:28,mutationRate:.08,
       mutationStrength:.12,predationRate:.7,predationThreshold:.7,currentStrength:.55,
       temperatureGradient:.45,oxygenGradient:.3,historyInterval:2,...options,...options.params};
-    this.fish=[];this.resources=[];this.history=[];this.elapsed=0;this.nextId=0;
+    this.fish=[];this.resources=[];this.history=[];this.elapsed=0;this.nextId=0;this.updateCount=0;this.lastUpdateDt=0;this.lastUpdateElapsed=0;
     this.group=new THREE.Group();this.group.name='Ultra-Water Ecology';scene.add(this.group);
     this.mats=[0x65c8c8,0xe7b75c,0x8b9ee8,0xb6d58b,0xe58c80,0x9aadd1].map(color=>new THREE.MeshStandardMaterial({color,roughness:.5}));
     this.bodyGeo=new THREE.SphereGeometry(1,16,10);this.tailGeo=new THREE.ConeGeometry(.42,.8,4);this.finGeo=new THREE.ConeGeometry(.18,.55,3);
@@ -93,7 +93,7 @@ export class FishEcology {
   nearestResource(p,r){let best=null,dmin=r*r;for(const x of this.resources)if(x.biomass>.02){const d=p.distanceToSquared(x.mesh.position);if(d<dmin){best=x;dmin=d;}}return best;}
   spatial(){const cell=Math.max(4,this.params.neighbourRadius),bins=new Map();for(const f of this.fish){const p=f.root.position,k=`${Math.floor(p.x/cell)},${Math.floor(p.y/cell)},${Math.floor(p.z/cell)}`;if(!bins.has(k))bins.set(k,[]);bins.get(k).push(f);}return{bins,cell};}
   update(dt,elapsed=0,waterHeight=0){
-    if(!Number.isFinite(dt)||dt<=0)return;const T=this.T,step=Math.min(dt,1/20);this.elapsed=elapsed;
+    if(!Number.isFinite(dt)||dt<=0)return;const T=this.T,step=Math.min(dt,1/20);this.elapsed=elapsed;this.updateCount++;this.lastUpdateDt=step;this.lastUpdateElapsed=elapsed;
     const{bins,cell}=this.spatial(),r2=this.params.neighbourRadius**2,s2=this.params.separationRadius**2;
     const births=[],deaths=new Set();
     for(const f of this.fish){
