@@ -67,6 +67,8 @@ if (mobile) {
     angle: Math.atan2(p[1].y - p[0].y, p[1].x - p[0].x)
   });
   const wrapAngle = value => Math.atan2(Math.sin(value), Math.cos(value));
+  const worldUp = new THREE.Vector3(0, 1, 0);
+  const raycaster = new THREE.Raycaster();
   surface.addEventListener('touchstart', event => {
     if (event.touches.length !== 2) { gesture = null; return; }
     event.preventDefault();
@@ -84,19 +86,39 @@ if (mobile) {
       .addScaledVector(up, (p.y - gesture.y) * viewScale);
     camera.position.add(pan);
     controls.target.add(pan);
-    const forward = controls.target.clone().sub(camera.position).normalize();
+
+    // Twist yaws the camera around the world-space point beneath the two-finger
+    // midpoint. The view plane is perpendicular to the camera direction and
+    // passes through the orbit target, giving a stable pivot even in open water.
     const twist = wrapAngle(p.angle - gesture.angle);
-    if (Math.abs(twist) > 0.0001) camera.up.applyQuaternion(
-      new THREE.Quaternion().setFromAxisAngle(forward, twist)
-    ).normalize();
+    let yawPivotApplied = false;
+    if (Math.abs(twist) > 0.0001) {
+      const rect = surface.getBoundingClientRect();
+      const midpoint = new THREE.Vector2(
+        ((p.x - rect.left) / Math.max(1, rect.width)) * 2 - 1,
+        -((p.y - rect.top) / Math.max(1, rect.height)) * 2 + 1
+      );
+      raycaster.setFromCamera(midpoint, camera);
+      const viewNormal = camera.getWorldDirection(new THREE.Vector3());
+      const pivotPlane = new THREE.Plane().setFromNormalAndCoplanarPoint(viewNormal, controls.target);
+      const pivot = raycaster.ray.intersectPlane(pivotPlane, new THREE.Vector3()) || controls.target.clone();
+      const yaw = new THREE.Quaternion().setFromAxisAngle(worldUp, twist);
+      camera.position.sub(pivot).applyQuaternion(yaw).add(pivot);
+      controls.target.sub(pivot).applyQuaternion(yaw).add(pivot);
+      camera.up.copy(worldUp);
+      camera.quaternion.premultiply(yaw);
+      yawPivotApplied = true;
+    }
+
     const zoomFactor = gesture.distance / Math.max(p.distance, 1);
     const offset = camera.position.clone().sub(controls.target);
     offset.multiplyScalar(THREE.MathUtils.clamp(zoomFactor, 0.85, 1.18));
     offset.setLength(THREE.MathUtils.clamp(offset.length(), 4, 900));
     camera.position.copy(controls.target).add(offset);
     controls.update();
+    camera.up.copy(worldUp);
     gesture = { ...p, height: gesture.height };
-    window.__osmoceanTouchGesture = { pan: true, rotate: true, zoom: true };
+    window.__osmoceanTouchGesture = { pan: true, rotate: true, zoom: true, yawPivot: yawPivotApplied, noRoll: camera.up.distanceTo(worldUp) < 1e-6 };
   }, { passive: false });
   const endGesture = event => {
     if (event.touches.length < 2) gesture = null;
