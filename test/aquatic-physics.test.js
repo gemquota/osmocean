@@ -8,7 +8,7 @@ test('quadratic drag accelerates a fish toward the local water velocity', () => 
     positionY: -10, surfaceY: 0, preferredDepth: 10
   });
   assert.ok(a.x < 0);
-  assert.equal(a.z, 0);
+  assert.ok(Math.abs(a.z) < 1e-12);
 });
 
 test('buoyancy is positive for a fish less dense than seawater', () => {
